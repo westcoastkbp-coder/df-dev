@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "machine": "Zephyrus",
+  "linux_host_root": "/home/avoro",
+  "shared_core": {
+    "repo_root": "/home/avoro/projects/digital_foreman",
+    "system_root": "/home/avoro/df-system",
+    "shared_config_role": "system config",
+    "shared_adapter_role": "shared adapters",
+    "future_storage_adapter_role": "future storage adapter layer"
+  },
+  "contours": {
+    "df-dev": {
+      "kind": "dev",
+      "working_root": "/home/avoro/df-dev",
+      "repo_root": "/home/avoro/projects/digital_foreman",
+      "artifact_root": "/home/avoro/data/hot/df-dev",
+      "export_root": "/home/avoro/data/export/df-dev",
+      "task_namespace": "df-dev.tasks",
+      "memory_namespace": "df-dev.memory",
+      "ownership": [
+        "repo",
+        "dev artifacts",
+        "test outputs",
+        "export outputs"
+      ]
+    },
+    "ownerbox": {
+      "kind": "owner",
+      "working_root": "/home/avoro/ownerbox",
+      "artifact_root": "/home/avoro/data/hot/ownerbox",
+      "export_root": "/home/avoro/data/export/ownerbox",
+      "task_namespace": "ownerbox.tasks",
+      "memory_namespace": "ownerbox.memory",
+      "ownership": [
+        "personal tasks",
+        "personal artifacts",
+        "owner memory",
+        "owner output"
+      ]
+    }
+  },
+  "storage": {
+    "hot_root": "/home/avoro/data/hot",
+    "warm_root": "/home/avoro/data/warm",
+    "cache_root": "/home/avoro/data/cache",
+    "export_root": "/home/avoro/data/export",
+    "sync_queue_root": "/home/avoro/data/sync-queue"
+  },
+  "rules": {
+    "shared_core_is_single_execution_foundation": true,
+    "cross_contour_memory_sharing_allowed": false,
+    "cross_contour_artifact_sharing_allowed": false,
+    "cross_contour_communication_requires_shared_adapter": true,
+    "storage_adapter_implemented": false
+  }
+}

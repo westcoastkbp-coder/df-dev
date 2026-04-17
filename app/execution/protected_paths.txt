@@ -1,0 +1,12 @@
+# Protected path policy baseline.
+# Changes in these paths should receive extra review and be covered in devlog.
+AGENTS.md
+.githooks
+.github/workflows
+core
+memory
+orchestrator
+agents
+api
+scripts/project_tasks.py
+Makefile

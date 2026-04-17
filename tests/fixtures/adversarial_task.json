@@ -1,0 +1,16 @@
+{
+  "task_id": "DF-ADVERSARIAL-TASK-V1",
+  "status": "created",
+  "intent": "missing_input_followup",
+  "payload": {
+    "workflow_type": "missing_input_followup",
+    "parent_lead_id": "lead-adversarial-001",
+    "missing_fields": [
+      "scope_summary"
+    ],
+    "required_action": "request_input_completion"
+  },
+  "interaction_id": "DF-ADVERSARIAL-TASK-V1",
+  "job_id": "DF-ADVERSARIAL-TASK-V1",
+  "trace_id": "DF-ADVERSARIAL-TASK-V1"
+}

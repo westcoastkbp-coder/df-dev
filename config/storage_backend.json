@@ -1,0 +1,15 @@
+{
+  "backend": "local",
+  "default": "local",
+  "webdav_enabled": true,
+  "webdav_url": "http://localhost:8080/remote.php/dav/files/admin",
+  "opencloud_enabled": true,
+  "opencloud": {
+    "base_url": "",
+    "username_env": "OPENCLOUD_USERNAME",
+    "app_token_env": "OPENCLOUD_APP_TOKEN",
+    "ownerbox_remote_root": "ownerbox",
+    "dev_remote_root": "exports/dev",
+    "timeout_seconds": 15
+  }
+}

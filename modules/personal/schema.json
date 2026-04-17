@@ -1,0 +1,18 @@
+{
+  "owner": {
+    "name": "",
+    "notes": ""
+  },
+  "vehicles": [
+    {
+      "name": "",
+      "model": "",
+      "year": "",
+      "vin": "",
+      "maintenance": []
+    }
+  ],
+  "dmv": [],
+  "immigration": [],
+  "reminders": []
+}

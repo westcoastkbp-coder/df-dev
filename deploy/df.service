@@ -1,0 +1,11 @@
+[Unit]
+Description=Digital Foreman
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/digital_foreman/scripts/start_df.py
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

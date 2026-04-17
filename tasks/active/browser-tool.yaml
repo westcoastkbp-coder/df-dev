@@ -1,0 +1,2 @@
+action: browser_tool
+description: Execute controlled browser steps through the task execution boundary.

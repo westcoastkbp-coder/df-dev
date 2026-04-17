@@ -1,0 +1,17 @@
+{
+  "task_id": "TASK-0001",
+  "title": "Build Control Plane V1",
+  "status": "in_progress",
+  "owner": "DEV_OFFICE",
+  "active_step": "CREATE_BASE_CONTROL_FILES",
+  "depends_on": [],
+  "artifacts": [
+    "control/ACTIVE_TASK.md",
+    "control/SYSTEM_STATE.json",
+    "control/POLICY.json",
+    "control/WORKFLOW_RULES.md",
+    "audit/audit_log.jsonl"
+  ],
+  "evidence": [],
+  "notes": "Minimal external control layer for deterministic dev workflow."
+}

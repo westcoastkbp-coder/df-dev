@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  issues:
+    types: [opened]
+  push:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  python-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - if: github.event_name == 'issues'
+        run: |
+          echo "test change" >> test.txt
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "AUTO: issue execution" || echo "no changes"
+          git push origin HEAD:issue-auto || true
