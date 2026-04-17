@@ -13,11 +13,15 @@ TASKS_DIR = REPO_ROOT / "tasks"
 TASK_QUEUE_PATH = TASKS_DIR / "task_queue.json"
 
 
-def _load_queue(queue_path: Path = TASK_QUEUE_PATH) -> list[dict[str, Any]]:
+def _load_queue(queue_path: Path | None = None) -> list[dict[str, Any]]:
+    if queue_path is None:
+        queue_path = TASK_QUEUE_PATH
     return json.loads(queue_path.read_text(encoding="utf-8"))
 
 
-def _resolve_task_path(task_id: str, tasks_dir: Path = TASKS_DIR) -> Path | None:
+def _resolve_task_path(task_id: str, tasks_dir: Path | None = None) -> Path | None:
+    if tasks_dir is None:
+        tasks_dir = TASKS_DIR
     for candidate in sorted(tasks_dir.glob("*.json")):
         if candidate.name == "task_queue.json":
             continue
@@ -25,6 +29,12 @@ def _resolve_task_path(task_id: str, tasks_dir: Path = TASKS_DIR) -> Path | None
         if task.get("task_id") == task_id:
             return candidate
     return None
+
+
+def _log_failed_task(task_id: str, task: dict[str, Any]) -> None:
+    retries = int(task.get("retries") or 0)
+    max_retries = int(task.get("max_retries") or 3)
+    print(f"FAILED_TASK: {task_id} retries={retries} max_retries={max_retries}")
 
 
 def orchestrate() -> list[dict[str, Any]]:
@@ -36,9 +46,18 @@ def orchestrate() -> list[dict[str, Any]]:
             continue
 
         task = json.loads(task_path.read_text(encoding="utf-8"))
-        if task.get("status") == "pending":
-            results.append(run_task(task_path))
+        status = str(task.get("status") or "")
+        if status == "completed":
+            continue
+        if status == "failed":
+            _log_failed_task(task_id, task)
+            continue
+        if status == "pending":
+            executed_task = run_task(task_path)
+            results.append(executed_task)
             derive_state()
+            if executed_task.get("status") == "failed":
+                _log_failed_task(task_id, executed_task)
     return results
 
 

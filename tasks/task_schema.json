@@ -2,6 +2,8 @@
   "task_id": "string",
   "created_at": "ISO8601",
   "status": "pending | running | completed | failed",
+  "retries": 0,
+  "max_retries": 3,
   "action": {
     "type": "string",
     "input": "object"
