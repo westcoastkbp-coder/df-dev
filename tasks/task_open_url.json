@@ -1,0 +1,20 @@
+{
+  "task_id": "task_open_url",
+  "created_at": "2026-04-17T01:05:08Z",
+  "status": "pending",
+  "action": {
+    "type": "open_url",
+    "input": {
+      "url": "https://example.com"
+    }
+  },
+  "result": {
+    "status": "pending",
+    "output": {}
+  },
+  "verification": {
+    "status": "pending"
+  },
+  "events": [],
+  "next_tasks": []
+}

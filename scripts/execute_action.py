@@ -33,6 +33,16 @@ def run_action(action_type: str, input_data: dict[str, Any]) -> dict[str, Any]:
             "file_written": str(path.relative_to(REPO_ROOT)),
         }
 
+    if action_type == "open_url":
+        import webbrowser
+
+        url = str(input_data["url"])
+        webbrowser.open(url)
+        return {
+            "status": "success",
+            "url_opened": url,
+        }
+
     return {
         "status": "success",
     }
@@ -52,6 +62,12 @@ def verify_result(
             }
         return {
             "status": "failed",
+            "details": {},
+        }
+
+    if action_type == "open_url":
+        return {
+            "status": "success",
             "details": {},
         }
 
