@@ -34,8 +34,8 @@ def _write_task(task: dict[str, Any], task_path: Path = TASK_PATH) -> None:
     task_path.write_text(json.dumps(task, indent=2) + "\n", encoding="utf-8")
 
 
-def run_task() -> dict[str, Any]:
-    task = _load_task()
+def run_task(task_path: Path = TASK_PATH) -> dict[str, Any]:
+    task = _load_task(task_path)
     action = task.get("action") or {}
     action_type = str(action.get("type") or "")
     action_input = dict(action.get("input") or {})
@@ -45,7 +45,9 @@ def run_task() -> dict[str, Any]:
     task["status"] = "completed"
     task["result"]["status"] = result["status"]
     task["result"]["output"] = result
-    task["verification"]["status"] = "success"
+    task["verification"]["status"] = (
+        "success" if result["status"] == "success" else "failed"
+    )
 
     last_event_id = _read_last_event_id()
     if last_event_id is not None:
@@ -53,7 +55,7 @@ def run_task() -> dict[str, Any]:
         events.append(last_event_id)
         task["events"] = events
 
-    _write_task(task)
+    _write_task(task, task_path)
     return task
 
 
