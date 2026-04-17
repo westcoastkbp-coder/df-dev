@@ -18,10 +18,28 @@ def _utc_now() -> str:
     )
 
 
-def execute_action(action_type: str, input_data: dict[str, Any]) -> dict[str, str]:
-    result = {
+def run_action(action_type: str, input_data: dict[str, Any]) -> dict[str, str]:
+    return {
         "status": "success",
     }
+
+
+def verify_result(result: dict[str, str]) -> dict[str, dict[str, Any] | str]:
+    if result["status"] == "success":
+        return {
+            "status": "success",
+            "details": {},
+        }
+    return {
+        "status": "failed",
+        "details": {},
+    }
+
+
+def execute_action(action_type: str, input_data: dict[str, Any]) -> dict[str, str]:
+    result = run_action(action_type, input_data)
+    verification = verify_result(result)
+    state_applied = verification["status"] == "success"
 
     event = {
         "event_id": _generate_event_id(),
@@ -33,13 +51,10 @@ def execute_action(action_type: str, input_data: dict[str, Any]) -> dict[str, st
             "input": input_data,
             "output": result,
         },
-        "verification": {
-            "status": "success",
-            "details": {},
-        },
+        "verification": verification,
         "state_update": {
-            "applied": False,
-            "changes": {},
+            "applied": state_applied,
+            "changes": {} if not state_applied else {"last_action_status": "success"},
         },
         "trace": {
             "task_id": "test_task",

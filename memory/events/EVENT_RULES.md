@@ -20,3 +20,11 @@ No event = no state change.
 - each line = one event
 
 ---
+
+## Verification Gate
+
+- no state update without verification
+- verification must be explicit
+- failed verification blocks state change
+
+---
