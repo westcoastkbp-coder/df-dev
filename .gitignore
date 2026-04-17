@@ -20,7 +20,7 @@ pytest-cache-files-*/
 
 # Runtime and generated output
 runtime/
-logs/
+/logs/
 artifacts/
 audit/
 screenshots/
