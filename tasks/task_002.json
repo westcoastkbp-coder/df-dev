@@ -1,11 +1,11 @@
 {
-  "task_id": "task_001",
-  "created_at": "2026-01-01T12:00:00Z",
+  "task_id": "task_002",
+  "created_at": "2026-04-17T00:47:50Z",
   "status": "pending",
   "action": {
-    "type": "send_email",
+    "type": "test_action_2",
     "input": {
-      "to": "client@example.com"
+      "value": 456
     }
   },
   "result": {
@@ -16,7 +16,5 @@
     "status": "pending"
   },
   "events": [],
-  "next_tasks": [
-    "task_002"
-  ]
+  "next_tasks": []
 }

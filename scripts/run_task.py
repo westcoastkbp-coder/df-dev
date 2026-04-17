@@ -9,6 +9,7 @@ from scripts.execute_action import execute_action
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TASK_PATH = REPO_ROOT / "tasks" / "sample_task.json"
+TASK_QUEUE_PATH = REPO_ROOT / "tasks" / "task_queue.json"
 EVENT_LOG_PATH = REPO_ROOT / "memory" / "events" / "event_log.jsonl"
 
 
@@ -34,6 +35,20 @@ def _write_task(task: dict[str, Any], task_path: Path = TASK_PATH) -> None:
     task_path.write_text(json.dumps(task, indent=2) + "\n", encoding="utf-8")
 
 
+def _append_next_tasks(next_tasks: list[str], queue_path: Path = TASK_QUEUE_PATH) -> None:
+    if not next_tasks:
+        return
+
+    queue: list[dict[str, str]] = []
+    if queue_path.is_file():
+        queue = json.loads(queue_path.read_text(encoding="utf-8"))
+
+    for task_id in next_tasks:
+        queue.append({"task_id": task_id})
+
+    queue_path.write_text(json.dumps(queue, indent=2) + "\n", encoding="utf-8")
+
+
 def run_task(task_path: Path = TASK_PATH) -> dict[str, Any]:
     task = _load_task(task_path)
     action = task.get("action") or {}
@@ -54,6 +69,9 @@ def run_task(task_path: Path = TASK_PATH) -> dict[str, Any]:
         events = list(task.get("events") or [])
         events.append(last_event_id)
         task["events"] = events
+
+    next_tasks = [str(task_id) for task_id in task.get("next_tasks") or []]
+    _append_next_tasks(next_tasks)
 
     _write_task(task, task_path)
     return task

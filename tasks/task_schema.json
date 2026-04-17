@@ -16,5 +16,9 @@
   "events": [
     "event_id_1",
     "event_id_2"
+  ],
+  "next_tasks": [
+    "task_id_2",
+    "task_id_3"
   ]
 }
