@@ -1,0 +1,20 @@
+{
+  "task_id": "string",
+  "created_at": "ISO8601",
+  "status": "pending | running | completed | failed",
+  "action": {
+    "type": "string",
+    "input": "object"
+  },
+  "result": {
+    "status": "pending | success | failed",
+    "output": "object"
+  },
+  "verification": {
+    "status": "pending | success | failed"
+  },
+  "events": [
+    "event_id_1",
+    "event_id_2"
+  ]
+}
