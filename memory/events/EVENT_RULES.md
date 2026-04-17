@@ -11,3 +11,12 @@ All system events must:
 No event = no state change.
 
 ---
+
+## Event Log
+
+- stored in event_log.jsonl
+- append-only
+- no edits allowed
+- each line = one event
+
+---
