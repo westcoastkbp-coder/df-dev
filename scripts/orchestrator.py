@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from scripts.derive_state import derive_state
 from scripts.run_task import run_task
 
 
@@ -37,6 +38,7 @@ def orchestrate() -> list[dict[str, Any]]:
         task = json.loads(task_path.read_text(encoding="utf-8"))
         if task.get("status") == "pending":
             results.append(run_task(task_path))
+            derive_state()
     return results
 
 

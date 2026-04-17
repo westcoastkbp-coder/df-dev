@@ -18,6 +18,7 @@ DEFAULT_STATE: dict[str, Any] = {
 def derive_state() -> dict[str, Any]:
     state = dict(DEFAULT_STATE)
     if not EVENT_LOG_PATH.is_file():
+        write_state(state)
         return state
 
     for raw_line in EVENT_LOG_PATH.read_text(encoding="utf-8").splitlines():
@@ -36,6 +37,7 @@ def derive_state() -> dict[str, Any]:
 
         state["last_event_id"] = event.get("event_id")
 
+    write_state(state)
     return state
 
 
@@ -48,7 +50,7 @@ def write_state(state: dict[str, Any]) -> None:
 
 
 def main() -> None:
-    write_state(derive_state())
+    derive_state()
 
 
 if __name__ == "__main__":

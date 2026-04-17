@@ -9,3 +9,9 @@ Rules:
 - state must reflect verified events only
 
 ---
+
+## Automatic State Update
+
+- state must be recalculated after each successful event
+- state is not optional
+- state must reflect latest verified system reality
