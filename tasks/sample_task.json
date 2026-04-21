@@ -1,7 +1,7 @@
 {
   "task_id": "task_001",
   "created_at": "2026-01-01T12:00:00Z",
-  "status": "pending",
+  "status": "completed",
   "action": {
     "type": "send_email",
     "input": {
@@ -9,13 +9,17 @@
     }
   },
   "result": {
-    "status": "pending",
-    "output": {}
+    "status": "success",
+    "output": {
+      "status": "success"
+    }
   },
   "verification": {
-    "status": "pending"
+    "status": "success"
   },
-  "events": [],
+  "events": [
+    "evt_01ea5ee0d81f4fcb8d2174534bfe24b8"
+  ],
   "next_tasks": [
     "task_002"
   ]

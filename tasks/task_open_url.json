@@ -1,7 +1,7 @@
 {
   "task_id": "task_open_url",
   "created_at": "2026-04-17T01:05:08Z",
-  "status": "pending",
+  "status": "completed",
   "action": {
     "type": "open_url",
     "input": {
@@ -9,12 +9,19 @@
     }
   },
   "result": {
-    "status": "pending",
-    "output": {}
+    "status": "success",
+    "output": {
+      "status": "success",
+      "url_opened": "https://example.com"
+    }
   },
   "verification": {
-    "status": "pending"
+    "status": "success"
   },
-  "events": [],
-  "next_tasks": []
+  "events": [
+    "evt_998861240a404098858d11fda900330e"
+  ],
+  "next_tasks": [],
+  "retries": 0,
+  "max_retries": 3
 }
