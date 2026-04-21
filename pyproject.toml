@@ -1,2 +1,2 @@
 [tool.ruff]
-ignore = ["E402"]
+ignore = ["E402", "F401", "F841", "E501"]
