@@ -47,7 +47,11 @@ def _run_loop(monkeypatch, capsys, *, test_result, review_result=None):
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: test_result)
-    monkeypatch.setattr(codex_loop, "execute_fix_task", lambda prompt: {"status": "timeout", "reason": "not_used"})
+    monkeypatch.setattr(
+        codex_loop,
+        "execute_fix_task",
+        lambda prompt: {"status": "timeout", "reason": "not_used"},
+    )
 
     if review_result is not None:
         monkeypatch.setattr(
@@ -137,5 +141,11 @@ def test_fail_path_never_writes_false_success(monkeypatch, capsys):
     )
 
     assert output == {"status": "timeout", "reason": "not_used"}
-    assert context.get("modules_state", {}).get("execution_replay", {}).get("status") != "WORKING"
-    assert context["next_required"] == "Resolve execution_replay via test_execution_replay.py"
+    assert (
+        context.get("modules_state", {}).get("execution_replay", {}).get("status")
+        != "WORKING"
+    )
+    assert (
+        context["next_required"]
+        == "Resolve execution_replay via test_execution_replay.py"
+    )

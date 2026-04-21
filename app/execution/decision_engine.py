@@ -5,8 +5,15 @@ import os
 from collections.abc import Mapping, Sequence
 
 import app.execution.orchestrator_client as orchestrator_client_module
-from app.execution.decision_trace import build_decision_trace, summarize_context_reference
-from app.execution.vendor_router import DEFAULT_VENDOR, normalize_vendor, route as route_vendor
+from app.execution.decision_trace import (
+    build_decision_trace,
+    summarize_context_reference,
+)
+from app.execution.vendor_router import (
+    DEFAULT_VENDOR,
+    normalize_vendor,
+    route as route_vendor,
+)
 from app.policy.policy_gate import PolicyAction, policy
 
 
@@ -64,7 +71,9 @@ class DecisionExecutionBlockedError(RuntimeError):
         self.code = str(code).strip()
         self.reason = _normalize_text(reason)
         self.decision_trace = dict(decision_trace)
-        self.action_plan = dict(action_plan) if isinstance(action_plan, Mapping) else None
+        self.action_plan = (
+            dict(action_plan) if isinstance(action_plan, Mapping) else None
+        )
         super().__init__(self.reason)
 
     def __str__(self) -> str:
@@ -172,7 +181,9 @@ def _action(task: Mapping[str, object], context: Mapping[str, object]) -> str:
     )
 
 
-def _action_type(task: Mapping[str, object], context: Mapping[str, object], *, action: str) -> str:
+def _action_type(
+    task: Mapping[str, object], context: Mapping[str, object], *, action: str
+) -> str:
     normalized_task = _normalize_mapping(task)
     explicit_action_type = _first_non_empty(
         normalized_task.get("intent"),
@@ -183,7 +194,9 @@ def _action_type(task: Mapping[str, object], context: Mapping[str, object], *, a
     return _normalize_text(action).upper().replace(" ", "_")
 
 
-def _decision_target(task: Mapping[str, object], context: Mapping[str, object], *, action: str) -> str:
+def _decision_target(
+    task: Mapping[str, object], context: Mapping[str, object], *, action: str
+) -> str:
     normalized_task = _normalize_mapping(task)
     normalized_context = _normalize_mapping(context)
     payload = _normalize_mapping(normalized_task.get("payload"))
@@ -202,7 +215,9 @@ def _decision_parameters(task: Mapping[str, object]) -> dict[str, object]:
     return _normalize_mapping(_normalize_mapping(task).get("payload"))
 
 
-def _requires_confirmation(task: Mapping[str, object], context: Mapping[str, object], *, task_state: str) -> bool:
+def _requires_confirmation(
+    task: Mapping[str, object], context: Mapping[str, object], *, task_state: str
+) -> bool:
     normalized_task = _normalize_mapping(task)
     normalized_context = _normalize_mapping(context)
     task_requires = _normalize_bool(normalized_task.get("requires_confirmation"))
@@ -233,7 +248,9 @@ def _context_summary_text(context: Mapping[str, object]) -> str:
     return json.dumps(_json_ready(candidate), ensure_ascii=True, separators=(",", ":"))
 
 
-def _input_text(task: Mapping[str, object], context: Mapping[str, object], *, action: str) -> str:
+def _input_text(
+    task: Mapping[str, object], context: Mapping[str, object], *, action: str
+) -> str:
     normalized_task = _normalize_mapping(task)
     normalized_context = _normalize_mapping(context)
     payload = _normalize_mapping(normalized_task.get("payload"))
@@ -249,13 +266,14 @@ def _input_text(task: Mapping[str, object], context: Mapping[str, object], *, ac
     )
 
 
-def _allowed_actions(task: Mapping[str, object], context: Mapping[str, object], *, action: str) -> list[str]:
+def _allowed_actions(
+    task: Mapping[str, object], context: Mapping[str, object], *, action: str
+) -> list[str]:
     normalized_task = _normalize_mapping(task)
     normalized_context = _normalize_mapping(context)
-    raw_allowed = (
-        _normalize_sequence(normalized_context.get("allowed_actions"))
-        or _normalize_sequence(normalized_task.get("allowed_actions"))
-    )
+    raw_allowed = _normalize_sequence(
+        normalized_context.get("allowed_actions")
+    ) or _normalize_sequence(normalized_task.get("allowed_actions"))
     normalized = [
         _normalize_text(candidate).lower().replace(" ", "_")
         for candidate in raw_allowed
@@ -311,7 +329,9 @@ def _policy_result_text(
 
 
 def _policy_task_state(context: Mapping[str, object]) -> dict[str, object]:
-    normalized_task_state = _normalize_mapping(_normalize_mapping(context).get("task_state"))
+    normalized_task_state = _normalize_mapping(
+        _normalize_mapping(context).get("task_state")
+    )
     raw_status = _normalize_text(normalized_task_state.get("status")).upper()
     status_map = {
         "CREATED": "pending",
@@ -349,7 +369,8 @@ def _validate_ai_policy(
         },
         task_id=_normalize_text(action_plan.get("task_id")),
         confirmation_required=(
-            bool(action_plan.get("requires_confirmation")) or normalized_action_type == "critical"
+            bool(action_plan.get("requires_confirmation"))
+            or normalized_action_type == "critical"
         ),
         confirmation_received=confirmation_received,
     )
@@ -357,9 +378,8 @@ def _validate_ai_policy(
         policy_action,
         _policy_task_state(context),
     )
-    if (
-        not policy_result.execution_allowed
-        and not (policy_action.confirmation_required and not policy_action.confirmation_received)
+    if not policy_result.execution_allowed and not (
+        policy_action.confirmation_required and not policy_action.confirmation_received
     ):
         raise ValueError(policy_result.reason or "policy rejected ai decision")
     return _policy_result_text(
@@ -436,7 +456,9 @@ def validate_action_plan(
     candidate = dict(plan)
     missing_fields = sorted(ACTION_PLAN_REQUIRED_FIELDS - set(candidate))
     if missing_fields:
-        raise ValueError("action plan missing required fields: " + ", ".join(missing_fields))
+        raise ValueError(
+            "action plan missing required fields: " + ", ".join(missing_fields)
+        )
     if not _normalize_text(candidate.get("task_id")):
         raise ValueError("action plan task_id must not be empty")
     if not _normalize_text(candidate.get("action")):
@@ -450,10 +472,15 @@ def validate_action_plan(
 
     normalized_expected_task_id = _normalize_text(expected_task_id)
     normalized_task_id = _normalize_text(candidate.get("task_id"))
-    if normalized_expected_task_id and normalized_task_id != normalized_expected_task_id:
+    if (
+        normalized_expected_task_id
+        and normalized_task_id != normalized_expected_task_id
+    ):
         raise ValueError("action plan task_id does not match execution task")
 
-    decision_source = _normalize_text(candidate.get("decision_source")).lower() or "rule"
+    decision_source = (
+        _normalize_text(candidate.get("decision_source")).lower() or "rule"
+    )
     if decision_source not in AI_DECISION_SOURCES:
         raise ValueError(f"unsupported decision source: {decision_source or '(empty)'}")
 
@@ -462,12 +489,13 @@ def validate_action_plan(
         normalized_action_type = normalized_action_type.lower()
         if normalized_action_type not in AI_POLICY_ACTION_TYPES:
             raise ValueError(
-                "invalid ai action_type: "
-                f"{normalized_action_type or '(empty)'}"
+                f"invalid ai action_type: {normalized_action_type or '(empty)'}"
             )
         if not _normalize_text(candidate.get("target")):
             raise ValueError("ai action plan target must not be empty")
-        if "parameters" not in candidate or not isinstance(candidate.get("parameters"), Mapping):
+        if "parameters" not in candidate or not isinstance(
+            candidate.get("parameters"), Mapping
+        ):
             raise ValueError("ai action plan parameters must be a dict")
 
     return {
@@ -493,7 +521,9 @@ def _decide_with_ai(
 ) -> dict[str, object]:
     normalized_task = _normalize_mapping(task)
     normalized_context = _normalize_mapping(context)
-    allowed_actions = _allowed_actions(normalized_task, normalized_context, action=action)
+    allowed_actions = _allowed_actions(
+        normalized_task, normalized_context, action=action
+    )
     raw_plan = orchestrator_client_module.call_orchestrator(
         normalized_task,
         _context_summary_text(normalized_context),
@@ -536,7 +566,9 @@ def decide(task: object, context: object) -> dict[str, object]:
 
     if _decision_mode(normalized_context) != "ai":
         routed_plan = _rule_based_plan(normalized_task, normalized_context)
-        routed_plan["vendor"] = route_vendor(normalized_task, normalized_context, routed_plan)
+        routed_plan["vendor"] = route_vendor(
+            normalized_task, normalized_context, routed_plan
+        )
         return validate_action_plan(routed_plan, expected_task_id=task_id)
 
     try:
@@ -546,7 +578,9 @@ def decide(task: object, context: object) -> dict[str, object]:
             task_id=task_id,
             action=action,
         )
-        routed_plan["vendor"] = route_vendor(normalized_task, normalized_context, routed_plan)
+        routed_plan["vendor"] = route_vendor(
+            normalized_task, normalized_context, routed_plan
+        )
         return validate_action_plan(routed_plan, expected_task_id=task_id)
     except orchestrator_client_module.OrchestratorUnavailableError as exc:
         routed_plan = _rule_based_plan(
@@ -557,7 +591,9 @@ def decide(task: object, context: object) -> dict[str, object]:
                 f"{_normalize_text(exc) or 'unavailable'}"
             ),
         )
-        routed_plan["vendor"] = route_vendor(normalized_task, normalized_context, routed_plan)
+        routed_plan["vendor"] = route_vendor(
+            normalized_task, normalized_context, routed_plan
+        )
         return validate_action_plan(routed_plan, expected_task_id=task_id)
 
 
@@ -573,7 +609,9 @@ def _context_used_for_plan(
         intent=action_plan["action"],
         payload={
             "operation": action_plan["action"],
-            "target": _first_non_empty(action_plan.get("target"), _task_state(task, context), "execution"),
+            "target": _first_non_empty(
+                action_plan.get("target"), _task_state(task, context), "execution"
+            ),
             **_normalize_mapping(action_plan.get("parameters")),
         },
         source=source,
@@ -644,14 +682,17 @@ def failure_trace_for_context(
             intent=action,
             payload={"operation": action},
             source=source,
-            context_summary=_normalize_mapping(normalized_context.get("context_summary")),
+            context_summary=_normalize_mapping(
+                normalized_context.get("context_summary")
+            ),
             command_name=_first_non_empty(
                 normalized_context.get("command_name"),
                 action,
             ),
             mode=_context_mode(normalized_context),
         ),
-        action_type=_action_type(normalized_task, normalized_context, action=action) or "EXECUTION",
+        action_type=_action_type(normalized_task, normalized_context, action=action)
+        or "EXECUTION",
         policy_result=f"blocked: {_normalize_text(reason) or 'decision missing'}",
         confidence="high",
         vendor=vendor,

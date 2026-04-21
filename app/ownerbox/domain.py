@@ -65,7 +65,9 @@ def _normalize_text(value: object) -> str:
 
 def _normalize_mapping(value: object) -> dict[str, Any]:
     if isinstance(value, Mapping):
-        return {str(key).strip(): value[key] for key in sorted(value) if str(key).strip()}
+        return {
+            str(key).strip(): value[key] for key in sorted(value) if str(key).strip()
+        }
     return {}
 
 
@@ -161,7 +163,9 @@ def _normalize_truth_constraints(value: object) -> dict[str, Any]:
         payload["require_explicit_refs"] = bool(provided["require_explicit_refs"])
     if "max_resolved_entries" in provided:
         try:
-            payload["max_resolved_entries"] = max(0, int(provided["max_resolved_entries"]))
+            payload["max_resolved_entries"] = max(
+                0, int(provided["max_resolved_entries"])
+            )
         except (TypeError, ValueError) as exc:
             raise OwnerBoxBoundaryError(
                 "truth_constraints.max_resolved_entries must be an integer"
@@ -189,9 +193,17 @@ class OwnerDomain:
     domain_type: str = OWNERBOX_DOMAIN_TYPE
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "domain_id", _stable_identifier(self.domain_id, field_name="domain_id"))
-        object.__setattr__(self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id"))
-        object.__setattr__(self, "trust_level", _normalized_trust_level(self.trust_level))
+        object.__setattr__(
+            self,
+            "domain_id",
+            _stable_identifier(self.domain_id, field_name="domain_id"),
+        )
+        object.__setattr__(
+            self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id")
+        )
+        object.__setattr__(
+            self, "trust_level", _normalized_trust_level(self.trust_level)
+        )
         object.__setattr__(
             self,
             "memory_scope_ref",
@@ -207,9 +219,13 @@ class OwnerDomain:
             "policy_scope_ref",
             _stable_identifier(self.policy_scope_ref, field_name="policy_scope_ref"),
         )
-        object.__setattr__(self, "created_at", _normalize_text(self.created_at) or _utc_timestamp())
+        object.__setattr__(
+            self, "created_at", _normalize_text(self.created_at) or _utc_timestamp()
+        )
         object.__setattr__(self, "status", _normalized_status(self.status))
-        object.__setattr__(self, "domain_type", _normalized_domain_type(self.domain_type))
+        object.__setattr__(
+            self, "domain_type", _normalized_domain_type(self.domain_type)
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -228,17 +244,27 @@ class OwnerDomain:
 @dataclass(frozen=True, slots=True)
 class OwnerMemoryScope:
     scope_id: str
-    allowed_memory_classes: tuple[str, ...] = field(default_factory=lambda: _DEFAULT_ALLOWED_MEMORY_CLASSES)
-    blocked_memory_classes: tuple[str, ...] = field(default_factory=lambda: _DEFAULT_BLOCKED_MEMORY_CLASSES)
+    allowed_memory_classes: tuple[str, ...] = field(
+        default_factory=lambda: _DEFAULT_ALLOWED_MEMORY_CLASSES
+    )
+    blocked_memory_classes: tuple[str, ...] = field(
+        default_factory=lambda: _DEFAULT_BLOCKED_MEMORY_CLASSES
+    )
     allowed_refs: tuple[str, ...] = field(default_factory=tuple)
     blocked_refs: tuple[str, ...] = field(default_factory=tuple)
-    truth_constraints: dict[str, Any] = field(default_factory=lambda: dict(_DEFAULT_TRUTH_CONSTRAINTS))
+    truth_constraints: dict[str, Any] = field(
+        default_factory=lambda: dict(_DEFAULT_TRUTH_CONSTRAINTS)
+    )
     status: str = "active"
     domain_type: str = OWNERBOX_DOMAIN_TYPE
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "scope_id", _stable_identifier(self.scope_id, field_name="scope_id"))
-        object.__setattr__(self, "domain_type", _normalized_domain_type(self.domain_type))
+        object.__setattr__(
+            self, "scope_id", _stable_identifier(self.scope_id, field_name="scope_id")
+        )
+        object.__setattr__(
+            self, "domain_type", _normalized_domain_type(self.domain_type)
+        )
         object.__setattr__(
             self,
             "allowed_memory_classes",
@@ -288,16 +314,28 @@ class OwnerMemoryScope:
 @dataclass(frozen=True, slots=True)
 class OwnerActionScope:
     scope_id: str
-    allowed_action_types: tuple[str, ...] = field(default_factory=lambda: _DEFAULT_ALLOWED_ACTION_TYPES)
-    blocked_action_types: tuple[str, ...] = field(default_factory=lambda: _DEFAULT_BLOCKED_ACTION_TYPES)
-    requires_confirmation_for: tuple[str, ...] = field(default_factory=lambda: _DEFAULT_CONFIRMATION_ACTIONS)
-    requires_high_trust_for: tuple[str, ...] = field(default_factory=lambda: _DEFAULT_HIGH_TRUST_ACTIONS)
+    allowed_action_types: tuple[str, ...] = field(
+        default_factory=lambda: _DEFAULT_ALLOWED_ACTION_TYPES
+    )
+    blocked_action_types: tuple[str, ...] = field(
+        default_factory=lambda: _DEFAULT_BLOCKED_ACTION_TYPES
+    )
+    requires_confirmation_for: tuple[str, ...] = field(
+        default_factory=lambda: _DEFAULT_CONFIRMATION_ACTIONS
+    )
+    requires_high_trust_for: tuple[str, ...] = field(
+        default_factory=lambda: _DEFAULT_HIGH_TRUST_ACTIONS
+    )
     status: str = "active"
     domain_type: str = OWNERBOX_DOMAIN_TYPE
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "scope_id", _stable_identifier(self.scope_id, field_name="scope_id"))
-        object.__setattr__(self, "domain_type", _normalized_domain_type(self.domain_type))
+        object.__setattr__(
+            self, "scope_id", _stable_identifier(self.scope_id, field_name="scope_id")
+        )
+        object.__setattr__(
+            self, "domain_type", _normalized_domain_type(self.domain_type)
+        )
         object.__setattr__(
             self,
             "allowed_action_types",
@@ -364,7 +402,9 @@ class OwnerTrustProfile:
             "trust_profile_id",
             _stable_identifier(self.trust_profile_id, field_name="trust_profile_id"),
         )
-        object.__setattr__(self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id"))
+        object.__setattr__(
+            self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id")
+        )
         object.__setattr__(
             self,
             "confirmation_policy_ref",
@@ -373,12 +413,18 @@ class OwnerTrustProfile:
                 field_name="confirmation_policy_ref",
             ),
         )
-        object.__setattr__(self, "approval_mode", _normalized_approval_mode(self.approval_mode))
-        object.__setattr__(self, "trust_class", _normalized_trust_class(self.trust_class))
+        object.__setattr__(
+            self, "approval_mode", _normalized_approval_mode(self.approval_mode)
+        )
+        object.__setattr__(
+            self, "trust_class", _normalized_trust_class(self.trust_class)
+        )
         object.__setattr__(
             self,
             "device_binding_ref",
-            _optional_identifier(self.device_binding_ref, field_name="device_binding_ref"),
+            _optional_identifier(
+                self.device_binding_ref, field_name="device_binding_ref"
+            ),
         )
         object.__setattr__(self, "status", _normalized_status(self.status))
 
@@ -445,8 +491,12 @@ def create_owner_memory_scope(
                 field_name="blocked_memory_classes",
             )
         ),
-        allowed_refs=_normalized_identifiers(allowed_refs or (), field_name="allowed_refs"),
-        blocked_refs=_normalized_identifiers(blocked_refs or (), field_name="blocked_refs"),
+        allowed_refs=_normalized_identifiers(
+            allowed_refs or (), field_name="allowed_refs"
+        ),
+        blocked_refs=_normalized_identifiers(
+            blocked_refs or (), field_name="blocked_refs"
+        ),
         truth_constraints=_normalize_truth_constraints(truth_constraints),
         status=_normalize_text(status) or "active",
     )
@@ -526,12 +576,16 @@ def create_owner_trust_profile(
 
 def normalize_ownerbox_domain_binding(value: object) -> dict[str, object]:
     payload = _normalize_mapping(value)
-    domain_type = _normalize_text(payload.get("domain_type") or payload.get("domain")).lower()
+    domain_type = _normalize_text(
+        payload.get("domain_type") or payload.get("domain")
+    ).lower()
     if domain_type != OWNERBOX_DOMAIN_TYPE:
         return {}
     normalized: dict[str, object] = {
         "domain_type": OWNERBOX_DOMAIN_TYPE,
-        "domain_id": _stable_identifier(payload.get("domain_id"), field_name="domain_id"),
+        "domain_id": _stable_identifier(
+            payload.get("domain_id"), field_name="domain_id"
+        ),
         "owner_id": _stable_identifier(payload.get("owner_id"), field_name="owner_id"),
         "trust_level": _normalized_trust_level(payload.get("trust_level")),
         "memory_scope_ref": _stable_identifier(
@@ -556,10 +610,14 @@ def normalize_ownerbox_domain_binding(value: object) -> dict[str, object]:
     trust_class = _normalize_text(payload.get("trust_class")).lower()
     if trust_class:
         normalized["trust_class"] = _normalized_trust_class(trust_class)
-    request_ref = _optional_identifier(payload.get("request_ref"), field_name="request_ref")
+    request_ref = _optional_identifier(
+        payload.get("request_ref"), field_name="request_ref"
+    )
     if request_ref is not None:
         normalized["request_ref"] = request_ref
-    session_ref = _optional_identifier(payload.get("session_ref"), field_name="session_ref")
+    session_ref = _optional_identifier(
+        payload.get("session_ref"), field_name="session_ref"
+    )
     if session_ref is not None:
         normalized["session_ref"] = session_ref
     trace_id = _optional_identifier(payload.get("trace_id"), field_name="trace_id")

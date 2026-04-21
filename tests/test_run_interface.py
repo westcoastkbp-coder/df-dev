@@ -66,7 +66,9 @@ def test_run_interface_routes_eb1_requests_to_owner_mode(
 
     output_payload = json.loads(capsys.readouterr().out)
     written_task = json.loads(task_path.read_text(encoding="utf-8"))
-    system_context = json.loads((context_dir / "system_context.json").read_text(encoding="utf-8"))
+    system_context = json.loads(
+        (context_dir / "system_context.json").read_text(encoding="utf-8")
+    )
 
     assert exit_code == 0
     assert output_payload == {
@@ -78,7 +80,9 @@ def test_run_interface_routes_eb1_requests_to_owner_mode(
     assert system_context["active_mode"] == "owner"
     assert written_task["context_mode"] == "owner"
     assert written_task["pipeline_route"] == "owner task"
-    assert written_task["pipeline"][0]["input"]["text"] == "what should I do next for EB1"
+    assert (
+        written_task["pipeline"][0]["input"]["text"] == "what should I do next for EB1"
+    )
     assert written_task["pipeline"][0]["input"]["context"] == {
         "context_summary": {
             "owner": {
@@ -129,7 +133,10 @@ def test_run_interface_routes_eb1_requests_to_owner_mode(
 
 
 def test_detect_mode_prefers_business_and_dev_defaults() -> None:
-    assert run_interface_module.detect_mode("follow up with client about project status") == "business"
+    assert (
+        run_interface_module.detect_mode("follow up with client about project status")
+        == "business"
+    )
     assert run_interface_module.detect_mode("check logs for task runner") == "dev"
 
 
@@ -227,7 +234,8 @@ def test_run_interface_injects_context_summary_and_updates_recent_actions(
         artifact_path = Path(artifact_dir) / f"pipeline-{payload['task_id']}.json"
         artifact_path.parent.mkdir(parents=True, exist_ok=True)
         artifact_path.write_text(
-            json.dumps({"final_output": {"analysis": "Structured summary"}}, indent=2) + "\n",
+            json.dumps({"final_output": {"analysis": "Structured summary"}}, indent=2)
+            + "\n",
             encoding="utf-8",
         )
         return {
@@ -244,11 +252,16 @@ def test_run_interface_injects_context_summary_and_updates_recent_actions(
     exit_code, payload = run_interface_module.run_interface("analyze drive file")
 
     written_task = json.loads(task_path.read_text(encoding="utf-8"))
-    system_context = json.loads((memory_dir / "system_context.json").read_text(encoding="utf-8"))
+    system_context = json.loads(
+        (memory_dir / "system_context.json").read_text(encoding="utf-8")
+    )
     claude_context = written_task["pipeline"][1]["input"]["context"]
 
     assert exit_code == 0
     assert payload["status"] == "success"
     assert claude_context["context_summary"]["product"]["name"] == "Execution OS"
-    assert claude_context["context_summary"]["current_stage"]["phase"] == "system integration"
+    assert (
+        claude_context["context_summary"]["current_stage"]["phase"]
+        == "system integration"
+    )
     assert system_context["last_actions"][-1] == "analyze drive file: completed"

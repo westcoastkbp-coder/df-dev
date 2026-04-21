@@ -18,7 +18,10 @@ from app.ownerbox.domain import (
 )
 from app.ownerbox.owner_approval import OwnerApproval
 from app.ownerbox.owner_orchestrator import OwnerOrchestrator
-from app.ownerbox.owner_response_plan import OwnerResponsePlan, create_owner_response_plan
+from app.ownerbox.owner_response_plan import (
+    OwnerResponsePlan,
+    create_owner_response_plan,
+)
 from app.ownerbox.owner_session import OwnerSession, create_owner_session
 from app.ownerbox.trust_model import classify_action_risk
 from app.ownerbox.workflow import (
@@ -43,7 +46,9 @@ OWNER_WORKFLOW_EVIDENCE_ARTIFACT_TYPE = "owner_workflow_evidence"
 OWNER_WORKFLOW_TRACE_DIR = OUTPUT_DIR / "traces" / "owner_workflows"
 OWNER_WORKFLOW_EVIDENCE_DIR = OUTPUT_DIR / "evidence" / "owner_workflows"
 _SAFE_FILENAME_PATTERN = re.compile(r"[^A-Za-z0-9._-]+")
-_STEP_REFERENCE_PATTERN = re.compile(r"^\{\{step(?P<index>[1-9][0-9]*)\.(?P<path>[A-Za-z0-9_.]+)\}\}$")
+_STEP_REFERENCE_PATTERN = re.compile(
+    r"^\{\{step(?P<index>[1-9][0-9]*)\.(?P<path>[A-Za-z0-9_.]+)\}\}$"
+)
 
 
 def _utc_timestamp() -> str:
@@ -95,10 +100,15 @@ def _result_attempt_count(action_result: Mapping[str, object] | None) -> int:
 
 
 def _result_retry_status(action_result: Mapping[str, object] | None) -> str:
-    return _normalize_text(_result_metadata(action_result).get("retry_status")).lower() or "not_needed"
+    return (
+        _normalize_text(_result_metadata(action_result).get("retry_status")).lower()
+        or "not_needed"
+    )
 
 
-def _result_last_error(action_result: Mapping[str, object] | None) -> dict[str, str] | None:
+def _result_last_error(
+    action_result: Mapping[str, object] | None,
+) -> dict[str, str] | None:
     if not isinstance(action_result, Mapping):
         return None
     error_code = _normalize_text(action_result.get("error_code"))
@@ -129,7 +139,9 @@ class OwnerWorkflowRunResult:
             "response_plan": self.response_plan.to_dict(),
             "trace_metadata": dict(self.trace_metadata),
             "approval": None if self.approval is None else self.approval.to_dict(),
-            "current_step": None if self.current_step is None else self.current_step.to_dict(),
+            "current_step": None
+            if self.current_step is None
+            else self.current_step.to_dict(),
         }
 
 
@@ -178,12 +190,15 @@ class OwnerWorkflowOrchestrator:
                     code="resume_not_possible",
                     workflow_id=state.workflow_id,
                     operation="restore_persisted_runtimes",
-                    reason=str(exc) or "persisted workflow runtime could not be restored",
+                    reason=str(exc)
+                    or "persisted workflow runtime could not be restored",
                 )
                 continue
             self._runtime_by_workflow_id[runtime.workflow.workflow_id] = runtime
 
-    def _runtime_from_persisted_state(self, state: PersistedWorkflowState) -> _WorkflowRuntime:
+    def _runtime_from_persisted_state(
+        self, state: PersistedWorkflowState
+    ) -> _WorkflowRuntime:
         snapshot = dict(state.snapshot)
         workflow = OwnerWorkflow(**dict(_mapping(snapshot.get("workflow"))))
         steps = [
@@ -192,27 +207,44 @@ class OwnerWorkflowOrchestrator:
         ]
         runtime_payload = _mapping(snapshot.get("runtime"))
         runtime = _WorkflowRuntime(
-            owner_session=OwnerSession(**dict(_mapping(runtime_payload.get("owner_session")))),
+            owner_session=OwnerSession(
+                **dict(_mapping(runtime_payload.get("owner_session")))
+            ),
             workflow=workflow,
             steps=list(steps),
-            owner_domain=OwnerDomain(**dict(_mapping(runtime_payload.get("owner_domain")))),
-            memory_scope=OwnerMemoryScope(**dict(_mapping(runtime_payload.get("memory_scope")))),
-            action_scope=OwnerActionScope(**dict(_mapping(runtime_payload.get("action_scope")))),
-            trust_profile=OwnerTrustProfile(**dict(_mapping(runtime_payload.get("trust_profile")))),
-            detected_language=_normalize_text(runtime_payload.get("detected_language")) or "und",
-            priority_class=_normalize_text(runtime_payload.get("priority_class")) or "medium",
+            owner_domain=OwnerDomain(
+                **dict(_mapping(runtime_payload.get("owner_domain")))
+            ),
+            memory_scope=OwnerMemoryScope(
+                **dict(_mapping(runtime_payload.get("memory_scope")))
+            ),
+            action_scope=OwnerActionScope(
+                **dict(_mapping(runtime_payload.get("action_scope")))
+            ),
+            trust_profile=OwnerTrustProfile(
+                **dict(_mapping(runtime_payload.get("trust_profile")))
+            ),
+            detected_language=_normalize_text(runtime_payload.get("detected_language"))
+            or "und",
+            priority_class=_normalize_text(runtime_payload.get("priority_class"))
+            or "medium",
             context_ref=_normalize_text(runtime_payload.get("context_ref")) or None,
             memory_records=[
                 dict(item) if isinstance(item, Mapping) else {}
                 for item in list(runtime_payload.get("memory_records", []))
             ],
-            execution_mode=_normalize_text(runtime_payload.get("execution_mode")) or "live",
+            execution_mode=_normalize_text(runtime_payload.get("execution_mode"))
+            or "live",
             workflow_metadata=_mapping(runtime_payload.get("workflow_metadata")),
         )
         pending_approval = _mapping(runtime_payload.get("pending_approval"))
         if pending_approval:
-            approval = self._owner_orchestrator.hydrate_pending_approval_state(pending_approval)
-            self._workflow_id_by_approval_id[approval.approval_id] = workflow.workflow_id
+            approval = self._owner_orchestrator.hydrate_pending_approval_state(
+                pending_approval
+            )
+            self._workflow_id_by_approval_id[approval.approval_id] = (
+                workflow.workflow_id
+            )
         return runtime
 
     def _runtime_snapshot(self, runtime: _WorkflowRuntime) -> dict[str, object]:
@@ -242,7 +274,9 @@ class OwnerWorkflowOrchestrator:
                 "workflow_metadata": dict(runtime.workflow_metadata),
                 "pending_approval": pending_approval,
             },
-            "current_step_index": -1 if current_step is None else current_step.sequence_index,
+            "current_step_index": -1
+            if current_step is None
+            else current_step.sequence_index,
         }
 
     def _resume_reset_runtime(self, runtime: _WorkflowRuntime) -> _WorkflowRuntime:
@@ -271,7 +305,11 @@ class OwnerWorkflowOrchestrator:
     ) -> OwnerWorkflowRunResult:
         timestamp = _utc_timestamp()
         failure_step = current_step
-        if current_step is not None and current_step.status not in {"completed", "failed", "rejected"}:
+        if current_step is not None and current_step.status not in {
+            "completed",
+            "failed",
+            "rejected",
+        }:
             runtime.steps[current_step.sequence_index] = update_owner_workflow_step(
                 current_step,
                 status="failed",
@@ -356,7 +394,8 @@ class OwnerWorkflowOrchestrator:
             memory_scope=memory_scope,
             action_scope=action_scope,
             trust_profile=trust_profile,
-            detected_language=_normalize_text(detected_language) or owner_session.active_language,
+            detected_language=_normalize_text(detected_language)
+            or owner_session.active_language,
             priority_class=_normalize_text(priority_class) or "medium",
             context_ref=_normalize_text(context_ref) or owner_session.context_ref,
             memory_records=list(memory_records or []),
@@ -382,12 +421,20 @@ class OwnerWorkflowOrchestrator:
             try:
                 state = self._workflow_state_store.load_state(normalized_workflow_id)
             except WorkflowStateStoreError as exc:
-                raise ValueError(f"workflow could not be resumed: {exc.reason}") from exc
+                raise ValueError(
+                    f"workflow could not be resumed: {exc.reason}"
+                ) from exc
             if state is None:
                 raise ValueError("workflow was not found")
             runtime = self._runtime_from_persisted_state(state)
             self._runtime_by_workflow_id[normalized_workflow_id] = runtime
-        if runtime.workflow.status in {"blocked", "completed", "failed", "rejected", "partial_failure"}:
+        if runtime.workflow.status in {
+            "blocked",
+            "completed",
+            "failed",
+            "rejected",
+            "partial_failure",
+        }:
             return self._build_result(
                 runtime,
                 approval=self._approval_for_step(self._current_step(runtime)),
@@ -413,7 +460,10 @@ class OwnerWorkflowOrchestrator:
             step = self._current_step(runtime)
             if step is None:
                 return self._build_result(runtime, approval=None, current_step=None)
-            if step.status != "awaiting_approval" or step.approval_id != _normalize_text(approval_id):
+            if (
+                step.status != "awaiting_approval"
+                or step.approval_id != _normalize_text(approval_id)
+            ):
                 return self._build_result(runtime, approval=None, current_step=step)
 
             resolution = self._owner_orchestrator.approve_action(approval_id)
@@ -421,11 +471,15 @@ class OwnerWorkflowOrchestrator:
             runtime.steps[step.sequence_index] = self._step_from_resolution(
                 runtime.steps[step.sequence_index],
                 action_id=_normalize_text(
-                    None if resolution.action_contract is None else resolution.action_contract.get("action_id")
+                    None
+                    if resolution.action_contract is None
+                    else resolution.action_contract.get("action_id")
                 ),
                 approval_id=_normalize_text(approval_id) or step.approval_id,
                 result_status=(
-                    None if resolution.action_result is None else _normalize_text(resolution.action_result.get("status"))
+                    None
+                    if resolution.action_result is None
+                    else _normalize_text(resolution.action_result.get("status"))
                 ),
                 result_summary=resolution.response_plan.summary_text,
                 action_result=resolution.action_result,
@@ -449,7 +503,9 @@ class OwnerWorkflowOrchestrator:
                     approval=resolution.approval,
                     current_step=runtime.steps[step.sequence_index],
                 )
-            step_result_status = _normalize_text(resolution.action_result.get("status")).lower()
+            step_result_status = _normalize_text(
+                resolution.action_result.get("status")
+            ).lower()
             if step_result_status == "success":
                 runtime.steps[step.sequence_index] = update_owner_workflow_step(
                     runtime.steps[step.sequence_index],
@@ -503,7 +559,10 @@ class OwnerWorkflowOrchestrator:
             step = self._current_step(runtime)
             if step is None:
                 return self._build_result(runtime, approval=None, current_step=None)
-            if step.status != "awaiting_approval" or step.approval_id != _normalize_text(approval_id):
+            if (
+                step.status != "awaiting_approval"
+                or step.approval_id != _normalize_text(approval_id)
+            ):
                 return self._build_result(runtime, approval=None, current_step=step)
 
             resolution = self._owner_orchestrator.reject_action(approval_id)
@@ -564,7 +623,9 @@ class OwnerWorkflowOrchestrator:
                 return step
         return None
 
-    def _run_until_pause_or_terminal(self, runtime: _WorkflowRuntime) -> OwnerWorkflowRunResult:
+    def _run_until_pause_or_terminal(
+        self, runtime: _WorkflowRuntime
+    ) -> OwnerWorkflowRunResult:
         while True:
             step = self._current_step(runtime)
             if step is None:
@@ -573,14 +634,20 @@ class OwnerWorkflowOrchestrator:
                     status="completed",
                     current_step_id=None,
                     completed_step_count=self._completed_step_count(runtime.steps),
-                    final_result_summary=runtime.workflow.final_result_summary or self._workflow_summary(runtime),
+                    final_result_summary=runtime.workflow.final_result_summary
+                    or self._workflow_summary(runtime),
                     updated_at=_utc_timestamp(),
                 )
                 self._persist_workflow_state(runtime)
                 return self._build_result(runtime, approval=None, current_step=None)
 
             if step.status != "pending":
-                if runtime.workflow.status in {"blocked", "failed", "completed", "rejected"}:
+                if runtime.workflow.status in {
+                    "blocked",
+                    "failed",
+                    "completed",
+                    "rejected",
+                }:
                     self._persist_workflow_state(runtime)
                     return self._build_result(
                         runtime,
@@ -602,7 +669,9 @@ class OwnerWorkflowOrchestrator:
                 updated_at=_utc_timestamp(),
             )
             try:
-                resolved_action_parameters = self._resolved_step_parameters(step, runtime.steps)
+                resolved_action_parameters = self._resolved_step_parameters(
+                    step, runtime.steps
+                )
             except ValueError as exc:
                 runtime.steps[step.sequence_index] = update_owner_workflow_step(
                     runtime.steps[step.sequence_index],
@@ -665,12 +734,23 @@ class OwnerWorkflowOrchestrator:
                 step_timeout_seconds=step.timeout_seconds,
             )
             runtime.owner_session = interaction.session
-            action_id = _normalize_text(
-                None if interaction.action_contract is None else interaction.action_contract.get("action_id")
-            ) or None
-            approval_id = None if interaction.approval is None else interaction.approval.approval_id
+            action_id = (
+                _normalize_text(
+                    None
+                    if interaction.action_contract is None
+                    else interaction.action_contract.get("action_id")
+                )
+                or None
+            )
+            approval_id = (
+                None
+                if interaction.approval is None
+                else interaction.approval.approval_id
+            )
             result_status = (
-                None if interaction.action_result is None else _normalize_text(interaction.action_result.get("status"))
+                None
+                if interaction.action_result is None
+                else _normalize_text(interaction.action_result.get("status"))
             )
             runtime.steps[step.sequence_index] = self._step_from_resolution(
                 runtime.steps[step.sequence_index],
@@ -700,7 +780,9 @@ class OwnerWorkflowOrchestrator:
                     final_result_summary=interaction.response_plan.summary_text,
                     updated_at=_utc_timestamp(),
                 )
-                self._workflow_id_by_approval_id[interaction.approval.approval_id] = runtime.workflow.workflow_id
+                self._workflow_id_by_approval_id[interaction.approval.approval_id] = (
+                    runtime.workflow.workflow_id
+                )
                 self._persist_workflow_state(runtime)
                 return self._build_result(
                     runtime,
@@ -723,9 +805,15 @@ class OwnerWorkflowOrchestrator:
                     updated_at=_utc_timestamp(),
                 )
                 self._persist_workflow_state(runtime)
-                return self._build_result(runtime, approval=None, current_step=runtime.steps[step.sequence_index])
+                return self._build_result(
+                    runtime,
+                    approval=None,
+                    current_step=runtime.steps[step.sequence_index],
+                )
 
-            normalized_result_status = _normalize_text(interaction.action_result.get("status")).lower()
+            normalized_result_status = _normalize_text(
+                interaction.action_result.get("status")
+            ).lower()
             if normalized_result_status == "success":
                 runtime.steps[step.sequence_index] = update_owner_workflow_step(
                     runtime.steps[step.sequence_index],
@@ -758,9 +846,13 @@ class OwnerWorkflowOrchestrator:
                 updated_at=_utc_timestamp(),
             )
             self._persist_workflow_state(runtime)
-            return self._build_result(runtime, approval=None, current_step=runtime.steps[step.sequence_index])
+            return self._build_result(
+                runtime, approval=None, current_step=runtime.steps[step.sequence_index]
+            )
 
-    def _approval_for_step(self, step: OwnerWorkflowStep | None) -> OwnerApproval | None:
+    def _approval_for_step(
+        self, step: OwnerWorkflowStep | None
+    ) -> OwnerApproval | None:
         if step is None or not step.approval_id:
             return None
         return self._owner_orchestrator.approval_store.get(step.approval_id)
@@ -781,7 +873,9 @@ class OwnerWorkflowOrchestrator:
             approval_id=approval_id,
             result_status=result_status,
             result_summary=result_summary,
-            result_payload=None if action_result is None else _mapping(action_result.get("payload")),
+            result_payload=None
+            if action_result is None
+            else _mapping(action_result.get("payload")),
             attempt_count=_result_attempt_count(action_result),
             last_error=_result_last_error(action_result),
             retry_status=_result_retry_status(action_result),
@@ -807,7 +901,9 @@ class OwnerWorkflowOrchestrator:
             path: str,
         ) -> object:
             if source_step.result_payload is None:
-                raise ValueError(f"validation_error: missing result payload for {source_step.step_id}")
+                raise ValueError(
+                    f"validation_error: missing result payload for {source_step.step_id}"
+                )
             resolved: object = dict(source_step.result_payload)
             for key in path.split("."):
                 if not isinstance(resolved, Mapping) or key not in resolved:
@@ -824,7 +920,9 @@ class OwnerWorkflowOrchestrator:
                     return value
                 sequence_index = int(match.group("index")) - 1
                 if sequence_index < 0 or sequence_index >= len(steps):
-                    raise ValueError(f"validation_error: unresolved step reference {value}")
+                    raise ValueError(
+                        f"validation_error: unresolved step reference {value}"
+                    )
                 source_step = steps[sequence_index]
                 path = match.group("path")
                 if path == "result_summary":
@@ -834,8 +932,12 @@ class OwnerWorkflowOrchestrator:
                         )
                     return source_step.result_summary
                 if path.startswith("result_payload."):
-                    return resolve_result_payload(source_step, path.removeprefix("result_payload."))
-                raise ValueError(f"validation_error: unsupported step reference {value}")
+                    return resolve_result_payload(
+                        source_step, path.removeprefix("result_payload.")
+                    )
+                raise ValueError(
+                    f"validation_error: unsupported step reference {value}"
+                )
             if isinstance(value, Mapping):
                 return {str(key): resolve(item) for key, item in dict(value).items()}
             if isinstance(value, list):
@@ -843,7 +945,11 @@ class OwnerWorkflowOrchestrator:
             return value
 
         resolved = resolve(step.action_parameters)
-        return dict(resolved) if isinstance(resolved, dict) else dict(step.action_parameters)
+        return (
+            dict(resolved)
+            if isinstance(resolved, dict)
+            else dict(step.action_parameters)
+        )
 
     def _workflow_summary(self, runtime: _WorkflowRuntime) -> str:
         current_step = self._current_step(runtime)
@@ -877,7 +983,10 @@ class OwnerWorkflowOrchestrator:
         return {
             "workflow_id": runtime.workflow.workflow_id,
             "workflow_type": runtime.workflow.workflow_type,
-            "scenario_type": _normalize_text(runtime.workflow_metadata.get("scenario_type")) or None,
+            "scenario_type": _normalize_text(
+                runtime.workflow_metadata.get("scenario_type")
+            )
+            or None,
             "workflow_status": runtime.workflow.status,
             "current_step_id": None if current_step is None else current_step.step_id,
             "owner_id": runtime.workflow.owner_id,
@@ -911,7 +1020,9 @@ class OwnerWorkflowOrchestrator:
         trace_metadata: Mapping[str, object],
     ) -> OwnerResponsePlan:
         current_step = self._current_step(runtime)
-        approval = None if current_step is None else self._approval_for_step(current_step)
+        approval = (
+            None if current_step is None else self._approval_for_step(current_step)
+        )
         risk_profile = None
         if current_step is not None:
             risk_profile = classify_action_risk(
@@ -919,20 +1030,29 @@ class OwnerWorkflowOrchestrator:
                 action_scope=runtime.action_scope,
                 action_parameters=current_step.action_parameters,
             )
-        awaiting_approval = bool(current_step is not None and current_step.status == "awaiting_approval")
+        awaiting_approval = bool(
+            current_step is not None and current_step.status == "awaiting_approval"
+        )
         return create_owner_response_plan(
             owner_session_id=runtime.owner_session.owner_session_id,
             owner_id=runtime.workflow.owner_id,
             response_type=(
                 "confirmation_request"
                 if awaiting_approval
-                else ("error" if runtime.workflow.status in {"blocked", "failed", "rejected"} else "summary_text")
+                else (
+                    "error"
+                    if runtime.workflow.status in {"blocked", "failed", "rejected"}
+                    else "summary_text"
+                )
             ),
             target_language=runtime.detected_language,
-            summary_text=runtime.workflow.final_result_summary or self._workflow_summary(runtime),
+            summary_text=runtime.workflow.final_result_summary
+            or self._workflow_summary(runtime),
             action_refs=[step.action_id for step in runtime.steps if step.action_id],
             requires_confirmation=awaiting_approval,
-            requires_high_trust=bool(risk_profile is not None and risk_profile.requires_high_trust),
+            requires_high_trust=bool(
+                risk_profile is not None and risk_profile.requires_high_trust
+            ),
             approval_id=None if approval is None else approval.approval_id,
             trust_class=None if risk_profile is None else risk_profile.trust_class,
             preview_text=self._preview_text_for_step(current_step),
@@ -946,7 +1066,8 @@ class OwnerWorkflowOrchestrator:
             },
             status=(
                 "planned"
-                if runtime.workflow.status in {"running", "completed"} or awaiting_approval
+                if runtime.workflow.status in {"running", "completed"}
+                or awaiting_approval
                 else "blocked"
             ),
         )
@@ -955,7 +1076,10 @@ class OwnerWorkflowOrchestrator:
         current_step = self._current_step(runtime)
         return {
             "type": OWNER_WORKFLOW_TRACE_ARTIFACT_TYPE,
-            "scenario_type": _normalize_text(runtime.workflow_metadata.get("scenario_type")) or None,
+            "scenario_type": _normalize_text(
+                runtime.workflow_metadata.get("scenario_type")
+            )
+            or None,
             "workflow_id": runtime.workflow.workflow_id,
             "step_id": None if current_step is None else current_step.step_id,
             "owner_id": runtime.workflow.owner_id,
@@ -963,7 +1087,9 @@ class OwnerWorkflowOrchestrator:
             "action_id": None if current_step is None else current_step.action_id,
             "approval_id": None if current_step is None else current_step.approval_id,
             "step_status": None if current_step is None else current_step.status,
-            "attempt_count": None if current_step is None else current_step.attempt_count,
+            "attempt_count": None
+            if current_step is None
+            else current_step.attempt_count,
             "retry_status": None if current_step is None else current_step.retry_status,
             "error_code": (
                 None
@@ -973,18 +1099,26 @@ class OwnerWorkflowOrchestrator:
             "workflow_status": runtime.workflow.status,
             "created_at": runtime.workflow.created_at,
             "updated_at": runtime.workflow.updated_at,
-            "step_summaries": [summarize_owner_workflow_step(step) for step in runtime.steps],
+            "step_summaries": [
+                summarize_owner_workflow_step(step) for step in runtime.steps
+            ],
         }
 
     def _evidence_payload(self, runtime: _WorkflowRuntime) -> dict[str, object]:
         return {
-            "scenario_type": _normalize_text(runtime.workflow_metadata.get("scenario_type")) or None,
+            "scenario_type": _normalize_text(
+                runtime.workflow_metadata.get("scenario_type")
+            )
+            or None,
             "workflow_id": runtime.workflow.workflow_id,
             "owner_id": runtime.workflow.owner_id,
             "workflow_type": runtime.workflow.workflow_type,
             "workflow_status": runtime.workflow.status,
-            "workflow_summary": runtime.workflow.final_result_summary or self._workflow_summary(runtime),
-            "step_summaries": [summarize_owner_workflow_step(step) for step in runtime.steps],
+            "workflow_summary": runtime.workflow.final_result_summary
+            or self._workflow_summary(runtime),
+            "step_summaries": [
+                summarize_owner_workflow_step(step) for step in runtime.steps
+            ],
             "approvals": [
                 {
                     "step_id": step.step_id,
@@ -998,7 +1132,12 @@ class OwnerWorkflowOrchestrator:
         }
 
     def _should_persist_terminal_evidence(self, runtime: _WorkflowRuntime) -> bool:
-        if runtime.workflow.status in {"completed", "failed", "rejected", "partial_failure"}:
+        if runtime.workflow.status in {
+            "completed",
+            "failed",
+            "rejected",
+            "partial_failure",
+        }:
             return True
         current_step = self._current_step(runtime)
         if runtime.workflow.status != "blocked":
@@ -1014,7 +1153,11 @@ class OwnerWorkflowOrchestrator:
         if durable:
             self._workflow_state_store.save_state(self._runtime_snapshot(runtime))
         trace_payload = self._trace_payload(runtime)
-        trace_path = ROOT_DIR / OWNER_WORKFLOW_TRACE_DIR / f"{_safe_filename(runtime.workflow.workflow_id)}.json"
+        trace_path = (
+            ROOT_DIR
+            / OWNER_WORKFLOW_TRACE_DIR
+            / f"{_safe_filename(runtime.workflow.workflow_id)}.json"
+        )
         trace_path.parent.mkdir(parents=True, exist_ok=True)
         trace_object = make_trace_object(
             id=runtime.workflow.workflow_id,
@@ -1031,7 +1174,12 @@ class OwnerWorkflowOrchestrator:
                 f"workflow:{runtime.workflow.workflow_id}",
                 f"owner:{runtime.workflow.owner_id}",
             ],
-            tags=["ownerbox", "workflow", runtime.workflow.workflow_type, runtime.workflow.status],
+            tags=[
+                "ownerbox",
+                "workflow",
+                runtime.workflow.workflow_type,
+                runtime.workflow.status,
+            ],
         )
         trace_path.write_text(
             json.dumps(trace_object.to_dict(), indent=2, sort_keys=True) + "\n",
@@ -1052,9 +1200,18 @@ class OwnerWorkflowOrchestrator:
             created_at=trace_object.created_at,
             updated_at=trace_object.updated_at,
         )
-        log_event("trace", trace_payload, task_id=runtime.workflow.workflow_id, status=runtime.workflow.status)
+        log_event(
+            "trace",
+            trace_payload,
+            task_id=runtime.workflow.workflow_id,
+            status=runtime.workflow.status,
+        )
 
-        evidence_path = ROOT_DIR / OWNER_WORKFLOW_EVIDENCE_DIR / f"{_safe_filename(runtime.workflow.workflow_id)}.json"
+        evidence_path = (
+            ROOT_DIR
+            / OWNER_WORKFLOW_EVIDENCE_DIR
+            / f"{_safe_filename(runtime.workflow.workflow_id)}.json"
+        )
         if self._should_persist_terminal_evidence(runtime):
             evidence_payload = self._evidence_payload(runtime)
             evidence_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1109,9 +1266,11 @@ class OwnerWorkflowOrchestrator:
         current_step: OwnerWorkflowStep | None,
         durable: bool = False,
     ) -> OwnerWorkflowRunResult:
-        trace_artifact_path, evidence_artifact_path, trace_metadata = self._persist_workflow_state(
-            runtime,
-            durable=durable,
+        trace_artifact_path, evidence_artifact_path, trace_metadata = (
+            self._persist_workflow_state(
+                runtime,
+                durable=durable,
+            )
         )
         response_plan = self._build_response_plan(
             runtime,

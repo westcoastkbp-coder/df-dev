@@ -24,7 +24,9 @@ def _parse_timestamp(value: Any) -> datetime | None:
     if not timestamp:
         return None
     try:
-        return datetime.fromisoformat(timestamp.replace("Z", "+00:00")).astimezone(timezone.utc)
+        return datetime.fromisoformat(timestamp.replace("Z", "+00:00")).astimezone(
+            timezone.utc
+        )
     except ValueError:
         return None
 
@@ -53,9 +55,7 @@ def load_state(state_path: Path | str | None = None) -> dict[str, list[dict[str,
         return _default_state()
 
     normalized_commands = [
-        dict(command)
-        for command in commands
-        if isinstance(command, dict)
+        dict(command) for command in commands if isinstance(command, dict)
     ]
     return {
         "commands": normalized_commands,

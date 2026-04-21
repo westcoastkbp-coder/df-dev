@@ -13,7 +13,7 @@ def main():
 
     issue = repo.create_issue(
         title="DF SYSTEM TEST ISSUE 001",
-        body="Created by github_issue_agent.py from Digital Foreman control system."
+        body="Created by github_issue_agent.py from Digital Foreman control system.",
     )
 
     print(f"ISSUE_CREATED: #{issue.number}")

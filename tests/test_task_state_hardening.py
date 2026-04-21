@@ -45,7 +45,9 @@ def _task_rows(store_path: Path) -> list[tuple[str, str]]:
         connection.close()
 
 
-def test_create_task_persists_and_is_readable_after_restart(monkeypatch, tmp_path: Path) -> None:
+def test_create_task_persists_and_is_readable_after_restart(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = tmp_path / "data" / "task_system.json"
     database_path = store_path.with_suffix(".sqlite3")
     _configure_state_backend(monkeypatch, tmp_path)
@@ -71,7 +73,9 @@ def test_create_task_persists_and_is_readable_after_restart(monkeypatch, tmp_pat
     assert restored["payload"]["summary"] == "deterministic create"
 
 
-def test_update_task_is_atomic_and_persists_final_state(monkeypatch, tmp_path: Path) -> None:
+def test_update_task_is_atomic_and_persists_final_state(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_state_backend(monkeypatch, tmp_path)
     store_path = tmp_path / "data" / "task_system.json"
     created = task_factory.create_task(
@@ -96,7 +100,9 @@ def test_update_task_is_atomic_and_persists_final_state(monkeypatch, tmp_path: P
     assert restored["payload"] == {"summary": "after"}
 
 
-def test_failed_update_rolls_back_previous_valid_state(monkeypatch, tmp_path: Path) -> None:
+def test_failed_update_rolls_back_previous_valid_state(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_state_backend(monkeypatch, tmp_path)
     store_path = tmp_path / "data" / "task_system.json"
     task_factory.create_task(
@@ -112,7 +118,10 @@ def test_failed_update_rolls_back_previous_valid_state(monkeypatch, tmp_path: Pa
     def broken_update(connection) -> None:
         connection.execute(
             "UPDATE Task SET descriptor = ? WHERE task_id = ?",
-            ('{"task_id":"DF-STATE-ROLLBACK-V1","status":"corrupted"}', "DF-STATE-ROLLBACK-V1"),
+            (
+                '{"task_id":"DF-STATE-ROLLBACK-V1","status":"corrupted"}',
+                "DF-STATE-ROLLBACK-V1",
+            ),
         )
         raise RuntimeError("force rollback")
 
@@ -174,7 +183,9 @@ def test_failed_insert_rolls_back_cleanly(monkeypatch, tmp_path: Path) -> None:
     assert _task_rows(store_path) == []
 
 
-def test_failed_multi_write_sequence_leaves_no_partial_state(monkeypatch, tmp_path: Path) -> None:
+def test_failed_multi_write_sequence_leaves_no_partial_state(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_state_backend(monkeypatch, tmp_path)
     store_path = tmp_path / "data" / "task_system.json"
     task_factory.create_task(
@@ -221,13 +232,17 @@ def test_failed_multi_write_sequence_leaves_no_partial_state(monkeypatch, tmp_pa
     assert _task_rows(store_path) == before_rows
 
 
-def test_retryable_disk_io_error_retries_write_and_persists(monkeypatch, tmp_path: Path) -> None:
+def test_retryable_disk_io_error_retries_write_and_persists(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_state_backend(monkeypatch, tmp_path)
     store_path = tmp_path / "data" / "task_system.json"
     original_execute_once = task_state_store._execute_transaction_once
     attempts: list[str] = []
 
-    def flaky_execute_once(connection, operation, *, operation_name: str, task_id: object = ""):
+    def flaky_execute_once(
+        connection, operation, *, operation_name: str, task_id: object = ""
+    ):
         if operation_name == "write_task" and not attempts:
             attempts.append("retry")
             raise task_state_store.StatePersistenceError(
@@ -243,7 +258,9 @@ def test_retryable_disk_io_error_retries_write_and_persists(monkeypatch, tmp_pat
             task_id=task_id,
         )
 
-    monkeypatch.setattr(task_state_store, "_execute_transaction_once", flaky_execute_once)
+    monkeypatch.setattr(
+        task_state_store, "_execute_transaction_once", flaky_execute_once
+    )
 
     created = task_factory.create_task(
         {
@@ -272,7 +289,9 @@ def test_retry_budget_exhaustion_returns_controlled_failure_without_partial_writ
     original_execute_once = task_state_store._execute_transaction_once
     attempts: list[str] = []
 
-    def always_fail(connection, operation, *, operation_name: str, task_id: object = ""):
+    def always_fail(
+        connection, operation, *, operation_name: str, task_id: object = ""
+    ):
         if operation_name == "write_task":
             attempts.append(str(task_id or ""))
             raise task_state_store.StatePersistenceError(
@@ -311,7 +330,9 @@ def test_retry_budget_exhaustion_returns_controlled_failure_without_partial_writ
     assert _task_rows(store_path) == []
 
 
-def test_repeated_failed_update_leaves_same_final_persisted_state(monkeypatch, tmp_path: Path) -> None:
+def test_repeated_failed_update_leaves_same_final_persisted_state(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_state_backend(monkeypatch, tmp_path)
     store_path = tmp_path / "data" / "task_system.json"
     task_factory.create_task(
@@ -409,7 +430,9 @@ def test_execution_behavior_deterministic_and_context_free_unchanged(
     monkeypatch, tmp_path: Path
 ) -> None:
     _configure_state_backend(monkeypatch, tmp_path)
-    monkeypatch.setattr(execution_runner_module, "store_task_result", lambda result: dict(result))
+    monkeypatch.setattr(
+        execution_runner_module, "store_task_result", lambda result: dict(result)
+    )
     store_path = tmp_path / "data" / "task_system.json"
     task = task_factory.create_task(
         {
@@ -444,6 +467,7 @@ def test_execution_behavior_deterministic_and_context_free_unchanged(
             error_message="",
             source="test_task_state_hardening",
         )
+
     executor.__module__ = "test_task_state_hardening"
 
     executed = run_execution(
@@ -477,7 +501,9 @@ def test_runtime_returns_structured_failure_signal_after_persist_failure(
     monkeypatch, tmp_path: Path
 ) -> None:
     _configure_state_backend(monkeypatch, tmp_path)
-    monkeypatch.setattr(execution_runner_module, "store_task_result", lambda result: dict(result))
+    monkeypatch.setattr(
+        execution_runner_module, "store_task_result", lambda result: dict(result)
+    )
     store_path = tmp_path / "data" / "task_system.json"
     task = task_factory.create_task(
         {

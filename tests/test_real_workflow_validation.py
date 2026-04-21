@@ -52,13 +52,23 @@ def test_repeated_same_scenario_gives_same_result(monkeypatch, tmp_path: Path) -
     first = run_validation_pack(store_path=task_store_path)
     second = run_validation_pack(store_path=task_store_path)
 
-    repeated_first = next(item for item in first["scenarios"] if item["scenario_id"] == "repeated_same_lead")
-    repeated_second = next(item for item in second["scenarios"] if item["scenario_id"] == "repeated_same_lead")
+    repeated_first = next(
+        item
+        for item in first["scenarios"]
+        if item["scenario_id"] == "repeated_same_lead"
+    )
+    repeated_second = next(
+        item
+        for item in second["scenarios"]
+        if item["scenario_id"] == "repeated_same_lead"
+    )
 
     assert repeated_first == repeated_second
 
 
-def test_validation_pack_checks_child_task_creation(monkeypatch, tmp_path: Path) -> None:
+def test_validation_pack_checks_child_task_creation(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_validation_runtime(monkeypatch, tmp_path)
 
     report = run_validation_pack(store_path=task_store_path)
@@ -76,7 +86,11 @@ def test_validation_pack_checks_archive_path(monkeypatch, tmp_path: Path) -> Non
     task_store_path = _configure_validation_runtime(monkeypatch, tmp_path)
 
     report = run_validation_pack(store_path=task_store_path)
-    archived = next(item for item in report["scenarios"] if item["scenario_id"] == "non_qualified_lead")
+    archived = next(
+        item
+        for item in report["scenarios"]
+        if item["scenario_id"] == "non_qualified_lead"
+    )
 
     assert archived["expected_action"] == "archive_lead"
     assert archived["actual_action"] == "archive_lead"
@@ -88,9 +102,13 @@ def test_validation_report_output_is_deterministic(monkeypatch, tmp_path: Path) 
     task_store_path = _configure_validation_runtime(monkeypatch, tmp_path)
     output_path = tmp_path / "runtime" / "out" / "validation" / "lead_validation.json"
 
-    first_path = write_validation_report(store_path=task_store_path, output_path=output_path)
+    first_path = write_validation_report(
+        store_path=task_store_path, output_path=output_path
+    )
     first_output = first_path.read_text(encoding="utf-8")
-    second_path = write_validation_report(store_path=task_store_path, output_path=output_path)
+    second_path = write_validation_report(
+        store_path=task_store_path, output_path=output_path
+    )
     second_output = second_path.read_text(encoding="utf-8")
 
     assert first_path == output_path

@@ -139,7 +139,11 @@ def test_owner_context_boundary_filters_cross_domain_and_transcript_memory() -> 
                 "created_at": "2026-04-14T10:00:00Z",
                 "updated_at": "2026-04-14T10:00:00Z",
                 "tags": ["owner"],
-                "refs": ["owner:owner-001", "domain:ownerbox-main", "artifact:estimate"],
+                "refs": [
+                    "owner:owner-001",
+                    "domain:ownerbox-main",
+                    "artifact:estimate",
+                ],
                 "payload": {"summary": "older"},
                 "type": "owner_note",
             },
@@ -181,7 +185,11 @@ def test_owner_context_boundary_filters_cross_domain_and_transcript_memory() -> 
                 "created_at": "2026-04-14T11:10:00Z",
                 "updated_at": "2026-04-14T11:10:00Z",
                 "tags": [],
-                "refs": ["owner:owner-001", "domain:ownerbox-main", "transcript:call-001"],
+                "refs": [
+                    "owner:owner-001",
+                    "domain:ownerbox-main",
+                    "transcript:call-001",
+                ],
                 "payload": {"summary": "raw transcript"},
                 "type": "call_transcript",
             },
@@ -252,7 +260,10 @@ def test_execution_trace_exposes_ownerbox_domain_metadata() -> None:
             "domain_binding": domain_binding,
         },
         {
-            "final_decision": {"action": "execute", "artifact_id": "owner-task-001.txt"},
+            "final_decision": {
+                "action": "execute",
+                "artifact_id": "owner-task-001.txt",
+            },
             "execution_status": "executed",
         },
     )
@@ -345,7 +356,9 @@ def test_action_dispatcher_preserves_ownerbox_binding_in_trace_and_registry(
     assert registry_entry["domain"] == "ownerbox"
 
 
-def test_voice_orchestrator_preserves_ownerbox_binding_through_session_and_dispatch() -> None:
+def test_voice_orchestrator_preserves_ownerbox_binding_through_session_and_dispatch() -> (
+    None
+):
     owner_domain, _memory_scope, _action_scope, trust_profile = _owner_boundary_bundle()
     domain_binding = build_ownerbox_domain_binding(
         owner_domain,
@@ -385,4 +398,7 @@ def test_voice_orchestrator_preserves_ownerbox_binding_through_session_and_dispa
     assert result.session.domain_binding["domain_type"] == "ownerbox"
     assert result.session.domain_binding["owner_id"] == "owner-001"
     assert result.turn.trace_metadata is not None
-    assert result.turn.trace_metadata.domain_binding["memory_scope_ref"] == "owner-memory-scope-v1"
+    assert (
+        result.turn.trace_metadata.domain_binding["memory_scope_ref"]
+        == "owner-memory-scope-v1"
+    )

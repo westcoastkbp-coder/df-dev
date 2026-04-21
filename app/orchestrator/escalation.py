@@ -52,7 +52,9 @@ def _history_event_count(task_data: dict[str, object], event_name: str) -> int:
     )
 
 
-def _result_status(task_data: dict[str, object], signal: dict[str, object] | None = None) -> str:
+def _result_status(
+    task_data: dict[str, object], signal: dict[str, object] | None = None
+) -> str:
     if signal is not None:
         normalized_signal_status = _normalize_text(signal.get("status"))
         if normalized_signal_status:
@@ -86,7 +88,9 @@ def decide_escalation_action(
     normalized_reason = _normalize_text(reason)
     result_status = _result_status(task_data, signal=signal)
 
-    if result_status == "invalid_action_result" or normalized_reason.startswith("invalid action result:"):
+    if result_status == "invalid_action_result" or normalized_reason.startswith(
+        "invalid action result:"
+    ):
         escalation_signal = build_escalation_signal(
             task_id=task_data.get("task_id"),
             reason="invalid_action_result",
@@ -105,7 +109,10 @@ def decide_escalation_action(
         )
         return {"action": "escalate", "signal": escalation_signal}
 
-    if result_status == "task_stuck" and _history_event_count(task_data, "execution_failed") >= 1:
+    if (
+        result_status == "task_stuck"
+        and _history_event_count(task_data, "execution_failed") >= 1
+    ):
         escalation_signal = build_escalation_signal(
             task_id=task_data.get("task_id"),
             reason="task_stuck_after_retry",
@@ -113,7 +120,9 @@ def decide_escalation_action(
         )
         return {"action": "escalate", "signal": escalation_signal}
 
-    if normalized_reason.startswith("policy gate blocked") and _is_critical_task(task_data):
+    if normalized_reason.startswith("policy gate blocked") and _is_critical_task(
+        task_data
+    ):
         escalation_signal = build_escalation_signal(
             task_id=task_data.get("task_id"),
             reason="policy_rejection_on_critical_task",
@@ -132,7 +141,9 @@ def decide_escalation_action(
     return {"action": "fail", "signal": None}
 
 
-def record_escalation(task_data: dict[str, object], signal: dict[str, object]) -> dict[str, object]:
+def record_escalation(
+    task_data: dict[str, object], signal: dict[str, object]
+) -> dict[str, object]:
     verdict = dict(task_data.get("runtime_verdict", {}) or {})
     verdict["escalation_signal"] = dict(signal)
     task_data["runtime_verdict"] = verdict

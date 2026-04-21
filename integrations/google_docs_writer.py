@@ -24,7 +24,12 @@ REQUIRED_ENV_VARS = (
     "GOOGLE_CLIENT_SECRET",
     "GOOGLE_REFRESH_TOKEN",
 )
-TOKEN_CACHE_PATH = Path(__file__).resolve().parents[1] / "artifacts" / "tool_cache" / "google_oauth_token.json"
+TOKEN_CACHE_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "artifacts"
+    / "tool_cache"
+    / "google_oauth_token.json"
+)
 
 
 def _env_value(name: str) -> str:
@@ -107,7 +112,9 @@ def _request_json_with_retry(
     headers: dict[str, str] | None = None,
     data: bytes | None = None,
 ) -> dict[str, Any]:
-    for attempt_index, delay_seconds in enumerate((0.0, *REQUEST_RETRY_DELAYS_SECONDS), start=1):
+    for attempt_index, delay_seconds in enumerate(
+        (0.0, *REQUEST_RETRY_DELAYS_SECONDS), start=1
+    ):
         try:
             return _request_json(url, headers=headers, data=data)
         except HTTPError as error:

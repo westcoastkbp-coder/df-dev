@@ -5,7 +5,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from app.execution.decision_trace import ensure_decision_trace, infer_confidence, infer_policy_result, summarize_context_reference
+from app.execution.decision_trace import (
+    ensure_decision_trace,
+    infer_confidence,
+    infer_policy_result,
+    summarize_context_reference,
+)
 from app.execution.paths import LOGS_DIR, ROOT_DIR
 
 
@@ -223,7 +228,9 @@ def validate_action_result(
 
     status = _normalize_text(normalized_payload.get("status")).lower()
     if status not in ALLOWED_ACTION_RESULT_STATUSES:
-        raise ActionResultViolation(f"unsupported action result status: {status or '(empty)'}")
+        raise ActionResultViolation(
+            f"unsupported action result status: {status or '(empty)'}"
+        )
 
     action_type = _normalize_text(normalized_payload.get("action_type"))
     if not action_type:
@@ -236,7 +243,9 @@ def validate_action_result(
     if not isinstance(normalized_payload.get("result_payload"), Mapping):
         raise ActionResultViolation("result_payload must be a dict")
     if not _is_json_like(normalized_payload.get("result_payload")):
-        raise ActionResultViolation("result_payload must contain only structured JSON-like values")
+        raise ActionResultViolation(
+            "result_payload must contain only structured JSON-like values"
+        )
     decision_trace = normalized_payload.get("decision_trace")
     if not isinstance(decision_trace, Mapping):
         raise ActionResultViolation("decision_trace must be a dict")
@@ -250,7 +259,10 @@ def validate_action_result(
 
     normalized_task_id = _normalize_text(normalized_payload.get("task_id"))
     normalized_expected_task_id = _normalize_text(expected_task_id)
-    if normalized_expected_task_id and normalized_task_id != normalized_expected_task_id:
+    if (
+        normalized_expected_task_id
+        and normalized_task_id != normalized_expected_task_id
+    ):
         raise ActionResultViolation("task_id does not match execution task")
 
     try:

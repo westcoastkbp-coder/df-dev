@@ -58,7 +58,9 @@ def test_apply_personal_context_update_merges_owner_vehicle_and_reminders() -> N
     ]
 
 
-def test_update_personal_context_file_writes_default_structure_when_missing(tmp_path) -> None:
+def test_update_personal_context_file_writes_default_structure_when_missing(
+    tmp_path,
+) -> None:
     context_path = tmp_path / "personal" / "personal_context.json"
 
     updated_context, saved_path = update_personal_context_file(
@@ -70,11 +72,15 @@ def test_update_personal_context_file_writes_default_structure_when_missing(tmp_
 
     assert saved_path == context_path
     assert updated_context["owner"] == {"name": "", "notes": ""}
-    assert updated_context["immigration"] == [{"id": "i94", "title": "Check extension date"}]
+    assert updated_context["immigration"] == [
+        {"id": "i94", "title": "Check extension date"}
+    ]
     assert json.loads(context_path.read_text(encoding="utf-8")) == updated_context
 
 
-def test_update_personal_context_script_reads_task_payload(monkeypatch, tmp_path, capsys) -> None:
+def test_update_personal_context_script_reads_task_payload(
+    monkeypatch, tmp_path, capsys
+) -> None:
     task_path = tmp_path / "task-77.json"
     context_path = tmp_path / "personal" / "personal_context.json"
     task_path.write_text(
@@ -97,7 +103,9 @@ def test_update_personal_context_script_reads_task_payload(monkeypatch, tmp_path
     monkeypatch.setattr(
         update_personal_context_script,
         "parse_args",
-        lambda: SimpleNamespace(update_path=str(task_path), context_file=str(context_path)),
+        lambda: SimpleNamespace(
+            update_path=str(task_path), context_file=str(context_path)
+        ),
     )
 
     exit_code = update_personal_context_script.main()

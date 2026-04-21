@@ -33,10 +33,13 @@ TEXT_MIME_TYPES = {
     "application/xhtml+xml",
     "application/xml",
 }
-TEXT_MIME_PREFIXES = (
-    "text/",
+TEXT_MIME_PREFIXES = ("text/",)
+TOKEN_CACHE_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "artifacts"
+    / "tool_cache"
+    / "google_oauth_token.json"
 )
-TOKEN_CACHE_PATH = Path(__file__).resolve().parents[1] / "artifacts" / "tool_cache" / "google_oauth_token.json"
 
 
 def _env_value(name: str) -> str:
@@ -117,7 +120,9 @@ def _request_bytes_with_retry(
     headers: dict[str, str] | None = None,
     data: bytes | None = None,
 ) -> bytes:
-    for attempt_index, delay_seconds in enumerate((0.0, *REQUEST_RETRY_DELAYS_SECONDS), start=1):
+    for attempt_index, delay_seconds in enumerate(
+        (0.0, *REQUEST_RETRY_DELAYS_SECONDS), start=1
+    ):
         try:
             return _request_bytes(url, headers=headers, data=data)
         except HTTPError as error:
@@ -194,7 +199,9 @@ def _is_supported_text_mime_type(mime_type: str) -> bool:
     return normalized in TEXT_MIME_TYPES
 
 
-def _fetch_file_content(file_id: str, mime_type: str, access_token: str) -> bytes | None:
+def _fetch_file_content(
+    file_id: str, mime_type: str, access_token: str
+) -> bytes | None:
     encoded_file_id = quote(file_id, safe="")
     headers = {"Authorization": f"Bearer {access_token}"}
 
@@ -244,7 +251,14 @@ def read_google_drive_file(payload: dict[str, Any]) -> dict[str, Any] | None:
         )
         if content_bytes is None:
             return None
-    except (HTTPError, URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError):
+    except (
+        HTTPError,
+        URLError,
+        OSError,
+        TimeoutError,
+        ValueError,
+        json.JSONDecodeError,
+    ):
         return None
 
     content = _normalize_text(content_bytes)

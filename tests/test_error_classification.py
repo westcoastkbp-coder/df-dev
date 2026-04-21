@@ -47,6 +47,7 @@ def test_fail_path_classifies_execution_error(monkeypatch, capsys) -> None:
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("fail", "broken"))
+
     class FailedExecution:
         returncode = 1
 

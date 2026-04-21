@@ -88,7 +88,9 @@ def _normalize_status(value: object) -> str:
 
 
 def _normalize_request_type(value: object, *, request_text: str) -> str:
-    normalized = _normalize_text(value).lower() or infer_owner_request_type(request_text)
+    normalized = _normalize_text(value).lower() or infer_owner_request_type(
+        request_text
+    )
     if normalized not in OWNER_REQUEST_TYPES:
         raise ValueError(
             "request_type must be one of: " + ", ".join(sorted(OWNER_REQUEST_TYPES))
@@ -100,7 +102,8 @@ def _normalize_priority_class(value: object, *, request_text: str) -> str:
     normalized = _normalize_text(value).lower() or infer_priority_class(request_text)
     if normalized not in OWNER_PRIORITY_CLASSES:
         raise ValueError(
-            "priority_class must be one of: " + ", ".join(sorted(OWNER_PRIORITY_CLASSES))
+            "priority_class must be one of: "
+            + ", ".join(sorted(OWNER_PRIORITY_CLASSES))
         )
     return normalized
 
@@ -136,7 +139,9 @@ def infer_owner_request_type(request_text: object) -> str:
 
 def infer_priority_class(request_text: object) -> str:
     normalized = _collapse_whitespace(request_text).lower()
-    if any(token in normalized for token in ("urgent", "asap", "immediately", "right now")):
+    if any(
+        token in normalized for token in ("urgent", "asap", "immediately", "right now")
+    ):
         return "urgent"
     if any(token in normalized for token in ("important", "high priority", "blocker")):
         return "high"
@@ -161,13 +166,19 @@ class OwnerRequest:
 
     def __post_init__(self) -> None:
         request_text = _normalize_request_text(self.request_text)
-        object.__setattr__(self, "request_id", _stable_identifier(self.request_id, field_name="request_id"))
+        object.__setattr__(
+            self,
+            "request_id",
+            _stable_identifier(self.request_id, field_name="request_id"),
+        )
         object.__setattr__(
             self,
             "owner_session_id",
             _stable_identifier(self.owner_session_id, field_name="owner_session_id"),
         )
-        object.__setattr__(self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id"))
+        object.__setattr__(
+            self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id")
+        )
         object.__setattr__(self, "request_text", request_text)
         object.__setattr__(
             self,
@@ -184,10 +195,16 @@ class OwnerRequest:
             "priority_class",
             _normalize_priority_class(self.priority_class, request_text=request_text),
         )
-        object.__setattr__(self, "context_ref", _normalize_context_ref(self.context_ref))
-        object.__setattr__(self, "created_at", _normalize_text(self.created_at) or _utc_timestamp())
+        object.__setattr__(
+            self, "context_ref", _normalize_context_ref(self.context_ref)
+        )
+        object.__setattr__(
+            self, "created_at", _normalize_text(self.created_at) or _utc_timestamp()
+        )
         object.__setattr__(self, "status", _normalize_status(self.status))
-        object.__setattr__(self, "normalized_payload", _normalize_mapping(self.normalized_payload))
+        object.__setattr__(
+            self, "normalized_payload", _normalize_mapping(self.normalized_payload)
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {

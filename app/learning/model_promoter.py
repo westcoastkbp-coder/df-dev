@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from app.learning.model_update_config import load_model_update_config, write_model_update_config
+from app.learning.model_update_config import (
+    load_model_update_config,
+    write_model_update_config,
+)
 from app.learning.promotion_audit import (
     build_promotion_audit_record,
     candidate_model_artifact_refs,
@@ -28,7 +31,9 @@ def _deep_copy(value: dict[str, Any]) -> dict[str, Any]:
     return json.loads(json.dumps(value))
 
 
-def _empty_metrics(*, active_model: str, candidate_model: str, sample_count: int = 0) -> dict[str, Any]:
+def _empty_metrics(
+    *, active_model: str, candidate_model: str, sample_count: int = 0
+) -> dict[str, Any]:
     return {
         "active_model": active_model,
         "candidate_model": candidate_model,
@@ -126,19 +131,25 @@ def _evaluate_promotion_details(config: dict[str, Any]) -> dict[str, Any]:
 
     if not candidate_model:
         return {
-            "decision": _decision(promote=False, reason="missing_candidate_model", metrics=metrics),
+            "decision": _decision(
+                promote=False, reason="missing_candidate_model", metrics=metrics
+            ),
             "thresholds": thresholds,
             "evaluation_refs": [],
         }
     if not active_model:
         return {
-            "decision": _decision(promote=False, reason="missing_active_model", metrics=metrics),
+            "decision": _decision(
+                promote=False, reason="missing_active_model", metrics=metrics
+            ),
             "thresholds": thresholds,
             "evaluation_refs": [],
         }
     if active_model == candidate_model:
         return {
-            "decision": _decision(promote=False, reason="candidate_matches_active", metrics=metrics),
+            "decision": _decision(
+                promote=False, reason="candidate_matches_active", metrics=metrics
+            ),
             "thresholds": thresholds,
             "evaluation_refs": [],
         }
@@ -151,7 +162,9 @@ def _evaluate_promotion_details(config: dict[str, Any]) -> dict[str, Any]:
     metrics["sample_count"] = len(relevant_artifacts)
     if missing_metrics:
         return {
-            "decision": _decision(promote=False, reason="missing_metrics", metrics=metrics),
+            "decision": _decision(
+                promote=False, reason="missing_metrics", metrics=metrics
+            ),
             "thresholds": thresholds,
             "evaluation_refs": evaluation_refs,
         }
@@ -165,7 +178,9 @@ def _evaluate_promotion_details(config: dict[str, Any]) -> dict[str, Any]:
         overlap_score = _float_metric(artifact, "top_k_overlap")
         if agreement_score is None or top1_score is None or overlap_score is None:
             return {
-                "decision": _decision(promote=False, reason="missing_metrics", metrics=metrics),
+                "decision": _decision(
+                    promote=False, reason="missing_metrics", metrics=metrics
+                ),
                 "thresholds": thresholds,
                 "evaluation_refs": evaluation_refs,
             }
@@ -186,13 +201,17 @@ def _evaluate_promotion_details(config: dict[str, Any]) -> dict[str, Any]:
 
     if metrics["agreement_score"] < float(thresholds["min_agreement_score"]):
         return {
-            "decision": _decision(promote=False, reason="low_agreement", metrics=metrics),
+            "decision": _decision(
+                promote=False, reason="low_agreement", metrics=metrics
+            ),
             "thresholds": thresholds,
             "evaluation_refs": evaluation_refs,
         }
     if metrics["top1_match"] < float(thresholds["min_top1_match"]):
         return {
-            "decision": _decision(promote=False, reason="low_top1_match", metrics=metrics),
+            "decision": _decision(
+                promote=False, reason="low_top1_match", metrics=metrics
+            ),
             "thresholds": thresholds,
             "evaluation_refs": evaluation_refs,
         }
@@ -231,7 +250,9 @@ def _build_audit_record(
         evaluation_refs=evaluation_refs,
         config_version_before=config_version_before,
         config_version_after=config_version_after,
-        artifact_refs=candidate_model_artifact_refs(_normalize_text(decision["metrics"].get("candidate_model"))),
+        artifact_refs=candidate_model_artifact_refs(
+            _normalize_text(decision["metrics"].get("candidate_model"))
+        ),
         status=status,
         promotion_id=promotion_id,
         timestamp=timestamp,

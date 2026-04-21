@@ -47,7 +47,9 @@ def _configure_state_backend(monkeypatch, tmp_path: Path) -> None:
     task_factory_module.clear_task_runtime_store()
 
 
-def test_dispatch_action_trigger_executes_browser_tool(monkeypatch, tmp_path: Path) -> None:
+def test_dispatch_action_trigger_executes_browser_tool(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_state_backend(monkeypatch, tmp_path)
     monkeypatch.setattr(browser_tool_module.httpx, "Client", _FakeClient)
 

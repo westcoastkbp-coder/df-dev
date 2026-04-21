@@ -23,7 +23,9 @@ INTAKE_REPEAT_TEXT = "Sorry, I didn't catch that. Could you repeat?"
 GOODBYE_TEXT = "Alright, feel free to call back anytime. Goodbye."
 CONFIRM_YES_TEXT = "Perfect. I've recorded your request."
 CLOSING_TEXT = "Perfect. Your request is recorded. Our team will contact you shortly."
-CONFIRM_PROMPT_TEXT = "Just to confirm - you're looking for an estimate for your project, right?"
+CONFIRM_PROMPT_TEXT = (
+    "Just to confirm - you're looking for an estimate for your project, right?"
+)
 CONFIRM_RETRY_TEXT = "Sorry, I didn't catch a clear yes. Please say yes to confirm."
 CONFIRM_WORDS = {"yes", "yeah", "yep", "correct", "right", "sure", "okay"}
 
@@ -31,6 +33,7 @@ CONFIRM_WORDS = {"yes", "yeah", "yep", "correct", "right", "sure", "okay"}
 def _debug_log(*parts: object) -> None:
     if MODE != "product":
         print(*parts)
+
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
@@ -111,16 +114,25 @@ def _normalized_payload(data: dict[str, object], session_id: str) -> dict[str, s
 @app.post("/test-webhook")
 async def test_webhook(request: Request):
     content_type = str(request.headers.get("content-type", "")).lower()
-    if "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+    if (
+        "application/x-www-form-urlencoded" in content_type
+        or "multipart/form-data" in content_type
+    ):
         raw_body = (await request.body()).decode("utf-8", errors="replace")
-        data = {str(key): str(value) for key, value in parse_qsl(raw_body, keep_blank_values=True)}
+        data = {
+            str(key): str(value)
+            for key, value in parse_qsl(raw_body, keep_blank_values=True)
+        }
     else:
         try:
             data = await request.json()
         except Exception:
             data = {}
 
-    session_id = str(request.query_params.get("session_id", "")).strip() or f"voice-{uuid.uuid4().hex[:12]}"
+    session_id = (
+        str(request.query_params.get("session_id", "")).strip()
+        or f"voice-{uuid.uuid4().hex[:12]}"
+    )
     state = _get_call_state(session_id)
     stage = str(state.get("stage", "greeting")).strip() or "greeting"
     action = f"/test-webhook?session_id={session_id}"

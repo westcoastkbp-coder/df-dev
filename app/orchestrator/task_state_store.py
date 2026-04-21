@@ -46,7 +46,9 @@ _INITIALIZED_DATABASES_GUARD = threading.Lock()
 class StatePersistenceError(RuntimeError):
     def __init__(self, signal: dict[str, object]) -> None:
         self.signal = dict(signal)
-        super().__init__(json.dumps(self.signal, ensure_ascii=True, separators=(",", ":")))
+        super().__init__(
+            json.dumps(self.signal, ensure_ascii=True, separators=(",", ":"))
+        )
 
 
 class InvalidPersistedTaskStateError(RuntimeError):
@@ -107,7 +109,9 @@ def _acquire_file_lock(lock_path: Path, *, timeout_seconds: float) -> object:
             handle.seek(0)
             if msvcrt is not None:
                 msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
-            elif fcntl is not None:  # pragma: no cover - Windows is the primary runtime.
+            elif (
+                fcntl is not None
+            ):  # pragma: no cover - Windows is the primary runtime.
                 fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             return handle
         except OSError:
@@ -369,7 +373,9 @@ def _run_write_operation(
         time.sleep(SQLITE_WRITE_RETRY_DELAY_SECONDS * (attempt_index + 1))
     if last_error is not None:
         raise last_error
-    raise RuntimeError(f"write operation failed without explicit error: {operation_name}")
+    raise RuntimeError(
+        f"write operation failed without explicit error: {operation_name}"
+    )
 
 
 def _json_text(value: object) -> str:
@@ -403,7 +409,9 @@ def _lineage_branch_key(task_data: dict[str, object]) -> str:
     return f"task::{_normalize_task_id(task_data.get('task_id'))}"
 
 
-def _task_version_event_type(task_data: dict[str, object], existing_task: dict[str, object] | None) -> str:
+def _task_version_event_type(
+    task_data: dict[str, object], existing_task: dict[str, object] | None
+) -> str:
     current_status = str(task_data.get("status", "")).strip()
     current_approval = str(task_data.get("approval_status", "")).strip()
     if existing_task is None:
@@ -530,7 +538,9 @@ def _build_invalid_state_task(
     base = dict(descriptor or {})
     normalized_task_id = str(task_id or "").strip()
     timestamp = str(updated_at or created_at or _now()).strip() or _now()
-    history = list(base.get("history", [])) if isinstance(base.get("history"), list) else []
+    history = (
+        list(base.get("history", [])) if isinstance(base.get("history"), list) else []
+    )
     history.append(
         {
             "timestamp": timestamp,
@@ -551,7 +561,9 @@ def _build_invalid_state_task(
         "intent": str(base.get("intent") or "invalid_state").strip() or "invalid_state",
         "payload": dict(base.get("payload", {}) or {}),
         "status": "FAILED",
-        "notes": list(base.get("notes", [])) if isinstance(base.get("notes"), list) else [],
+        "notes": list(base.get("notes", []))
+        if isinstance(base.get("notes"), list)
+        else [],
         "history": history,
         "interaction_id": str(base.get("interaction_id", "")).strip(),
         "job_id": str(base.get("job_id") or normalized_task_id).strip(),
@@ -742,7 +754,9 @@ def task_row(task_data: dict[str, object]) -> dict[str, str]:
     return _task_row(task_data)
 
 
-def _memory_row(entry: dict[str, object], *, ordinal: int, updated_at: str) -> dict[str, str]:
+def _memory_row(
+    entry: dict[str, object], *, ordinal: int, updated_at: str
+) -> dict[str, str]:
     logical_task_id = str(entry.get("task_id", "")).strip()
     row_task_id = f"{logical_task_id}::memory::{ordinal:08d}"
     status = str(entry.get("status", "")).strip() or "completed"
@@ -831,6 +845,7 @@ def _bootstrap_legacy_memory(connection: sqlite3.Connection) -> None:
     if not entries:
         return
     timestamp = _now()
+
     def _write_entries(active_connection: sqlite3.Connection) -> None:
         for index, entry in enumerate(entries, start=1):
             row = _memory_row(entry, ordinal=index, updated_at=timestamp)
@@ -852,6 +867,7 @@ def _bootstrap_legacy_memory(connection: sqlite3.Connection) -> None:
                     row["memory_ref"],
                 ),
             )
+
     _execute_transaction_once(
         connection,
         _write_entries,
@@ -859,7 +875,9 @@ def _bootstrap_legacy_memory(connection: sqlite3.Connection) -> None:
     )
 
 
-def _bootstrap_legacy_tasks(connection: sqlite3.Connection, store_path: Path | None) -> None:
+def _bootstrap_legacy_tasks(
+    connection: sqlite3.Connection, store_path: Path | None
+) -> None:
     target = _root_relative(store_path or TASK_SYSTEM_FILE)
     if not target.exists() or target.suffix.lower() == ".sqlite3":
         return
@@ -871,6 +889,7 @@ def _bootstrap_legacy_tasks(connection: sqlite3.Connection, store_path: Path | N
     entries = _load_legacy_entries(target)
     if not entries:
         return
+
     def _write_entries(active_connection: sqlite3.Connection) -> None:
         for entry in entries:
             row = _task_row(entry)
@@ -894,6 +913,7 @@ def _bootstrap_legacy_tasks(connection: sqlite3.Connection, store_path: Path | N
                     row["memory_ref"],
                 ),
             )
+
     _execute_transaction_once(
         connection,
         _write_entries,
@@ -952,8 +972,11 @@ def read_all_tasks(store_path: Path | None = None) -> list[dict[str, object]]:
         connection.close()
 
 
-def write_task(task_data: dict[str, object], store_path: Path | None = None) -> dict[str, object]:
+def write_task(
+    task_data: dict[str, object], store_path: Path | None = None
+) -> dict[str, object]:
     validated_task = validate_task_contract(task_data)
+
     def _write(active_connection: sqlite3.Connection) -> dict[str, object]:
         existing_tasks = _validated_tasks_from_rows(
             active_connection,
@@ -1022,7 +1045,9 @@ def write_task(task_data: dict[str, object], store_path: Path | None = None) -> 
         _append_task_version(
             active_connection,
             task_data=candidate_task,
-            existing_task=current_task if isinstance(current_task, dict) else existing_task,
+            existing_task=current_task
+            if isinstance(current_task, dict)
+            else existing_task,
             timestamp=timestamp,
         )
         _upsert_execution_branch(
@@ -1129,6 +1154,7 @@ def append_memory_entry(entry: dict[str, object]) -> dict[str, object]:
                 "DELETE FROM Task WHERE task_id = ?",
                 [(task_id,) for task_id in delete_ids],
             )
+
     _run_write_operation(
         _append,
         operation_name="append_memory_entry",
@@ -1139,6 +1165,7 @@ def append_memory_entry(entry: dict[str, object]) -> dict[str, object]:
 
 def replace_memory_entries(entries: list[dict[str, object]]) -> list[dict[str, object]]:
     trimmed_entries = [dict(entry) for entry in entries[-MAX_MEMORY_ENTRIES:]]
+
     def _replace(active_connection: sqlite3.Connection) -> None:
         active_connection.execute("DELETE FROM Task WHERE memory_ref != ''")
         updated_at = _now()
@@ -1162,6 +1189,7 @@ def replace_memory_entries(entries: list[dict[str, object]]) -> list[dict[str, o
                     row["memory_ref"],
                 ),
             )
+
     _run_write_operation(
         _replace,
         operation_name="replace_memory_entries",
@@ -1277,6 +1305,7 @@ def write_execution_record(
     if existing is not None:
         return existing
     timestamp = _now()
+
     def _write(active_connection: sqlite3.Connection) -> None:
         active_connection.execute(
             """
@@ -1294,24 +1323,22 @@ def write_execution_record(
                 timestamp,
             ),
         )
+
     _run_write_operation(
         _write,
         store_path=store_path,
         operation_name="write_execution_record",
         task_id=normalized_task_id,
     )
-    return (
-        read_execution_record(normalized_execution_key, store_path=store_path)
-        or {
-            "execution_key": normalized_execution_key,
-            "task_id": normalized_task_id,
-            "action_type": normalized_action_type,
-            "status": EXECUTION_LEDGER_STATUS_EXECUTED,
-            "action_result": dict(action_result),
-            "created_at": timestamp,
-            "updated_at": timestamp,
-        }
-    )
+    return read_execution_record(normalized_execution_key, store_path=store_path) or {
+        "execution_key": normalized_execution_key,
+        "task_id": normalized_task_id,
+        "action_type": normalized_action_type,
+        "status": EXECUTION_LEDGER_STATUS_EXECUTED,
+        "action_result": dict(action_result),
+        "created_at": timestamp,
+        "updated_at": timestamp,
+    }
 
 
 def claim_execution_record(
@@ -1399,6 +1426,7 @@ def complete_execution_record(
     if not normalized_execution_key:
         raise ValueError("execution_key must not be empty")
     timestamp = _now()
+
     def _complete(active_connection: sqlite3.Connection) -> None:
         cursor = active_connection.execute(
             """
@@ -1427,7 +1455,8 @@ def complete_execution_record(
                 raise ValueError("execution claim missing for completion")
             existing_result = _json_value(existing_row["action_result"], {})
             if (
-                str(existing_row["status"] or "").strip() == EXECUTION_LEDGER_STATUS_EXECUTED
+                str(existing_row["status"] or "").strip()
+                == EXECUTION_LEDGER_STATUS_EXECUTED
                 and isinstance(existing_result, dict)
                 and existing_result
             ):
@@ -1455,15 +1484,12 @@ def complete_execution_record(
         operation_name="complete_execution_record",
         task_id=str(action_result.get("task_id", "")).strip(),
     )
-    return (
-        read_execution_record(normalized_execution_key, store_path=store_path)
-        or {
-            "execution_key": normalized_execution_key,
-            "task_id": str(action_result.get("task_id", "")).strip(),
-            "action_type": str(action_result.get("action_type", "")).strip(),
-            "status": EXECUTION_LEDGER_STATUS_EXECUTED,
-            "action_result": dict(action_result),
-            "created_at": timestamp,
-            "updated_at": timestamp,
-        }
-    )
+    return read_execution_record(normalized_execution_key, store_path=store_path) or {
+        "execution_key": normalized_execution_key,
+        "task_id": str(action_result.get("task_id", "")).strip(),
+        "action_type": str(action_result.get("action_type", "")).strip(),
+        "status": EXECUTION_LEDGER_STATUS_EXECUTED,
+        "action_result": dict(action_result),
+        "created_at": timestamp,
+        "updated_at": timestamp,
+    }

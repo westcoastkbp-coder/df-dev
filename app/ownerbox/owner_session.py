@@ -102,7 +102,9 @@ class OwnerSession:
             "owner_session_id",
             _stable_identifier(self.owner_session_id, field_name="owner_session_id"),
         )
-        object.__setattr__(self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id"))
+        object.__setattr__(
+            self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id")
+        )
         if _normalize_text(self.domain_type).lower() != OWNERBOX_DOMAIN_TYPE:
             raise ValueError("domain_type must equal ownerbox")
         object.__setattr__(self, "domain_type", OWNERBOX_DOMAIN_TYPE)
@@ -111,9 +113,15 @@ class OwnerSession:
             "active_language",
             _normalize_language_tag(self.active_language, default="und"),
         )
-        object.__setattr__(self, "context_ref", _normalize_context_ref(self.context_ref))
-        object.__setattr__(self, "request_count", _normalize_request_count(self.request_count))
-        object.__setattr__(self, "started_at", _normalize_text(self.started_at) or _utc_timestamp())
+        object.__setattr__(
+            self, "context_ref", _normalize_context_ref(self.context_ref)
+        )
+        object.__setattr__(
+            self, "request_count", _normalize_request_count(self.request_count)
+        )
+        object.__setattr__(
+            self, "started_at", _normalize_text(self.started_at) or _utc_timestamp()
+        )
         object.__setattr__(
             self,
             "last_request_at",
@@ -146,7 +154,8 @@ def create_owner_session(
 ) -> OwnerSession:
     timestamp = _normalize_text(started_at) or _utc_timestamp()
     return OwnerSession(
-        owner_session_id=_normalize_text(owner_session_id) or _new_identifier("owner-session"),
+        owner_session_id=_normalize_text(owner_session_id)
+        or _new_identifier("owner-session"),
         owner_id=_normalize_text(owner_id),
         domain_type=OWNERBOX_DOMAIN_TYPE,
         active_language=_normalize_text(active_language) or "und",

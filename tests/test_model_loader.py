@@ -80,7 +80,9 @@ def test_load_model_returns_valid_model(
     tmp_path: Path,
 ) -> None:
     _write_model(tmp_path, model_id="valid-model")
-    monkeypatch.setattr(model_loader_module, "MODELS_ROOT", tmp_path / "DF" / "shared" / "models")
+    monkeypatch.setattr(
+        model_loader_module, "MODELS_ROOT", tmp_path / "DF" / "shared" / "models"
+    )
 
     model = load_model("valid-model")
 
@@ -123,7 +125,9 @@ def test_load_model_rejects_invalid_model(
             "conflict_flag": 0.03,
         },
     )
-    monkeypatch.setattr(model_loader_module, "MODELS_ROOT", tmp_path / "DF" / "shared" / "models")
+    monkeypatch.setattr(
+        model_loader_module, "MODELS_ROOT", tmp_path / "DF" / "shared" / "models"
+    )
 
     with pytest.raises(ModelLoaderError, match="state_flag"):
         load_model("invalid-model")
@@ -134,7 +138,9 @@ def test_score_with_model_falls_back_when_model_is_missing(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    monkeypatch.setattr(model_loader_module, "MODELS_ROOT", tmp_path / "DF" / "shared" / "models")
+    monkeypatch.setattr(
+        model_loader_module, "MODELS_ROOT", tmp_path / "DF" / "shared" / "models"
+    )
 
     scored = score_with_model(
         {"domain": "dev", "type": "task", "tags": ["finance", "urgent"]},
@@ -175,10 +181,14 @@ def test_score_with_model_changes_with_loaded_weights(
             "state_flag": 0.0,
         },
     )
-    monkeypatch.setattr(model_loader_module, "MODELS_ROOT", tmp_path / "DF" / "shared" / "models")
+    monkeypatch.setattr(
+        model_loader_module, "MODELS_ROOT", tmp_path / "DF" / "shared" / "models"
+    )
     context = {"domain": "dev", "type": "task", "tags": ["finance", "urgent"]}
     artifacts = [
-        _artifact("task-recent", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]),
+        _artifact(
+            "task-recent", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]
+        ),
         _artifact(
             "conflict-1",
             artifact_type="conflict_escalation",
@@ -189,11 +199,15 @@ def test_score_with_model_changes_with_loaded_weights(
 
     recency_scores = {
         entry["entity_id"]: float(entry["score"])
-        for entry in score_with_model(context, artifacts, model_id="recency-heavy")["items"]
+        for entry in score_with_model(context, artifacts, model_id="recency-heavy")[
+            "items"
+        ]
     }
     conflict_scores = {
         entry["entity_id"]: float(entry["score"])
-        for entry in score_with_model(context, artifacts, model_id="conflict-heavy")["items"]
+        for entry in score_with_model(context, artifacts, model_id="conflict-heavy")[
+            "items"
+        ]
     }
 
     assert recency_scores["task-recent"] > recency_scores["conflict-1"]
@@ -217,10 +231,14 @@ def test_rank_memory_with_loaded_model_can_change_ordering(
             "state_flag": 0.0,
         },
     )
-    monkeypatch.setattr(model_loader_module, "MODELS_ROOT", tmp_path / "DF" / "shared" / "models")
+    monkeypatch.setattr(
+        model_loader_module, "MODELS_ROOT", tmp_path / "DF" / "shared" / "models"
+    )
     context = {"domain": "dev", "type": "task", "tags": ["finance", "urgent"]}
     artifacts = [
-        _artifact("task-recent", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]),
+        _artifact(
+            "task-recent", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]
+        ),
         _artifact(
             "conflict-1",
             artifact_type="conflict_escalation",
@@ -230,10 +248,18 @@ def test_rank_memory_with_loaded_model_can_change_ordering(
     ]
 
     heuristic_ranked = rank_memory(context, artifacts, model_enabled=False)
-    model_ranked = rank_memory(context, artifacts, model_enabled=True, model_id="recency-heavy")
+    model_ranked = rank_memory(
+        context, artifacts, model_enabled=True, model_id="recency-heavy"
+    )
 
     output = capsys.readouterr().out
-    assert [entry["memory_id"] for entry in heuristic_ranked] == ["conflict-1", "task-recent"]
-    assert [entry["memory_id"] for entry in model_ranked] == ["task-recent", "conflict-1"]
+    assert [entry["memory_id"] for entry in heuristic_ranked] == [
+        "conflict-1",
+        "task-recent",
+    ]
+    assert [entry["memory_id"] for entry in model_ranked] == [
+        "task-recent",
+        "conflict-1",
+    ]
     assert "[MODEL] loaded id=recency-heavy" in output
     assert "[RANKER] combined scoring applied" in output

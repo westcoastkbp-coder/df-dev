@@ -43,7 +43,9 @@ def _configure_storage(monkeypatch, tmp_path: Path) -> None:
     )
 
 
-def _store_trace(tmp_path: Path, *, task_id: str, status: str, relative_name: str) -> dict[str, object]:
+def _store_trace(
+    tmp_path: Path, *, task_id: str, status: str, relative_name: str
+) -> dict[str, object]:
     trace_payload = create_execution_trace(
         {
             "task_id": task_id,
@@ -53,7 +55,9 @@ def _store_trace(tmp_path: Path, *, task_id: str, status: str, relative_name: st
             "resolver": {"resolved_memory": []},
             "memory_policy": {"allowed": True, "reason": "no_recent_duplicate"},
             "conflict_gate": {"allowed": True, "reason": "no_cross_domain_conflict"},
-            "final_decision": {"action": "execute" if status == "executed" else "block"},
+            "final_decision": {
+                "action": "execute" if status == "executed" else "block"
+            },
             "execution_status": status,
         },
     )
@@ -67,7 +71,9 @@ def _store_trace(tmp_path: Path, *, task_id: str, status: str, relative_name: st
     return json.loads(trace_path.read_text(encoding="utf-8"))
 
 
-def test_check_replay_allows_when_no_prior_execution(monkeypatch, tmp_path: Path) -> None:
+def test_check_replay_allows_when_no_prior_execution(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_storage(monkeypatch, tmp_path)
 
     decision = check_replay({"task_id": "DF-REPLAY-ALLOW-V1"})
@@ -198,7 +204,9 @@ def test_run_codex_task_blocks_replay_after_first_success(
         "instruction": "Execute the task once",
         "result_type": "replay_blocked",
         "reason": "already_executed",
-        "previous_trace_id": second_task["replay_protection_decision"]["previous_trace_id"],
+        "previous_trace_id": second_task["replay_protection_decision"][
+            "previous_trace_id"
+        ],
         "action": "block",
         "replay_protection_decision": second_task["replay_protection_decision"],
         "execution_timeline": second_artifact["execution_timeline"],

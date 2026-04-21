@@ -129,7 +129,9 @@ def _sort_key(value: object) -> str:
             [
                 _first_non_empty(mapped.get("id"), mapped.get("resource_id")),
                 _first_non_empty(mapped.get("type"), mapped.get("resource_type")),
-                _first_non_empty(mapped.get("availability"), mapped.get("resource_availability")),
+                _first_non_empty(
+                    mapped.get("availability"), mapped.get("resource_availability")
+                ),
             ]
         )
     return _normalize_text(value)
@@ -149,7 +151,9 @@ def _decision_summary(task_data: object) -> dict[str, str]:
     return {
         "task_id": _normalize_text(task.get("task_id")),
         "status": normalize_task_status(task.get("status")),
-        "decision_id": _first_non_empty(decision.get("decision_id"), payload.get("decision_id")),
+        "decision_id": _first_non_empty(
+            decision.get("decision_id"), payload.get("decision_id")
+        ),
         "decision_type": _first_non_empty(
             decision.get("decision_type"),
             payload.get("decision_type"),
@@ -167,7 +171,9 @@ def _decision_summary(task_data: object) -> dict[str, str]:
             payload.get("lead_id"),
             task.get("source_lead_id"),
         ),
-        "priority": _first_non_empty(payload.get("priority"), decision.get("priority")).lower(),
+        "priority": _first_non_empty(
+            payload.get("priority"), decision.get("priority")
+        ).lower(),
         "action": primary_action.lower(),
     }
 
@@ -244,8 +250,12 @@ def _resource_summary(task_data: object) -> dict[str, object]:
 
 def _resource_from_candidate(candidate: object) -> dict[str, object]:
     candidate_map = _normalize_mapping(candidate)
-    resource_id = _first_non_empty(candidate_map.get("id"), candidate_map.get("resource_id"))
-    resource_type = _first_non_empty(candidate_map.get("type"), candidate_map.get("resource_type")).lower()
+    resource_id = _first_non_empty(
+        candidate_map.get("id"), candidate_map.get("resource_id")
+    )
+    resource_type = _first_non_empty(
+        candidate_map.get("type"), candidate_map.get("resource_type")
+    ).lower()
     availability = _first_non_empty(
         candidate_map.get("availability"),
         candidate_map.get("resource_availability"),
@@ -267,11 +277,15 @@ def _resource_candidates(task_data: object) -> list[dict[str, object]]:
     payload = _normalize_mapping(task.get("payload"))
     candidates = [
         _resource_from_candidate(candidate)
-        for candidate in sorted(_normalize_list(payload.get("candidate_resources")), key=_sort_key)
+        for candidate in sorted(
+            _normalize_list(payload.get("candidate_resources")), key=_sort_key
+        )
     ]
     contractors = [
         _resource_from_candidate(candidate)
-        for candidate in sorted(_normalize_list(payload.get("alternative_contractors")), key=_sort_key)
+        for candidate in sorted(
+            _normalize_list(payload.get("alternative_contractors")), key=_sort_key
+        )
     ]
     return [
         candidate
@@ -285,7 +299,9 @@ def _time_slot_candidates(task_data: object) -> list[str]:
     payload = _normalize_mapping(task.get("payload"))
     return [
         _normalize_text(slot)
-        for slot in sorted(_normalize_list(payload.get("candidate_time_slots")), key=_sort_key)
+        for slot in sorted(
+            _normalize_list(payload.get("candidate_time_slots")), key=_sort_key
+        )
         if _normalize_text(slot)
     ]
 
@@ -311,7 +327,13 @@ def _find_decision_conflict(
     new_summary = _decision_summary(new_task)
     if not any(
         new_summary.get(field)
-        for field in ("decision_id", "decision_type", "resource_id", "priority", "action")
+        for field in (
+            "decision_id",
+            "decision_type",
+            "resource_id",
+            "priority",
+            "action",
+        )
     ):
         return ""
 
@@ -440,7 +462,11 @@ def suggest_alternative(
                 break
         if has_schedule_conflict:
             continue
-        option_kind = "alternative_contractor" if _normalize_text(candidate.get("type")) == "contractor" else "next_available_resource"
+        option_kind = (
+            "alternative_contractor"
+            if _normalize_text(candidate.get("type")) == "contractor"
+            else "next_available_resource"
+        )
         return {
             "option_type": option_kind,
             "resource": {
@@ -449,14 +475,19 @@ def suggest_alternative(
             },
         }
 
-    if normalized_conflict_type in {"resource_conflict", "schedule_conflict"} and new_resource["id"]:
+    if (
+        normalized_conflict_type in {"resource_conflict", "schedule_conflict"}
+        and new_resource["id"]
+    ):
         for slot in _time_slot_candidates(new_task):
             has_schedule_conflict = False
             for existing_task in existing_tasks:
                 existing_resource = _resource_summary(existing_task)
                 if existing_resource["status"] not in OPEN_TASK_STATUSES:
                     continue
-                if _normalize_text(existing_resource["id"]) != _normalize_text(new_resource["id"]):
+                if _normalize_text(existing_resource["id"]) != _normalize_text(
+                    new_resource["id"]
+                ):
                     continue
                 if _normalize_text(existing_resource["schedule_slot"]) == slot:
                     has_schedule_conflict = True
@@ -534,7 +565,9 @@ def _write_policy_log(task_id: str, *, allowed: bool, reason: str) -> None:
 
 
 def record_policy_decision(task_id: str, *, allowed: bool, reason: str) -> None:
-    _write_policy_log(str(task_id or "").strip() or "(unknown)", allowed=allowed, reason=reason)
+    _write_policy_log(
+        str(task_id or "").strip() or "(unknown)", allowed=allowed, reason=reason
+    )
 
 
 def _return_result(
@@ -599,7 +632,9 @@ def _browser_policy_action_type(payload: object) -> str:
                     click_target = _normalize_mapping(
                         click_targets.get(_normalize_text(step.get("selector")))
                     )
-                    method = _normalize_text(click_target.get("method")).upper() or "GET"
+                    method = (
+                        _normalize_text(click_target.get("method")).upper() or "GET"
+                    )
                     if method == "POST":
                         return "critical"
                 except ValueError:
@@ -649,7 +684,9 @@ def build_policy_action(
     elif normalized_action_name == "SEND_EMAIL":
         policy_action_type = "critical"
     elif normalized_action_name == "API_REQUEST":
-        policy_action_type = "critical" if _api_request_is_critical(normalized_payload) else "external"
+        policy_action_type = (
+            "critical" if _api_request_is_critical(normalized_payload) else "external"
+        )
 
     confirmation_required = policy_action_type == "critical"
     confirmation_received = _confirmation_received(
@@ -678,13 +715,17 @@ class ExecutionPolicy:
             "task_id": action.task_id,
             "confirmation_required": action.confirmation_required,
             "confirmation_received": action.confirmation_received,
-            "known_action_type": action.action_name in (ALLOWED_ACTION_TYPES | ALLOWED_EXTERNAL_ACTION_TYPES),
+            "known_action_type": action.action_name
+            in (ALLOWED_ACTION_TYPES | ALLOWED_EXTERNAL_ACTION_TYPES),
             "task_state_allows_execution": task_status in ALLOWED_TASK_STATUSES,
         }
 
         if action.action_type not in POLICY_ACTION_TYPES:
             return _return_result(
-                descriptor={"action_type": action.action_name, "payload": action.payload},
+                descriptor={
+                    "action_type": action.action_name,
+                    "payload": action.payload,
+                },
                 task_state=normalized_task_state,
                 execution_allowed=False,
                 reason=f"unknown policy action_type: {action.action_type or '(empty)'}",
@@ -693,7 +734,10 @@ class ExecutionPolicy:
 
         if task_status not in ALLOWED_TASK_STATUSES:
             return _return_result(
-                descriptor={"action_type": action.action_name, "payload": action.payload},
+                descriptor={
+                    "action_type": action.action_name,
+                    "payload": action.payload,
+                },
                 task_state=normalized_task_state,
                 execution_allowed=False,
                 reason=f"task_state does not allow execution: {task_status or '(empty)'}",
@@ -702,7 +746,10 @@ class ExecutionPolicy:
 
         if action.confirmation_required and not action.confirmation_received:
             return _return_result(
-                descriptor={"action_type": action.action_name, "payload": action.payload},
+                descriptor={
+                    "action_type": action.action_name,
+                    "payload": action.payload,
+                },
                 task_state=normalized_task_state,
                 execution_allowed=False,
                 reason=f"critical action requires confirmation: {action.action_name}",
@@ -731,10 +778,12 @@ def evaluate_policy(descriptor: object, task_state: object) -> PolicyResult:
     policy_trace: dict[str, object] = {
         "action_type": action_type,
         "descriptor_fields_present": {
-            field: field in normalized_descriptor for field in REQUIRED_DESCRIPTOR_FIELDS
+            field: field in normalized_descriptor
+            for field in REQUIRED_DESCRIPTOR_FIELDS
         },
         "payload_fields_present": {
-            field: bool(str(payload.get(field, "")).strip()) for field in REQUIRED_PAYLOAD_FIELDS
+            field: bool(str(payload.get(field, "")).strip())
+            for field in REQUIRED_PAYLOAD_FIELDS
         },
         "task_status": task_status,
         "known_action_type": action_type in ALLOWED_ACTION_TYPES,
@@ -751,7 +800,9 @@ def evaluate_policy(descriptor: object, task_state: object) -> PolicyResult:
         )
 
     missing_descriptor_fields = [
-        field for field in REQUIRED_DESCRIPTOR_FIELDS if field not in normalized_descriptor
+        field
+        for field in REQUIRED_DESCRIPTOR_FIELDS
+        if field not in normalized_descriptor
     ]
     if missing_descriptor_fields:
         return _return_result(
@@ -781,7 +832,9 @@ def evaluate_policy(descriptor: object, task_state: object) -> PolicyResult:
         )
 
     missing_payload_fields = [
-        field for field in REQUIRED_PAYLOAD_FIELDS if not str(payload.get(field, "")).strip()
+        field
+        for field in REQUIRED_PAYLOAD_FIELDS
+        if not str(payload.get(field, "")).strip()
     ]
     if missing_payload_fields:
         return _return_result(
@@ -839,7 +892,9 @@ def evaluate_workflow_policy(payload: object, task_state: object) -> PolicyResul
     task_status = str(normalized_task_state.get("status", "")).strip().lower()
     valid, reason, validation_trace = validate_input_payload(payload)
     policy_trace: dict[str, object] = {
-        "workflow_type": str(_normalize_mapping(payload).get("workflow_type", "")).strip(),
+        "workflow_type": str(
+            _normalize_mapping(payload).get("workflow_type", "")
+        ).strip(),
         "task_status": task_status,
         "workflow_validation": dict(validation_trace),
         "task_state_allows_execution": task_status in ALLOWED_TASK_STATUSES,
@@ -913,7 +968,10 @@ def evaluate_external_action_policy(
     }
     if normalized_action_type not in ALLOWED_EXTERNAL_ACTION_TYPES:
         return _return_result(
-            descriptor={"action_type": normalized_action_type, "payload": normalized_payload},
+            descriptor={
+                "action_type": normalized_action_type,
+                "payload": normalized_payload,
+            },
             task_state=normalized_task_state,
             execution_allowed=False,
             reason=f"unknown external action_type: {normalized_action_type or '(empty)'}",
@@ -921,15 +979,23 @@ def evaluate_external_action_policy(
         )
     if task_status not in ALLOWED_TASK_STATUSES:
         return _return_result(
-            descriptor={"action_type": normalized_action_type, "payload": normalized_payload},
+            descriptor={
+                "action_type": normalized_action_type,
+                "payload": normalized_payload,
+            },
             task_state=normalized_task_state,
             execution_allowed=False,
             reason=f"task_state does not allow execution: {task_status or '(empty)'}",
             policy_trace=policy_trace,
         )
-    if destination not in ALLOWED_EXTERNAL_ACTION_DESTINATIONS.get(normalized_action_type, set()):
+    if destination not in ALLOWED_EXTERNAL_ACTION_DESTINATIONS.get(
+        normalized_action_type, set()
+    ):
         return _return_result(
-            descriptor={"action_type": normalized_action_type, "payload": normalized_payload},
+            descriptor={
+                "action_type": normalized_action_type,
+                "payload": normalized_payload,
+            },
             task_state=normalized_task_state,
             execution_allowed=False,
             reason=(
@@ -1000,18 +1066,18 @@ def evaluate_task_creation_policy(
         is_system_improvement = (
             _normalize_text(validated_task.get("intent")) == SYSTEM_IMPROVEMENT_INTENT
         )
-        if (
-            is_system_improvement
-            and core_impact
-        ):
+        if is_system_improvement and core_impact:
             requires_high_approval = (
                 _normalize_bool(validated_payload.get("requires_approval"))
-                and _normalize_text(validated_payload.get("route_target")) == "approval_queue"
+                and _normalize_text(validated_payload.get("route_target"))
+                == "approval_queue"
                 and _normalize_text(validated_payload.get("priority")).upper() == "HIGH"
                 and _normalize_text(validated_task.get("approval_status")) == "pending"
             )
             policy_trace["requires_high_approval"] = requires_high_approval
-            policy_trace["execution_blocked_until_approval"] = not requires_high_approval
+            policy_trace[
+                "execution_blocked_until_approval"
+            ] = not requires_high_approval
         resource_conflict_reason, resource_conflict_task_id = _find_resource_conflict(
             validated_task,
             existing_tasks=normalized_existing,
@@ -1039,7 +1105,10 @@ def evaluate_task_creation_policy(
     except ValueError as exc:
         return _return_result(
             descriptor={"payload": normalized_task},
-            task_state={"task_id": str(normalized_task.get("task_id", "")).strip(), "status": "pending"},
+            task_state={
+                "task_id": str(normalized_task.get("task_id", "")).strip(),
+                "status": "pending",
+            },
             execution_allowed=False,
             reason=str(exc).strip(),
             policy_trace=policy_trace,
@@ -1047,7 +1116,10 @@ def evaluate_task_creation_policy(
 
     return _return_result(
         descriptor={"payload": normalized_task},
-        task_state={"task_id": str(normalized_task.get("task_id", "")).strip(), "status": "pending"},
+        task_state={
+            "task_id": str(normalized_task.get("task_id", "")).strip(),
+            "status": "pending",
+        },
         execution_allowed=True,
         reason="",
         policy_trace=policy_trace,

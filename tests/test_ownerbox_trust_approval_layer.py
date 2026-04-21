@@ -92,7 +92,9 @@ def test_low_risk_action_executes_immediately(monkeypatch, tmp_path: Path) -> No
 
     def dispatcher(action_contract: object, **kwargs: object) -> dict[str, object]:
         captured["dispatch_kwargs"] = dict(kwargs)
-        return dispatch_action(action_contract, openai_executor=openai_executor, **kwargs)
+        return dispatch_action(
+            action_contract, openai_executor=openai_executor, **kwargs
+        )
 
     result = OwnerOrchestrator(dispatcher=dispatcher).process_request(
         request_text="Summarize the current owner queue",
@@ -134,7 +136,10 @@ def test_high_risk_action_creates_approval_and_does_not_execute(
         action_type="write_file",
         target_type="filesystem",
         target_ref="runtime/out/ownerbox/approved.txt",
-        action_parameters={"path": "runtime/out/ownerbox/approved.txt", "content": "approved"},
+        action_parameters={
+            "path": "runtime/out/ownerbox/approved.txt",
+            "content": "approved",
+        },
     )
 
     assert dispatch_calls == 0
@@ -178,7 +183,10 @@ def test_approve_executes_and_duplicate_approve_does_not_double_execute(
         action_type="write_file",
         target_type="filesystem",
         target_ref="runtime/out/ownerbox/approved.txt",
-        action_parameters={"path": "runtime/out/ownerbox/approved.txt", "content": "approved"},
+        action_parameters={
+            "path": "runtime/out/ownerbox/approved.txt",
+            "content": "approved",
+        },
     )
 
     assert interaction.approval is not None
@@ -218,7 +226,10 @@ def test_reject_blocks_without_execution(monkeypatch, tmp_path: Path) -> None:
         action_type="write_file",
         target_type="filesystem",
         target_ref="runtime/out/ownerbox/rejected.txt",
-        action_parameters={"path": "runtime/out/ownerbox/rejected.txt", "content": "rejected"},
+        action_parameters={
+            "path": "runtime/out/ownerbox/rejected.txt",
+            "content": "rejected",
+        },
     )
 
     assert interaction.approval is not None
@@ -230,7 +241,10 @@ def test_reject_blocks_without_execution(monkeypatch, tmp_path: Path) -> None:
     assert resolution.action_result is None
     assert resolution.queue_entry is not None
     assert resolution.queue_entry.action_status == "blocked"
-    assert resolution.response_plan.summary_text == "Owner approval rejected. Action was not executed."
+    assert (
+        resolution.response_plan.summary_text
+        == "Owner approval rejected. Action was not executed."
+    )
 
 
 def test_trace_contains_approval_lifecycle(monkeypatch, tmp_path: Path) -> None:
@@ -257,14 +271,19 @@ def test_trace_contains_approval_lifecycle(monkeypatch, tmp_path: Path) -> None:
         action_type="write_file",
         target_type="filesystem",
         target_ref="runtime/out/ownerbox/trace.txt",
-        action_parameters={"path": "runtime/out/ownerbox/trace.txt", "content": "trace"},
+        action_parameters={
+            "path": "runtime/out/ownerbox/trace.txt",
+            "content": "trace",
+        },
     )
 
     assert interaction.approval is not None
     approval_id = interaction.approval.approval_id
     resolution = orchestrator.approve_action(approval_id)
     traces = _trace_entries(system_log_file)
-    approval_events = [trace for trace in traces if trace.get("approval_id") == approval_id]
+    approval_events = [
+        trace for trace in traces if trace.get("approval_id") == approval_id
+    ]
     created_key = compute_artifact_key(
         "ownerbox",
         "owner_approval_trace",
@@ -347,10 +366,15 @@ def test_browser_action_requires_approval_path(monkeypatch, tmp_path: Path) -> N
     assert result.approval.status == "pending"
     assert result.response_plan.trust_class == "high"
     assert result.response_plan.requires_confirmation is True
-    assert result.response_plan.preview_text == "System wants to submit a form on https://example.com/linkedin."
+    assert (
+        result.response_plan.preview_text
+        == "System wants to submit a form on https://example.com/linkedin."
+    )
 
 
-def test_send_email_requires_approval_and_executes_once(monkeypatch, tmp_path: Path) -> None:
+def test_send_email_requires_approval_and_executes_once(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
     dispatch_calls: list[str] = []
@@ -362,7 +386,10 @@ def test_send_email_requires_approval_and_executes_once(monkeypatch, tmp_path: P
             action_id=str(dict(action_contract)["action_id"]),
             status="success",
             result_type="email_send",
-            payload={"summary": "Sent owner email", "metadata": {"operation": "send_email"}},
+            payload={
+                "summary": "Sent owner email",
+                "metadata": {"operation": "send_email"},
+            },
         )
 
     orchestrator = OwnerOrchestrator(dispatcher=dispatcher)

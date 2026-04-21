@@ -6,7 +6,10 @@ from pathlib import Path
 
 import app.adapters.browser_adapter as browser_adapter_module
 import app.adapters.email_adapter as email_adapter_module
-from app.execution.action_contract import build_action_result_contract, validate_action_result_contract
+from app.execution.action_contract import (
+    build_action_result_contract,
+    validate_action_result_contract,
+)
 from app.execution.action_dispatcher import dispatch_action
 from app.memory import memory_registry
 from app.orchestrator import task_memory, task_state_store
@@ -95,7 +98,9 @@ def _valid_send_email_action_contract() -> dict[str, object]:
     }
 
 
-def _valid_browser_action_contract(*, execution_mode: str = "live") -> dict[str, object]:
+def _valid_browser_action_contract(
+    *, execution_mode: str = "live"
+) -> dict[str, object]:
     return {
         "action_id": "act-browser-001",
         "action_type": "browser_action",
@@ -138,7 +143,9 @@ def _valid_email_action_contract(*, execution_mode: str = "live") -> dict[str, o
     }
 
 
-def _valid_printer_action_contract(*, execution_mode: str = "live") -> dict[str, object]:
+def _valid_printer_action_contract(
+    *, execution_mode: str = "live"
+) -> dict[str, object]:
     return {
         "action_id": "act-print-action-001",
         "action_type": "print_document",
@@ -217,7 +224,9 @@ def test_valid_openai_request_executes_end_to_end(monkeypatch, tmp_path: Path) -
     assert trace_record["type"] == "execution_trace"
     assert trace_record["payload"]["action_id"] == "act-openai-dispatch-001"
     registry_entry = memory_registry.get_artifact_by_logical_key(
-        memory_registry.compute_artifact_key("dev", "execution_trace", "act-openai-dispatch-001")
+        memory_registry.compute_artifact_key(
+            "dev", "execution_trace", "act-openai-dispatch-001"
+        )
     )
     assert registry_entry is not None
     history = task_memory.get_task_history("act-openai-dispatch-001")
@@ -243,13 +252,17 @@ def test_invalid_action_is_blocked(monkeypatch, tmp_path: Path) -> None:
     assert validate_action_result_contract(result) == result
     assert result["status"] == "blocked"
     assert result["error_code"] == "unsupported_operation"
-    assert result["error_message"] == "unsupported action_type for dispatcher: SEND_EMAIL"
+    assert (
+        result["error_message"] == "unsupported action_type for dispatcher: SEND_EMAIL"
+    )
     trace_entries = _trace_entries(system_log_file)
     assert trace_entries[-1]["result_status"] == "blocked"
     assert trace_entries[-1]["error_code"] == "unsupported_operation"
 
 
-def test_dry_run_path_skips_adapter_and_still_traces(monkeypatch, tmp_path: Path) -> None:
+def test_dry_run_path_skips_adapter_and_still_traces(
+    monkeypatch, tmp_path: Path
+) -> None:
     system_log_file = _configure_runtime(monkeypatch, tmp_path)
     called = False
 
@@ -291,7 +304,9 @@ def test_adapter_errors_are_handled_without_crash(monkeypatch, tmp_path: Path) -
     assert trace_entries[-1]["adapter_used"] == "openai_adapter"
 
 
-def test_successful_action_is_returned_from_idempotency_cache(monkeypatch, tmp_path: Path) -> None:
+def test_successful_action_is_returned_from_idempotency_cache(
+    monkeypatch, tmp_path: Path
+) -> None:
     system_log_file = _configure_runtime(monkeypatch, tmp_path)
     calls: list[str] = []
 
@@ -309,8 +324,12 @@ def test_successful_action_is_returned_from_idempotency_cache(monkeypatch, tmp_p
             },
         )
 
-    first = dispatch_action(_valid_email_action_contract(), email_executor=email_executor)
-    second = dispatch_action(_valid_email_action_contract(), email_executor=email_executor)
+    first = dispatch_action(
+        _valid_email_action_contract(), email_executor=email_executor
+    )
+    second = dispatch_action(
+        _valid_email_action_contract(), email_executor=email_executor
+    )
 
     assert calls == ["act-email-action-001"]
     assert first["status"] == "success"
@@ -338,9 +357,13 @@ def test_idempotency_survives_restart(monkeypatch, tmp_path: Path) -> None:
             },
         )
 
-    first = dispatch_action(_valid_email_action_contract(), email_executor=email_executor)
+    first = dispatch_action(
+        _valid_email_action_contract(), email_executor=email_executor
+    )
     action_dispatcher_module._ACTION_OUTCOME_CACHE.clear()
-    second = dispatch_action(_valid_email_action_contract(), email_executor=email_executor)
+    second = dispatch_action(
+        _valid_email_action_contract(), email_executor=email_executor
+    )
 
     assert calls == ["act-email-action-001"]
     assert first["status"] == "success"
@@ -367,9 +390,13 @@ def test_failed_non_retryable_action_is_not_replayed_after_restart(
             error_message="provider failed",
         )
 
-    first = dispatch_action(_valid_openai_action_contract(), openai_executor=openai_executor)
+    first = dispatch_action(
+        _valid_openai_action_contract(), openai_executor=openai_executor
+    )
     action_dispatcher_module._ACTION_OUTCOME_CACHE.clear()
-    second = dispatch_action(_valid_openai_action_contract(), openai_executor=openai_executor)
+    second = dispatch_action(
+        _valid_openai_action_contract(), openai_executor=openai_executor
+    )
 
     assert calls == ["act-openai-dispatch-001"]
     assert first["status"] == "failed"
@@ -378,7 +405,9 @@ def test_failed_non_retryable_action_is_not_replayed_after_restart(
     assert second["payload"]["metadata"]["idempotency_cache_hit"] is True
 
 
-def test_idempotency_store_failure_returns_normalized_failure(monkeypatch, tmp_path: Path) -> None:
+def test_idempotency_store_failure_returns_normalized_failure(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_runtime(monkeypatch, tmp_path)
 
     class FailingIdempotencyStore:
@@ -521,7 +550,9 @@ def test_printer_route_executes_with_trace_and_bounded_memory(
             result_type="print_document",
             payload={
                 "summary": "Printed 'Owner Review' on Zephyrus_Main",
-                "references": {"artifact_path": "runtime/out/artifacts/printer_jobs/act-print-action-001.txt"},
+                "references": {
+                    "artifact_path": "runtime/out/artifacts/printer_jobs/act-print-action-001.txt"
+                },
                 "metadata": {
                     "operation": "print_document",
                     "backend_used": "stub_printer",
@@ -558,7 +589,9 @@ def test_printer_route_executes_with_trace_and_bounded_memory(
     assert "Bounded printable document text." not in print_history[0]["result_summary"]
 
 
-def test_dispatcher_routes_to_default_live_capable_adapters(monkeypatch, tmp_path: Path) -> None:
+def test_dispatcher_routes_to_default_live_capable_adapters(
+    monkeypatch, tmp_path: Path
+) -> None:
     system_log_file = _configure_runtime(monkeypatch, tmp_path)
 
     class BrowserRuntime:
@@ -570,7 +603,14 @@ def test_dispatcher_routes_to_default_live_capable_adapters(monkeypatch, tmp_pat
         def extract_text(self, *, url: str, selector: str, timeout_seconds: int):
             raise AssertionError("unexpected operation")
 
-        def fill_form(self, *, url: str, fields: dict[str, str], selector: str | None, timeout_seconds: int):
+        def fill_form(
+            self,
+            *,
+            url: str,
+            fields: dict[str, str],
+            selector: str | None,
+            timeout_seconds: int,
+        ):
             raise AssertionError("unexpected operation")
 
         def click_element(self, *, url: str, selector: str, timeout_seconds: int):
@@ -586,14 +626,21 @@ def test_dispatcher_routes_to_default_live_capable_adapters(monkeypatch, tmp_pat
     class EmailRuntime:
         backend_name = "gmail"
 
-        def create_draft(self, *, to: list[str], subject: str, body: str, attachments: list[str]):
+        def create_draft(
+            self, *, to: list[str], subject: str, body: str, attachments: list[str]
+        ):
             raise AssertionError("unexpected operation")
 
-        def send_email(self, *, to: list[str], subject: str, body: str, attachments: list[str]):
+        def send_email(
+            self, *, to: list[str], subject: str, body: str, attachments: list[str]
+        ):
             return email_adapter_module.EmailExecution(
                 result_type="email_send",
                 summary="Sent via live email backend",
-                references={"message_id": "message-live-001", "recipient_count": len(to)},
+                references={
+                    "message_id": "message-live-001",
+                    "recipient_count": len(to),
+                },
             )
 
         def reply_email(
@@ -631,11 +678,17 @@ def test_dispatcher_routes_to_default_live_capable_adapters(monkeypatch, tmp_pat
     assert traces[-1]["backend_used"] == "gmail"
 
 
-def test_browser_and_email_dry_run_paths_use_adapter_simulation(monkeypatch, tmp_path: Path) -> None:
+def test_browser_and_email_dry_run_paths_use_adapter_simulation(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_runtime(monkeypatch, tmp_path)
 
-    browser_result = dispatch_action(_valid_browser_action_contract(execution_mode="dry_run"))
-    email_result = dispatch_action(_valid_email_action_contract(execution_mode="dry_run"))
+    browser_result = dispatch_action(
+        _valid_browser_action_contract(execution_mode="dry_run")
+    )
+    email_result = dispatch_action(
+        _valid_email_action_contract(execution_mode="dry_run")
+    )
 
     assert browser_result["status"] == "success"
     assert browser_result["result_type"] == "simulation"

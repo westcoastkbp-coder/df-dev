@@ -33,7 +33,9 @@ def _write_policy(tmp_path: Path) -> Path:
     return policy_path
 
 
-def test_register_artifact_persists_json_index(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_register_artifact_persists_json_index(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     registry_path = tmp_path / "df-system" / "memory_registry.json"
     monkeypatch.setattr(memory_registry, "REGISTRY_FILE", registry_path)
 
@@ -92,7 +94,9 @@ def test_save_artifact_registers_entry_and_supports_get_by_id(
 
     entry = memory_registry.get_artifact_by_id("renew-insurance")
 
-    assert saved_path == tmp_path / "ownerbox" / "artifacts" / "task_renew-insurance.json"
+    assert (
+        saved_path == tmp_path / "ownerbox" / "artifacts" / "task_renew-insurance.json"
+    )
     assert entry is not None
     assert entry["id"] == "renew-insurance"
     assert entry["domain"] == "ownerbox"

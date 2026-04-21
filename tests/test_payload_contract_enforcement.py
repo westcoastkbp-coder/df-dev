@@ -6,13 +6,20 @@ from app.execution.lead_estimate_decision import (
     build_action_payload,
     build_decision_payload,
 )
-from app.execution.lead_estimate_contract import build_execution_result_payload, build_input_payload, validate_input_payload
+from app.execution.lead_estimate_contract import (
+    build_execution_result_payload,
+    build_input_payload,
+    validate_input_payload,
+)
 from app.execution.real_lead_contract import (
     build_followup_payload,
     build_lead_input_payload,
     validate_followup_payload,
 )
-from app.execution.real_lead_reporting import build_reporting_payload, report_workflow_execution
+from app.execution.real_lead_reporting import (
+    build_reporting_payload,
+    report_workflow_execution,
+)
 
 
 def test_valid_lead_input_payload_passes() -> None:
@@ -31,7 +38,9 @@ def test_valid_lead_input_payload_passes() -> None:
 
 
 def test_missing_required_lead_input_field_fails() -> None:
-    with pytest.raises(ValueError, match="lead_input_payload missing required fields: scope_summary"):
+    with pytest.raises(
+        ValueError, match="lead_input_payload missing required fields: scope_summary"
+    ):
         from app.execution.real_lead_contract import validate_lead_input_payload
 
         validate_lead_input_payload(
@@ -51,7 +60,9 @@ def test_missing_required_lead_input_field_fails() -> None:
 
 
 def test_extra_lead_input_field_fails() -> None:
-    with pytest.raises(ValueError, match="lead_input_payload contains unsupported fields: extra_field"):
+    with pytest.raises(
+        ValueError, match="lead_input_payload contains unsupported fields: extra_field"
+    ):
         from app.execution.real_lead_contract import validate_lead_input_payload
 
         validate_lead_input_payload(
@@ -73,7 +84,9 @@ def test_extra_lead_input_field_fails() -> None:
 
 
 def test_decision_payload_shape_enforced() -> None:
-    with pytest.raises(ValueError, match="decision payload contains unsupported fields: extra_field"):
+    with pytest.raises(
+        ValueError, match="decision payload contains unsupported fields: extra_field"
+    ):
         build_decision_payload(
             {
                 "decision": "create_estimate",
@@ -85,7 +98,9 @@ def test_decision_payload_shape_enforced() -> None:
 
 
 def test_action_payload_shape_enforced() -> None:
-    with pytest.raises(ValueError, match="action payload contains unsupported fields: extra_field"):
+    with pytest.raises(
+        ValueError, match="action payload contains unsupported fields: extra_field"
+    ):
         build_action_payload(
             {
                 "binding_action": "create_estimate_task",
@@ -147,7 +162,9 @@ def test_input_payload_rejects_nested_scalar_structure() -> None:
 
 
 def test_followup_payload_shape_enforced() -> None:
-    with pytest.raises(ValueError, match="followup_payload contains unsupported fields: extra_field"):
+    with pytest.raises(
+        ValueError, match="followup_payload contains unsupported fields: extra_field"
+    ):
         validate_followup_payload(
             {
                 "workflow_type": "missing_input_followup",
@@ -161,7 +178,9 @@ def test_followup_payload_shape_enforced() -> None:
 
 
 def test_reporting_payload_shape_enforced() -> None:
-    with pytest.raises(ValueError, match="reporting_payload contains unsupported fields: extra_field"):
+    with pytest.raises(
+        ValueError, match="reporting_payload contains unsupported fields: extra_field"
+    ):
         report_workflow_execution(
             {
                 "task_id": "DF-1",

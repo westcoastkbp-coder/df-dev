@@ -64,7 +64,9 @@ def _build_task(*, task_id: str, intent: str = "new_lead") -> dict[str, object]:
     }
 
 
-def test_run_execution_fails_before_persist_or_executor_when_task_contract_is_invalid() -> None:
+def test_run_execution_fails_before_persist_or_executor_when_task_contract_is_invalid() -> (
+    None
+):
     persist_calls = 0
     executor_calls = 0
 
@@ -77,7 +79,10 @@ def test_run_execution_fails_before_persist_or_executor_when_task_contract_is_in
         executor_calls += 1
         return {"summary": "should not run"}
 
-    with pytest.raises(ValueError, match="task missing required fields: created_at, history, notes, task_contract_version"):
+    with pytest.raises(
+        ValueError,
+        match="task missing required fields: created_at, history, notes, task_contract_version",
+    ):
         execution_runner.run_execution(
             {
                 "task_id": "DF-BOUNDARY-INVALID-TASK-V1",
@@ -94,7 +99,9 @@ def test_run_execution_fails_before_persist_or_executor_when_task_contract_is_in
     assert executor_calls == 0
 
 
-def test_invalid_action_result_blocks_deeper_execution(monkeypatch, tmp_path: Path) -> None:
+def test_invalid_action_result_blocks_deeper_execution(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     task = task_factory.save_task(
         {
@@ -157,13 +164,21 @@ def test_invalid_action_result_blocks_deeper_execution(monkeypatch, tmp_path: Pa
     )
 
     assert executed["status"] == "FAILED"
-    assert executed["error"] == "invalid action result: action result contains unsupported fields: unexpected_field"
+    assert (
+        executed["error"]
+        == "invalid action result: action result contains unsupported fields: unexpected_field"
+    )
     assert executed["result"]["status"] == "invalid_action_result"
-    assert [snapshot["status"] for snapshot in persisted_snapshots] == ["EXECUTING", "FAILED"]
+    assert [snapshot["status"] for snapshot in persisted_snapshots] == [
+        "EXECUTING",
+        "FAILED",
+    ]
     assert len(task_factory.load_tasks(store_path)) == 1
 
 
-def test_workflow_validation_fails_before_any_persist_or_executor(monkeypatch, tmp_path: Path) -> None:
+def test_workflow_validation_fails_before_any_persist_or_executor(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     task = task_factory.save_task(
         {
@@ -203,7 +218,9 @@ def test_workflow_validation_fails_before_any_persist_or_executor(monkeypatch, t
         executor_calls += 1
         return {"summary": "should not run"}
 
-    with pytest.raises(ValueError, match="policy gate blocked workflow: lead_id must not be empty"):
+    with pytest.raises(
+        ValueError, match="policy gate blocked workflow: lead_id must not be empty"
+    ):
         execution_runner.run_execution(
             task,
             now=lambda: "2026-04-04T00:00:00Z",
@@ -243,7 +260,9 @@ def test_direct_action_call_is_blocked_and_logged(monkeypatch, tmp_path: Path) -
 def test_execution_without_task_is_blocked(monkeypatch, tmp_path: Path) -> None:
     _configure_state_backend(monkeypatch, tmp_path)
 
-    with execution_boundary_module.execution_boundary({"intent": "new_lead"}, policy_validated=True):
+    with execution_boundary_module.execution_boundary(
+        {"intent": "new_lead"}, policy_validated=True
+    ):
         result = dispatch_action_trigger(
             {
                 "action_type": "WRITE_FILE",
@@ -283,7 +302,9 @@ def test_execution_without_policy_is_blocked(monkeypatch, tmp_path: Path) -> Non
     assert result["reason"] == "execution_without_policy_blocked"
 
 
-def test_valid_execution_still_runs_through_execution_runner(monkeypatch, tmp_path: Path) -> None:
+def test_valid_execution_still_runs_through_execution_runner(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_state_backend(monkeypatch, tmp_path)
     task = _build_task(task_id="DF-BOUNDARY-VALID-EXECUTION-V1")
     persisted_statuses: list[str] = []

@@ -99,7 +99,9 @@ def test_single_task_preserves_lineage_under_repeated_approval_execution_and_sig
 
     execution_statuses: list[str] = []
     for _ in range(5):
-        current = task_factory_module.get_task(task_id, store_path=store_path) or approved
+        current = (
+            task_factory_module.get_task(task_id, store_path=store_path) or approved
+        )
         executed = run_execution(
             json.loads(json.dumps(current)),
             now=lambda: "2026-04-05T20:00:00Z",

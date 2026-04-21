@@ -135,13 +135,21 @@ def _context_is_cleanly_working(payload: dict[str, object]) -> bool:
 
     last_codex_loop = payload.get("last_codex_loop", {})
     if isinstance(last_codex_loop, dict):
-        if last_codex_loop.get("status") in {"timeout", "fail", "blocked_by_review", "escalated"}:
+        if last_codex_loop.get("status") in {
+            "timeout",
+            "fail",
+            "blocked_by_review",
+            "escalated",
+        }:
             return False
 
     modules_state = payload.get("modules_state", {})
     if isinstance(modules_state, dict):
         for item in modules_state.values():
-            if isinstance(item, dict) and item.get("status") in {"BLOCKED", "ESCALATED"}:
+            if isinstance(item, dict) and item.get("status") in {
+                "BLOCKED",
+                "ESCALATED",
+            }:
                 return False
 
     return True
@@ -187,7 +195,9 @@ def _build_execution_decision_trace(
 
 def select_broken_module(payload: dict[str, object]) -> str:
     raw_broken_modules = payload.get("broken_modules", [])
-    broken_modules = list(raw_broken_modules) if isinstance(raw_broken_modules, list) else []
+    broken_modules = (
+        list(raw_broken_modules) if isinstance(raw_broken_modules, list) else []
+    )
     if broken_modules:
         return str(broken_modules[0]).strip()
     raw_broken = payload.get("broken", {})
@@ -234,10 +244,7 @@ def execute_fix_task(prompt: str):
             text=True,
         )
     except subprocess.TimeoutExpired:
-        return {
-            "status": "timeout",
-            "reason": "codex_execution_timeout"
-        }
+        return {"status": "timeout", "reason": "codex_execution_timeout"}
     return result
 
 
@@ -299,9 +306,15 @@ def mark_fixed(payload: dict[str, object], module_name: str) -> dict[str, object
     broken = dict(payload.get("broken", {}) or {})
     broken.pop(module_name, None)
     payload["broken"] = broken
-    payload["broken_modules"] = [item for item in list(payload.get("broken_modules", []) or []) if item != module_name]
+    payload["broken_modules"] = [
+        item
+        for item in list(payload.get("broken_modules", []) or [])
+        if item != module_name
+    ]
     payload["status"] = "WORKING" if not broken else "NOT_WORKING"
-    payload["next_required"] = "Proceed to next broken module" if broken else "System ready for execution"
+    payload["next_required"] = (
+        "Proceed to next broken module" if broken else "System ready for execution"
+    )
     payload["last_codex_loop"] = {
         "module": module_name,
         "status": "pass",
@@ -343,14 +356,17 @@ def _update_loop_session(
         current_task=f"Resolve {module_name} from GitHub-backed session context.",
         last_failing_test=normalized_test,
         fixed_items=fixed_items,
-        remaining_items=remaining_items or _session_remaining_items(module_name, test_path),
+        remaining_items=remaining_items
+        or _session_remaining_items(module_name, test_path),
         status=status,
         next_step=next_step,
         did=did,
     )
 
 
-def enforce_external_review(payload: dict[str, object], module_name: str, test_path: Path) -> dict[str, object]:
+def enforce_external_review(
+    payload: dict[str, object], module_name: str, test_path: Path
+) -> dict[str, object]:
     review_result = _normalize_review_result(
         run_external_review(
             task_id=module_name,
@@ -380,7 +396,7 @@ def enforce_external_review(payload: dict[str, object], module_name: str, test_p
         updated["modules_state"][module_name] = {
             "status": "BLOCKED",
             "last_test": "PASS",
-            "review": review_result["decision"]
+            "review": review_result["decision"],
         }
         updated["last_error"] = {
             "module": module_name,
@@ -402,7 +418,7 @@ def enforce_external_review(payload: dict[str, object], module_name: str, test_p
         updated["git"] = {
             "commit": get_git_commit(),
             "branch": get_git_branch(),
-            "time": datetime.utcnow().isoformat()
+            "time": datetime.utcnow().isoformat(),
         }
         save_context(updated)
         log_execution(
@@ -466,16 +482,31 @@ def main() -> dict[str, str] | None:
     module_name = select_broken_module(context)
 
     if _context_is_cleanly_working(context):
-        print(json.dumps({"status": "pass", "message": "system already working"}, ensure_ascii=False))
+        print(
+            json.dumps(
+                {"status": "pass", "message": "system already working"},
+                ensure_ascii=False,
+            )
+        )
         return
 
     if not module_name:
-        print(json.dumps({"status": "fail", "reason": "no_broken_module_identified"}, ensure_ascii=False))
+        print(
+            json.dumps(
+                {"status": "fail", "reason": "no_broken_module_identified"},
+                ensure_ascii=False,
+            )
+        )
         return
 
     test_path = TEST_MAP.get(module_name)
     if test_path is None:
-        print(json.dumps({"status": "fail", "reason": "no_test_mapping", "module": module_name}, ensure_ascii=False))
+        print(
+            json.dumps(
+                {"status": "fail", "reason": "no_test_mapping", "module": module_name},
+                ensure_ascii=False,
+            )
+        )
         return
 
     normalized_test_path = str(test_path).replace("\\", "/")
@@ -485,7 +516,8 @@ def main() -> dict[str, str] | None:
         status="in_progress",
         next_step=f"Run {test_path.name} and keep /docs/dev_session.md current.",
         did=f"Loaded GitHub-backed session context for {module_name}.",
-        last_failing_test=extract_last_failing_test(repo_root=ROOT) or normalized_test_path,
+        last_failing_test=extract_last_failing_test(repo_root=ROOT)
+        or normalized_test_path,
     )
 
     modules_state = context.get("modules_state", {})
@@ -502,7 +534,9 @@ def main() -> dict[str, str] | None:
         updated = copy.deepcopy(context)
         _mark_not_working(updated)
         updated["next_required"] = f"manual intervention required for {module_name}"
-        escalation_decision = build_escalation_decision(module_name, "previous_escalation_pending")
+        escalation_decision = build_escalation_decision(
+            module_name, "previous_escalation_pending"
+        )
         updated["decision_trace"] = dict(escalation_decision.get("decision_trace", {}))
         save_context(updated)
         log_execution(
@@ -565,12 +599,12 @@ def main() -> dict[str, str] | None:
         updated["modules_state"][module_name] = {
             "status": "WORKING",
             "last_test": "PASS",
-            "review": review_result["decision"]
+            "review": review_result["decision"],
         }
         updated["git"] = {
             "commit": get_git_commit(),
             "branch": get_git_branch(),
-            "time": datetime.utcnow().isoformat()
+            "time": datetime.utcnow().isoformat(),
         }
         apply_strategy_feedback(updated, "success")
         save_context(updated)
@@ -856,13 +890,13 @@ STRICT RULES:
         updated["modules_state"][module_name] = {
             "status": "WORKING",
             "last_test": "PASS",
-            "review": review_result["decision"]
+            "review": review_result["decision"],
         }
         updated["last_strategy"] = fix_task["strategy"]
         updated["git"] = {
             "commit": get_git_commit(),
             "branch": get_git_branch(),
-            "time": datetime.utcnow().isoformat()
+            "time": datetime.utcnow().isoformat(),
         }
         apply_strategy_feedback(updated, "success")
         save_context(updated)
@@ -885,7 +919,9 @@ STRICT RULES:
             status="working",
             next_step=updated["next_required"],
             did=f"Codex fix for {module_name} passed validation and review.",
-            fixed_items=[f"Validated Codex fix for {module_name} via {normalized_test_path}."],
+            fixed_items=[
+                f"Validated Codex fix for {module_name} via {normalized_test_path}."
+            ],
             remaining_items=[
                 item
                 for item in (

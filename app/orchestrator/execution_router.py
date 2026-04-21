@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from collections.abc import Callable
 
@@ -39,11 +39,19 @@ def _network_event_details(network_snapshot: dict[str, object]) -> dict[str, obj
 def _runtime_event_details(runtime_decision: dict[str, object]) -> dict[str, object]:
     return {
         "event_type": "RUNTIME",
-        "overall_runtime_state": runtime_decision.get("overall_runtime_state", "NORMAL"),
-        "execution_preference": runtime_decision.get("execution_preference", "SAFE_LOCAL"),
-        "execution_compute_mode": runtime_decision.get("execution_compute_mode", "cpu_mode"),
+        "overall_runtime_state": runtime_decision.get(
+            "overall_runtime_state", "NORMAL"
+        ),
+        "execution_preference": runtime_decision.get(
+            "execution_preference", "SAFE_LOCAL"
+        ),
+        "execution_compute_mode": runtime_decision.get(
+            "execution_compute_mode", "cpu_mode"
+        ),
         "offload_recommended": bool(runtime_decision.get("offload_recommended", False)),
-        "load_reduction_required": bool(runtime_decision.get("load_reduction_required", False)),
+        "load_reduction_required": bool(
+            runtime_decision.get("load_reduction_required", False)
+        ),
         "voice_safety_mode": bool(runtime_decision.get("voice_safety_mode", False)),
         "confidence": runtime_decision.get("confidence", "HIGH_CONFIDENCE"),
         "path_type": runtime_decision.get("path_type", "non_voice"),
@@ -60,7 +68,9 @@ def _runtime_event_details(runtime_decision: dict[str, object]) -> dict[str, obj
     }
 
 
-def _validation_event_details(runtime_validation: dict[str, object]) -> dict[str, object]:
+def _validation_event_details(
+    runtime_validation: dict[str, object],
+) -> dict[str, object]:
     return {
         "event_type": "RUNTIME_VALIDATION",
         "state": runtime_validation.get("state", "PASSED"),
@@ -131,12 +141,17 @@ def route_execution(
     runtime_profile = get_runtime_profile()
     metrics = dict(telemetry_collector())
     network_snapshot = dict(network_snapshot_collector())
-    execution_mode, execution_compute_mode, routing_reason, safety_override, network_policy, runtime_decision = (
-        decide_policy_execution_mode(
-            task_data,
-            metrics,
-            network_snapshot,
-        )
+    (
+        execution_mode,
+        execution_compute_mode,
+        routing_reason,
+        safety_override,
+        network_policy,
+        runtime_decision,
+    ) = decide_policy_execution_mode(
+        task_data,
+        metrics,
+        network_snapshot,
     )
     runtime_decision["execution_compute_mode"] = execution_compute_mode
     runtime_validation = build_runtime_validation(
@@ -221,7 +236,10 @@ def route_execution(
             to_status=task_data.get("status", ""),
             details=_network_event_details(network_snapshot),
         )
-    if network_snapshot.get("quality") == "DEGRADED" or network_snapshot.get("policy_mode") == "DEGRADED":
+    if (
+        network_snapshot.get("quality") == "DEGRADED"
+        or network_snapshot.get("policy_mode") == "DEGRADED"
+    ):
         record_task_event(
             task_data,
             timestamp=now(),
@@ -349,7 +367,10 @@ def route_execution(
         to_status=task_data.get("status", ""),
         details=_verdict_event_details(runtime_verdict),
     )
-    if str(runtime_verdict.get("voice_verdict", "")).strip() not in {"", "NOT_APPLICABLE"}:
+    if str(runtime_verdict.get("voice_verdict", "")).strip() not in {
+        "",
+        "NOT_APPLICABLE",
+    }:
         record_task_event(
             task_data,
             timestamp=now(),
@@ -366,13 +387,15 @@ def route_execution(
             event="safety_override",
             from_status=task_data.get("status", ""),
             to_status=task_data.get("status", ""),
-        details=dict(routing_contract),
+            details=dict(routing_contract),
         )
 
     record_task_event(
         task_data,
         timestamp=now(),
-        event="policy_routed_remote" if execution_mode == "REMOTE" else "policy_routed_local",
+        event="policy_routed_remote"
+        if execution_mode == "REMOTE"
+        else "policy_routed_local",
         from_status=task_data.get("status", ""),
         to_status=task_data.get("status", ""),
         details=dict(routing_contract),
@@ -381,7 +404,9 @@ def route_execution(
     record_task_event(
         task_data,
         timestamp=now(),
-        event="execution_routed_remote" if execution_mode == "REMOTE" else "execution_routed_local",
+        event="execution_routed_remote"
+        if execution_mode == "REMOTE"
+        else "execution_routed_local",
         from_status=task_data.get("status", ""),
         to_status=task_data.get("status", ""),
         details=dict(routing_contract),
@@ -402,5 +427,10 @@ def route_execution(
         "routing_contract": dict(routing_contract),
     }
 
-__all__ = ["COMPUTE_MODES", "EXECUTION_MODES", "materialize_routing_contract", "route_execution"]
 
+__all__ = [
+    "COMPUTE_MODES",
+    "EXECUTION_MODES",
+    "materialize_routing_contract",
+    "route_execution",
+]

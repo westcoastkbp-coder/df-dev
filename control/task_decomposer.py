@@ -50,11 +50,7 @@ ANALYSIS_HINTS = (
 )
 ACTION_VERBS = tuple(
     dict.fromkeys(
-        CREATE_HINTS
-        + MODIFY_HINTS
-        + SETUP_HINTS
-        + ANALYSIS_HINTS
-        + ("build", "run")
+        CREATE_HINTS + MODIFY_HINTS + SETUP_HINTS + ANALYSIS_HINTS + ("build", "run")
     )
 )
 VERB_GROUP = "|".join(
@@ -113,12 +109,17 @@ def _clean_clause(text: str) -> str:
 
 def _is_structured_single_step_task(task_source: dict[str, Any]) -> bool:
     task_type = str(task_source.get("task_type") or "").strip()
-    return task_type in STRUCTURED_SINGLE_STEP_TASK_TYPES or isinstance(
-        task_source.get("personal_context_update"),
-        dict,
-    ) or isinstance(task_source.get("tool_call"), dict) or isinstance(
-        task_source.get("pipeline"),
-        list,
+    return (
+        task_type in STRUCTURED_SINGLE_STEP_TASK_TYPES
+        or isinstance(
+            task_source.get("personal_context_update"),
+            dict,
+        )
+        or isinstance(task_source.get("tool_call"), dict)
+        or isinstance(
+            task_source.get("pipeline"),
+            list,
+        )
     )
 
 
@@ -225,11 +226,15 @@ def decompose_task(task_source: dict[str, Any] | Path | str) -> dict[str, Any]:
         if expanded:
             split_clauses.extend(expanded)
 
-    normalized_clauses = [clause for clause in map(_clean_clause, split_clauses) if clause]
+    normalized_clauses = [
+        clause for clause in map(_clean_clause, split_clauses) if clause
+    ]
     if not normalized_clauses:
         normalized_clauses = [_clean_clause(instruction)]
 
-    limited_clauses = _merge_excess_clauses(normalized_clauses or [_clean_clause(instruction)])
+    limited_clauses = _merge_excess_clauses(
+        normalized_clauses or [_clean_clause(instruction)]
+    )
     subtasks: list[dict[str, Any]] = []
     for index, clause in enumerate(limited_clauses, start=1):
         subtasks.append(
@@ -243,7 +248,8 @@ def decompose_task(task_source: dict[str, Any] | Path | str) -> dict[str, Any]:
 
     return {
         "parent_task_id": parent_task_id,
-        "subtasks": subtasks or [
+        "subtasks": subtasks
+        or [
             {
                 "subtask_id": f"{parent_task_id}-1",
                 "instruction": _clean_clause(instruction),

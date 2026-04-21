@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import PurePosixPath
@@ -133,4 +133,3 @@ def classify_paths(paths: Iterable[str]) -> ChangeClassification:
         reviewer_required=route.reviewer_required,
         qa_repeat_allowed=route.qa_repeat_allowed,
     )
-

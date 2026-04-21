@@ -46,8 +46,7 @@ class HybridRuntimeConfig:
         payload = asdict(self)
         payload["workspace_root"] = self.workspace_root.as_posix()
         payload["storage_paths"] = {
-            key: value.as_posix()
-            for key, value in asdict(self.storage_paths).items()
+            key: value.as_posix() for key, value in asdict(self.storage_paths).items()
         }
         return payload
 
@@ -132,6 +131,8 @@ def load_runtime_config(
             enabled=role == "local_dev",
             base_url=str(env.get("DF_REMOTE_BASE_URL", "")).strip(),
             verify_tls=_env_flag(env, "DF_REMOTE_VERIFY_TLS", default=True),
-            request_timeout_seconds=_env_float(env, "DF_REMOTE_TIMEOUT_SECONDS", default=30.0),
+            request_timeout_seconds=_env_float(
+                env, "DF_REMOTE_TIMEOUT_SECONDS", default=30.0
+            ),
         ),
     )

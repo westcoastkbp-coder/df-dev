@@ -91,7 +91,13 @@ TASK_ALLOWED_FIELDS = TASK_REQUIRED_FIELDS | {
     "rejected_at",
     "rejected_by",
 }
-TASK_EVENT_REQUIRED_FIELDS = {"timestamp", "event", "from_status", "to_status", "details"}
+TASK_EVENT_REQUIRED_FIELDS = {
+    "timestamp",
+    "event",
+    "from_status",
+    "to_status",
+    "details",
+}
 TASK_EVENT_ALLOWED_FIELDS = set(TASK_EVENT_REQUIRED_FIELDS)
 
 
@@ -170,7 +176,9 @@ def canonical_task_type(task_data: object) -> str:
         payload_task_type = _normalize_text(payload.get("task_type")).lower()
         if payload_task_type:
             return payload_task_type
-    return INTENT_TASK_TYPE_ALIASES.get(_normalize_text(task_data.get("intent")).lower(), "")
+    return INTENT_TASK_TYPE_ALIASES.get(
+        _normalize_text(task_data.get("intent")).lower(), ""
+    )
 
 
 def is_office_task(task_data: object) -> bool:
@@ -196,7 +204,9 @@ def validate_task_lineage(
     if not task_type:
         return validated_task
     if task_type not in OFFICE_TASK_TYPES:
-        raise ValueError(f"task_type must be one of: {', '.join(sorted(OFFICE_TASK_TYPES))}")
+        raise ValueError(
+            f"task_type must be one of: {', '.join(sorted(OFFICE_TASK_TYPES))}"
+        )
 
     validated_task["task_type"] = task_type
     parent_task_id = _lineage_parent_task_id(validated_task)
@@ -221,7 +231,9 @@ def validate_task_lineage(
             f"invalid office lineage transition: {resolved_parent_type} -> {task_type}"
         )
 
-    declared_parent_type = _normalize_text(validated_task.get("parent_task_type")).lower()
+    declared_parent_type = _normalize_text(
+        validated_task.get("parent_task_type")
+    ).lower()
     if declared_parent_type and declared_parent_type != resolved_parent_type:
         raise ValueError(
             f"parent_task_type must equal resolved parent type: {resolved_parent_type}"
@@ -231,7 +243,9 @@ def validate_task_lineage(
     validated_task["parent_task_type"] = resolved_parent_type
 
     for existing_task in existing_tasks or []:
-        if _normalize_text(existing_task.get("task_id")) == _normalize_text(validated_task.get("task_id")):
+        if _normalize_text(existing_task.get("task_id")) == _normalize_text(
+            validated_task.get("task_id")
+        ):
             continue
         if _lineage_parent_task_id(existing_task) != parent_task_id:
             continue
@@ -258,9 +272,7 @@ def validate_task_contract(task_data: object) -> dict[str, object]:
 
     contract_version = task_data.get("task_contract_version")
     if contract_version != TASK_CONTRACT_VERSION:
-        raise ValueError(
-            f"task_contract_version must equal {TASK_CONTRACT_VERSION}"
-        )
+        raise ValueError(f"task_contract_version must equal {TASK_CONTRACT_VERSION}")
 
     task_id = _normalize_text(task_data.get("task_id"))
     if not task_id:
@@ -349,7 +361,9 @@ def validate_task_contract(task_data: object) -> dict[str, object]:
 
     if "offload_latency" in task_data:
         offload_latency = task_data.get("offload_latency")
-        if offload_latency is not None and not isinstance(offload_latency, (int, float)):
+        if offload_latency is not None and not isinstance(
+            offload_latency, (int, float)
+        ):
             raise ValueError("offload_latency must be numeric when provided")
         validated_task["offload_latency"] = offload_latency
 
@@ -373,7 +387,9 @@ def validate_task_contract(task_data: object) -> dict[str, object]:
         )
 
     if "runtime_profile" in task_data:
-        validated_task["runtime_profile"] = _normalize_text(task_data.get("runtime_profile"))
+        validated_task["runtime_profile"] = _normalize_text(
+            task_data.get("runtime_profile")
+        )
 
     if "runtime_authority_chain" in task_data:
         authority_chain = task_data.get("runtime_authority_chain")
@@ -382,7 +398,9 @@ def validate_task_contract(task_data: object) -> dict[str, object]:
         elif isinstance(authority_chain, list):
             validated_task["runtime_authority_chain"] = list(authority_chain)
         else:
-            raise ValueError("runtime_authority_chain must be a dict or list when provided")
+            raise ValueError(
+                "runtime_authority_chain must be a dict or list when provided"
+            )
 
     return validated_task
 

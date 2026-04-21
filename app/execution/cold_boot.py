@@ -60,7 +60,9 @@ def _append_log(
         "details": dict(details or {}),
     }
     with target.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(payload, ensure_ascii=True, separators=(",", ":")) + "\n")
+        handle.write(
+            json.dumps(payload, ensure_ascii=True, separators=(",", ":")) + "\n"
+        )
     return target
 
 
@@ -236,7 +238,9 @@ def _prepare_validated_task() -> dict[str, object]:
     return task_factory_module.save_task(task, store_path=store_path)
 
 
-def _run_scenario_once(*, label: str, log_path: Path | None = None) -> dict[str, object]:
+def _run_scenario_once(
+    *, label: str, log_path: Path | None = None
+) -> dict[str, object]:
     from app.orchestrator.task_worker import process_next_queued_task
 
     target_log = Path(log_path) if log_path is not None else cold_boot_log_path()
@@ -287,7 +291,8 @@ def _run_scenario_once(*, label: str, log_path: Path | None = None) -> dict[str,
                 "final_status": str(executed_task.get("status", "")).strip(),
                 "error": str(executed_task.get("error", "")).strip(),
                 "decision": dict(
-                    dict(executed_task.get("result", {}) or {}).get("decision", {}) or {}
+                    dict(executed_task.get("result", {}) or {}).get("decision", {})
+                    or {}
                 ),
                 "execution_order": list(snapshot.get("execution_order", [])),
             },
@@ -306,7 +311,9 @@ def _run_scenario_once(*, label: str, log_path: Path | None = None) -> dict[str,
 def run_cold_boot_validation(*, log_path: Path | None = None) -> dict[str, object]:
     target_log = Path(log_path) if log_path is not None else cold_boot_log_path()
 
-    reset_summary = reset_cold_boot_environment(log_path=target_log, clear_boot_log=True)
+    reset_summary = reset_cold_boot_environment(
+        log_path=target_log, clear_boot_log=True
+    )
     initialization_summary = initialize_cold_boot_system(log_path=target_log)
     baseline_run = _run_scenario_once(label="baseline", log_path=target_log)
 
@@ -318,9 +325,15 @@ def run_cold_boot_validation(*, log_path: Path | None = None) -> dict[str, objec
         baseline_run["snapshot"],
         cold_boot_run["snapshot"],
     )
-    baseline_completed = str(baseline_run["task"].get("status", "")).strip() == "COMPLETED"
-    cold_boot_completed = str(cold_boot_run["task"].get("status", "")).strip() == "COMPLETED"
-    correct_execution_path = list(cold_boot_run["snapshot"].get("execution_order", [])) == [
+    baseline_completed = (
+        str(baseline_run["task"].get("status", "")).strip() == "COMPLETED"
+    )
+    cold_boot_completed = (
+        str(cold_boot_run["task"].get("status", "")).strip() == "COMPLETED"
+    )
+    correct_execution_path = list(
+        cold_boot_run["snapshot"].get("execution_order", [])
+    ) == [
         "input_validated",
         "decision_recorded",
         "decision_evaluated",
@@ -342,7 +355,8 @@ def run_cold_boot_validation(*, log_path: Path | None = None) -> dict[str, objec
         "reset_summary": reset_summary,
         "initialization_summary": initialization_summary,
         "no_dependency_on_previous_runs": bool(matches),
-        "no_missing_initialization": initialization_summary["execution_readiness"] == "ready",
+        "no_missing_initialization": initialization_summary["execution_readiness"]
+        == "ready",
         "correct_execution_path": correct_execution_path,
         "determinism_preserved": bool(matches),
         "mismatched_field": str(mismatched_field or ""),

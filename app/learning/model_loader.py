@@ -39,9 +39,13 @@ def _parse_timestamp(value: object) -> str:
     if not normalized:
         raise ModelLoaderError("created_at must not be empty.")
     try:
-        datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(timezone.utc)
+        datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(
+            timezone.utc
+        )
     except ValueError as exc:
-        raise ModelLoaderError("created_at must be a valid ISO-8601 timestamp.") from exc
+        raise ModelLoaderError(
+            "created_at must be a valid ISO-8601 timestamp."
+        ) from exc
     return normalized
 
 
@@ -70,18 +74,16 @@ def _validate_weights(value: object) -> dict[str, float]:
     weights: dict[str, float] = {}
     for feature_name in REQUIRED_MODEL_FEATURES:
         if feature_name not in value:
-            raise ModelLoaderError(f"weights missing required feature '{feature_name}'.")
+            raise ModelLoaderError(
+                f"weights missing required feature '{feature_name}'."
+            )
         raw_weight = value[feature_name]
         try:
             normalized_weight = float(raw_weight)
         except (TypeError, ValueError) as exc:
-            raise ModelLoaderError(
-                f"weight '{feature_name}' must be numeric."
-            ) from exc
+            raise ModelLoaderError(f"weight '{feature_name}' must be numeric.") from exc
         if not math.isfinite(normalized_weight):
-            raise ModelLoaderError(
-                f"weight '{feature_name}' must be finite."
-            )
+            raise ModelLoaderError(f"weight '{feature_name}' must be finite.")
         weights[feature_name] = normalized_weight
     extra_keys = set(value) - set(REQUIRED_MODEL_FEATURES)
     if extra_keys:

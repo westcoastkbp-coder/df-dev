@@ -69,8 +69,16 @@ def test_save_artifact_is_idempotent_by_logical_key(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setattr(storage_adapter, "POLICY_FILE", _write_policy(tmp_path))
-    monkeypatch.setattr(storage_adapter, "STORAGE_BACKEND_FILE", _write_storage_backend(tmp_path, webdav_enabled=False))
-    monkeypatch.setattr(memory_registry, "REGISTRY_FILE", tmp_path / "df-system" / "memory_registry.json")
+    monkeypatch.setattr(
+        storage_adapter,
+        "STORAGE_BACKEND_FILE",
+        _write_storage_backend(tmp_path, webdav_enabled=False),
+    )
+    monkeypatch.setattr(
+        memory_registry,
+        "REGISTRY_FILE",
+        tmp_path / "df-system" / "memory_registry.json",
+    )
 
     first_path = storage_adapter.save_artifact(
         "dev",
@@ -90,7 +98,9 @@ def test_save_artifact_is_idempotent_by_logical_key(
     )
     output = capsys.readouterr().out
     stored_payload = json.loads(first_path.read_text(encoding="utf-8"))
-    registry_payload = json.loads(memory_registry.REGISTRY_FILE.read_text(encoding="utf-8"))
+    registry_payload = json.loads(
+        memory_registry.REGISTRY_FILE.read_text(encoding="utf-8")
+    )
 
     assert first_path == second_path
     assert first_path.exists()
@@ -108,8 +118,16 @@ def test_save_artifact_does_not_repeat_webdav_upload_on_idempotent_hit(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setattr(storage_adapter, "POLICY_FILE", _write_policy(tmp_path))
-    monkeypatch.setattr(storage_adapter, "STORAGE_BACKEND_FILE", _write_storage_backend(tmp_path, webdav_enabled=True))
-    monkeypatch.setattr(memory_registry, "REGISTRY_FILE", tmp_path / "df-system" / "memory_registry.json")
+    monkeypatch.setattr(
+        storage_adapter,
+        "STORAGE_BACKEND_FILE",
+        _write_storage_backend(tmp_path, webdav_enabled=True),
+    )
+    monkeypatch.setattr(
+        memory_registry,
+        "REGISTRY_FILE",
+        tmp_path / "df-system" / "memory_registry.json",
+    )
     monkeypatch.setenv("WEBDEV_USER", "admin")
     monkeypatch.setenv("WEBDEV_PASSWORD", "test-password")
 
@@ -146,7 +164,9 @@ def test_save_artifact_does_not_repeat_webdav_upload_on_idempotent_hit(
     assert "[STORAGE] idempotent_hit artifact=owner-sync" in output
 
 
-def test_run_codex_task_repeated_execution_reuses_same_artifact_path(tmp_path: Path) -> None:
+def test_run_codex_task_repeated_execution_reuses_same_artifact_path(
+    tmp_path: Path,
+) -> None:
     task_path = tmp_path / "task-51.json"
     task_path.write_text(
         (
@@ -176,5 +196,9 @@ def test_run_codex_task_repeated_execution_reuses_same_artifact_path(tmp_path: P
     artifact_paths = list((tmp_path / "artifacts").glob("task-*.txt"))
 
     assert first_task["task_id"] == second_task["task_id"] == 51
-    assert first_artifact_path == second_artifact_path == tmp_path / "artifacts" / "task-51.txt"
+    assert (
+        first_artifact_path
+        == second_artifact_path
+        == tmp_path / "artifacts" / "task-51.txt"
+    )
     assert len(artifact_paths) == 1

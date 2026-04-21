@@ -20,8 +20,4 @@ def call_claude_local(packet):
         check=False,
     )
 
-    return {
-        "status": "ok",
-        "stdout": result.stdout,
-        "stderr": result.stderr
-    }
+    return {"status": "ok", "stdout": result.stdout, "stderr": result.stderr}

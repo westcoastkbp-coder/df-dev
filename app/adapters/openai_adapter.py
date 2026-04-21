@@ -22,7 +22,9 @@ from app.execution.action_contract import (
 SUPPORTED_ACTION_TYPE = "OPENAI_REQUEST"
 SUPPORTED_TARGET_REF = "openai"
 SUPPORTED_PARAMETER_FIELDS = frozenset({"model", "prompt", "max_tokens", "temperature"})
-SUPPORTED_CONFIG_FIELDS = frozenset({"timeout_seconds", "max_retries", "supported_models"})
+SUPPORTED_CONFIG_FIELDS = frozenset(
+    {"timeout_seconds", "max_retries", "supported_models"}
+)
 MAX_TOKENS_LIMIT = 4096
 DEFAULT_OPENAI_BASE_URL = "https://api.openai.com"
 DEFAULT_TIMEOUT_SECONDS = 30
@@ -72,8 +74,7 @@ class OpenAITextClient(Protocol):
         max_tokens: int,
         temperature: float,
         timeout_seconds: int,
-    ) -> OpenAITextResponse:
-        ...
+    ) -> OpenAITextResponse: ...
 
 
 def _utc_timestamp() -> str:
@@ -108,7 +109,9 @@ def _normalize_sequence(value: object) -> list[object]:
     return []
 
 
-def _normalize_diagnostic_mapping(value: Mapping[str, object] | None) -> dict[str, object]:
+def _normalize_diagnostic_mapping(
+    value: Mapping[str, object] | None,
+) -> dict[str, object]:
     normalized: dict[str, object] = {}
     if value is None:
         return normalized
@@ -139,9 +142,15 @@ def _normalize_supported_models(value: object) -> tuple[str, ...] | None:
     if value is None:
         return None
     if isinstance(value, str):
-        items = [item for item in (_normalize_text(part) for part in value.split(",")) if item]
+        items = [
+            item
+            for item in (_normalize_text(part) for part in value.split(","))
+            if item
+        ]
     elif isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, str)):
-        items = [_bounded_text(item, field_name="supported_models item") for item in value]
+        items = [
+            _bounded_text(item, field_name="supported_models item") for item in value
+        ]
     else:
         raise OpenAIAdapterError(
             "validation_error",
@@ -228,7 +237,9 @@ def _parse_optional_int(value: object) -> int | None:
     return None
 
 
-def _extract_usage(payload: Mapping[str, object]) -> tuple[int | None, int | None, int | None]:
+def _extract_usage(
+    payload: Mapping[str, object],
+) -> tuple[int | None, int | None, int | None]:
     usage = _normalize_mapping(payload.get("usage"))
     input_tokens = _parse_optional_int(usage.get("input_tokens"))
     if input_tokens is None:
@@ -342,7 +353,9 @@ def _resolve_adapter_config(
     if config is None:
         raw_timeout = _normalize_text(os.getenv("OPENAI_ADAPTER_TIMEOUT_SECONDS"))
         raw_retries = _normalize_text(os.getenv("OPENAI_ADAPTER_MAX_RETRIES"))
-        timeout_seconds: object = DEFAULT_TIMEOUT_SECONDS if not raw_timeout else raw_timeout
+        timeout_seconds: object = (
+            DEFAULT_TIMEOUT_SECONDS if not raw_timeout else raw_timeout
+        )
         max_retries: object = DEFAULT_MAX_RETRIES if not raw_retries else raw_retries
         supported_models = _read_supported_models_from_env()
     elif isinstance(config, OpenAIAdapterConfig):
@@ -354,7 +367,8 @@ def _resolve_adapter_config(
         if unexpected_fields:
             raise OpenAIAdapterError(
                 "validation_error",
-                "adapter config contains unsupported fields: " + ", ".join(unexpected_fields),
+                "adapter config contains unsupported fields: "
+                + ", ".join(unexpected_fields),
             )
         timeout_seconds = config.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)
         max_retries = config.get("max_retries", DEFAULT_MAX_RETRIES)
@@ -363,7 +377,9 @@ def _resolve_adapter_config(
         raise OpenAIAdapterError("validation_error", "adapter config must be a mapping")
 
     if isinstance(timeout_seconds, bool):
-        raise OpenAIAdapterError("validation_error", "timeout_seconds must be an integer")
+        raise OpenAIAdapterError(
+            "validation_error", "timeout_seconds must be an integer"
+        )
     try:
         normalized_timeout = int(timeout_seconds)
     except (TypeError, ValueError) as exc:
@@ -427,7 +443,9 @@ class DefaultOpenAITextClient:
         }
         http_request = request.Request(
             _responses_url(),
-            data=json.dumps(payload, ensure_ascii=True, separators=(",", ":")).encode("utf-8"),
+            data=json.dumps(payload, ensure_ascii=True, separators=(",", ":")).encode(
+                "utf-8"
+            ),
             headers={
                 "Authorization": f"Bearer {_api_key()}",
                 "Content-Type": "application/json",
@@ -442,7 +460,8 @@ class DefaultOpenAITextClient:
             provider_message, diagnostic = _extract_provider_error(detail)
             raise OpenAIAdapterError(
                 "provider_error",
-                _truncate_text(provider_message) or f"OpenAI provider returned HTTP {exc.code}",
+                _truncate_text(provider_message)
+                or f"OpenAI provider returned HTTP {exc.code}",
                 diagnostic={
                     "http_status": exc.code,
                     **diagnostic,
@@ -477,7 +496,9 @@ class DefaultOpenAITextClient:
                 diagnostic={"reason": _truncate_text(exc)},
             ) from exc
 
-        input_tokens, output_tokens, total_tokens = _extract_usage(_normalize_mapping(response_payload))
+        input_tokens, output_tokens, total_tokens = _extract_usage(
+            _normalize_mapping(response_payload)
+        )
         return OpenAITextResponse(
             text=_extract_response_text(_normalize_mapping(response_payload)),
             input_tokens=input_tokens,
@@ -496,7 +517,10 @@ def _validate_openai_action_contract(
         raise ActionContractViolation(
             f"unsupported action_type for openai adapter: {validated_contract['action_type']}"
         )
-    if _normalize_text(validated_contract.get("target_ref")).lower() != SUPPORTED_TARGET_REF:
+    if (
+        _normalize_text(validated_contract.get("target_ref")).lower()
+        != SUPPORTED_TARGET_REF
+    ):
         raise ActionContractViolation(f"target_ref must be {SUPPORTED_TARGET_REF}")
     normalized_parameters = validate_openai_action_parameters(
         _normalize_mapping(validated_contract.get("parameters")),
@@ -582,7 +606,9 @@ def execute_openai_action(
 
     try:
         effective_config = _resolve_adapter_config(config)
-        validated_contract = _validate_openai_action_contract(action_contract, config=effective_config)
+        validated_contract = _validate_openai_action_contract(
+            action_contract, config=effective_config
+        )
         action_id = str(validated_contract["action_id"])
         parameters = dict(validated_contract["parameters"])
 

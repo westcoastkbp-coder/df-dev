@@ -21,7 +21,9 @@ def run_google_docs_create_document(input_payload: dict[str, Any]) -> dict[str, 
     }
 
 
-def run_google_docs_create_document_external(input_payload: dict[str, Any]) -> dict[str, str]:
+def run_google_docs_create_document_external(
+    input_payload: dict[str, Any],
+) -> dict[str, str]:
     return run_google_docs_create_document(input_payload)
 
 

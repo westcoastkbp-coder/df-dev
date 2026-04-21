@@ -31,7 +31,9 @@ def test_load_context_recovers_when_json_corrupted(monkeypatch, tmp_path):
 
 def test_load_context_fills_missing_keys_for_partial_context(monkeypatch, tmp_path):
     target = tmp_path / "system_context.json"
-    target.write_text('{"system":"Digital Foreman","status":"WORKING"}', encoding="utf-8")
+    target.write_text(
+        '{"system":"Digital Foreman","status":"WORKING"}', encoding="utf-8"
+    )
     monkeypatch.setattr(memory, "CTX_PATH", target)
 
     result = memory.load_context()

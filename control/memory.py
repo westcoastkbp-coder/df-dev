@@ -18,7 +18,7 @@ def default_context():
         "last_update": "",
         "modules_state": {},
         "last_codex_loop": {},
-        "next_required": ""
+        "next_required": "",
     }
 
 
@@ -67,10 +67,7 @@ def save_context(ctx):
 
 def record_event(event: str):
     ctx = load_context()
-    ctx["history"].append({
-        "time": datetime.utcnow().isoformat(),
-        "event": event
-    })
+    ctx["history"].append({"time": datetime.utcnow().isoformat(), "event": event})
     save_context(ctx)
 
 

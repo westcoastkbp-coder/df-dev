@@ -53,8 +53,12 @@ def test_success_records_strategy_feedback(monkeypatch, capsys) -> None:
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("fail", "broken"))
-    monkeypatch.setattr(codex_loop, "execute_fix_task", lambda prompt: SuccessfulExecution())
-    monkeypatch.setattr(codex_loop, "run_in_dev_env", lambda *args, **kwargs: SuccessfulValidation())
+    monkeypatch.setattr(
+        codex_loop, "execute_fix_task", lambda prompt: SuccessfulExecution()
+    )
+    monkeypatch.setattr(
+        codex_loop, "run_in_dev_env", lambda *args, **kwargs: SuccessfulValidation()
+    )
     monkeypatch.setattr(
         codex_loop,
         "run_external_review",
@@ -105,7 +109,9 @@ def test_failure_records_strategy_feedback(monkeypatch, capsys) -> None:
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("fail", "broken"))
-    monkeypatch.setattr(codex_loop, "execute_fix_task", lambda prompt: FailedExecution())
+    monkeypatch.setattr(
+        codex_loop, "execute_fix_task", lambda prompt: FailedExecution()
+    )
 
     codex_loop.main()
     output = json.loads(capsys.readouterr().out.strip())
@@ -155,7 +161,9 @@ def test_strategy_history_accumulates(monkeypatch, capsys) -> None:
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("fail", "broken"))
-    monkeypatch.setattr(codex_loop, "execute_fix_task", lambda prompt: FailedExecution())
+    monkeypatch.setattr(
+        codex_loop, "execute_fix_task", lambda prompt: FailedExecution()
+    )
 
     codex_loop.main()
     capsys.readouterr()
@@ -198,7 +206,9 @@ def test_audit_contains_strategy_feedback(monkeypatch, capsys) -> None:
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("fail", "broken"))
-    monkeypatch.setattr(codex_loop, "execute_fix_task", lambda prompt: FailedExecution())
+    monkeypatch.setattr(
+        codex_loop, "execute_fix_task", lambda prompt: FailedExecution()
+    )
 
     codex_loop.main()
     capsys.readouterr()

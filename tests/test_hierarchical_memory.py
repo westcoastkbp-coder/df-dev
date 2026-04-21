@@ -31,8 +31,13 @@ def test_build_assistant_context_exposes_full_memory_and_scoped_files(
     assistant_context = memory_store_module.build_assistant_context()
 
     assert assistant_context["access_level"] == "assistant_context"
-    assert assistant_context["shared_memory"]["owner_memory"]["owner_name"] == "Anton Vorontsov"
-    assert assistant_context["shared_memory"]["project_state"]["core_status"] == "stable"
+    assert (
+        assistant_context["shared_memory"]["owner_memory"]["owner_name"]
+        == "Anton Vorontsov"
+    )
+    assert (
+        assistant_context["shared_memory"]["project_state"]["core_status"] == "stable"
+    )
     assert set(assistant_context["scoped_memory"]) == {
         "google_context",
         "web_context",
@@ -80,8 +85,14 @@ def test_build_agent_task_payload_routes_scoped_memory_by_role(
 ) -> None:
     memory_dir = tmp_path / "memory"
     monkeypatch.setattr(memory_store_module, "MEMORY_DIR", memory_dir)
-    monkeypatch.setattr(orchestrator, "build_assistant_context", memory_store_module.build_assistant_context)
-    monkeypatch.setattr(orchestrator, "build_agent_context", memory_store_module.build_agent_context)
+    monkeypatch.setattr(
+        orchestrator,
+        "build_assistant_context",
+        memory_store_module.build_assistant_context,
+    )
+    monkeypatch.setattr(
+        orchestrator, "build_agent_context", memory_store_module.build_agent_context
+    )
 
     payload = orchestrator.build_agent_task_payload(
         {
@@ -102,8 +113,14 @@ def test_build_agent_task_payload_allows_explicit_full_memory_override(
 ) -> None:
     memory_dir = tmp_path / "memory"
     monkeypatch.setattr(memory_store_module, "MEMORY_DIR", memory_dir)
-    monkeypatch.setattr(orchestrator, "build_assistant_context", memory_store_module.build_assistant_context)
-    monkeypatch.setattr(orchestrator, "build_agent_context", memory_store_module.build_agent_context)
+    monkeypatch.setattr(
+        orchestrator,
+        "build_assistant_context",
+        memory_store_module.build_assistant_context,
+    )
+    monkeypatch.setattr(
+        orchestrator, "build_agent_context", memory_store_module.build_agent_context
+    )
 
     payload = orchestrator.build_agent_task_payload(
         {
@@ -125,8 +142,14 @@ def test_apply_memory_context_includes_scoped_agent_memory(
 ) -> None:
     memory_dir = tmp_path / "memory"
     monkeypatch.setattr(memory_store_module, "MEMORY_DIR", memory_dir)
-    monkeypatch.setattr(orchestrator, "build_agent_context", memory_store_module.build_agent_context)
-    monkeypatch.setattr(orchestrator, "build_assistant_context", memory_store_module.build_assistant_context)
+    monkeypatch.setattr(
+        orchestrator, "build_agent_context", memory_store_module.build_agent_context
+    )
+    monkeypatch.setattr(
+        orchestrator,
+        "build_assistant_context",
+        memory_store_module.build_assistant_context,
+    )
     monkeypatch.setattr(orchestrator, "load_recent_memory_records", lambda limit=3: [])
 
     task_data = {

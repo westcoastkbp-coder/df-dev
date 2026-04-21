@@ -50,7 +50,8 @@ def _normalize_priority_class(value: object) -> str:
     normalized = _normalize_text(value).lower()
     if normalized not in OWNER_PRIORITY_CLASSES:
         raise ValueError(
-            "priority_class must be one of: " + ", ".join(sorted(OWNER_PRIORITY_CLASSES))
+            "priority_class must be one of: "
+            + ", ".join(sorted(OWNER_PRIORITY_CLASSES))
         )
     return normalized
 
@@ -78,8 +79,14 @@ class OwnerActionQueueEntry:
             "queue_entry_id",
             _stable_identifier(self.queue_entry_id, field_name="queue_entry_id"),
         )
-        object.__setattr__(self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id"))
-        object.__setattr__(self, "action_id", _stable_identifier(self.action_id, field_name="action_id"))
+        object.__setattr__(
+            self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id")
+        )
+        object.__setattr__(
+            self,
+            "action_id",
+            _stable_identifier(self.action_id, field_name="action_id"),
+        )
         object.__setattr__(
             self,
             "action_type",
@@ -91,8 +98,12 @@ class OwnerActionQueueEntry:
             "priority_class",
             _normalize_priority_class(self.priority_class),
         )
-        object.__setattr__(self, "created_at", _normalize_text(self.created_at) or _utc_timestamp())
-        object.__setattr__(self, "updated_at", _normalize_text(self.updated_at) or self.created_at)
+        object.__setattr__(
+            self, "created_at", _normalize_text(self.created_at) or _utc_timestamp()
+        )
+        object.__setattr__(
+            self, "updated_at", _normalize_text(self.updated_at) or self.created_at
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -124,7 +135,8 @@ def create_owner_action_queue_entry(
 ) -> OwnerActionQueueEntry:
     timestamp = _normalize_text(created_at) or _utc_timestamp()
     return OwnerActionQueueEntry(
-        queue_entry_id=_normalize_text(queue_entry_id) or _new_identifier("owner-queue"),
+        queue_entry_id=_normalize_text(queue_entry_id)
+        or _new_identifier("owner-queue"),
         owner_id=_normalize_text(owner_id),
         action_id=_normalize_text(action_id),
         action_type=_normalize_text(action_type),
@@ -145,14 +157,14 @@ class OwnerActionQueue:
         self._entries.append(entry)
         return entry
 
-    def list_entries(self, *, owner_id: object | None = None) -> list[OwnerActionQueueEntry]:
+    def list_entries(
+        self, *, owner_id: object | None = None
+    ) -> list[OwnerActionQueueEntry]:
         normalized_owner_id = _normalize_text(owner_id)
         if not normalized_owner_id:
             return list(self._entries)
         return [
-            entry
-            for entry in self._entries
-            if entry.owner_id == normalized_owner_id
+            entry for entry in self._entries if entry.owner_id == normalized_owner_id
         ]
 
     def get(self, queue_entry_id: object) -> OwnerActionQueueEntry | None:

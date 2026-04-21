@@ -52,13 +52,17 @@ def _parse_timestamp(value: object) -> datetime:
     if not normalized:
         return datetime.min.replace(tzinfo=timezone.utc)
     try:
-        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(timezone.utc)
+        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(
+            timezone.utc
+        )
     except ValueError:
         return datetime.min.replace(tzinfo=timezone.utc)
 
 
 def _ref_matches(candidate: str, prefixes: tuple[str, ...]) -> bool:
-    return any(candidate == prefix or candidate.startswith(f"{prefix}:") for prefix in prefixes)
+    return any(
+        candidate == prefix or candidate.startswith(f"{prefix}:") for prefix in prefixes
+    )
 
 
 def _scope_allows_record(
@@ -74,7 +78,10 @@ def _scope_allows_record(
     memory_class = _normalize_text(record.get("memory_class"))
     if memory_class in memory_scope.blocked_memory_classes:
         return False, "blocked_memory_class"
-    if memory_scope.allowed_memory_classes and memory_class not in memory_scope.allowed_memory_classes:
+    if (
+        memory_scope.allowed_memory_classes
+        and memory_class not in memory_scope.allowed_memory_classes
+    ):
         return False, "disallowed_memory_class"
 
     refs = tuple(_normalized_tags(record.get("refs")))
@@ -151,10 +158,14 @@ class OwnerRequestContextRef:
     def __post_init__(self) -> None:
         object.__setattr__(self, "request_ref", _normalize_text(self.request_ref))
         object.__setattr__(self, "owner_id", _normalize_text(self.owner_id))
-        object.__setattr__(self, "session_ref", _normalize_text(self.session_ref) or None)
+        object.__setattr__(
+            self, "session_ref", _normalize_text(self.session_ref) or None
+        )
         object.__setattr__(self, "trace_id", _normalize_text(self.trace_id) or None)
         object.__setattr__(self, "turn_ref", _normalize_text(self.turn_ref) or None)
-        object.__setattr__(self, "memory_context", _normalize_mapping(self.memory_context))
+        object.__setattr__(
+            self, "memory_context", _normalize_mapping(self.memory_context)
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -196,7 +207,9 @@ def assemble_owner_context(
             request_memory_context=request_ref.memory_context,
         )
         if not allowed:
-            boundary_application["filtered_out_count"] = int(boundary_application["filtered_out_count"]) + 1
+            boundary_application["filtered_out_count"] = (
+                int(boundary_application["filtered_out_count"]) + 1
+            )
             if reason == "cross_domain":
                 boundary_application["blocked_cross_domain_count"] = (
                     int(boundary_application["blocked_cross_domain_count"]) + 1
@@ -209,9 +222,13 @@ def assemble_owner_context(
         filtered.append(normalized_record)
 
     filtered.sort(key=lambda item: _normalize_text(item.get("id")))
-    filtered.sort(key=lambda item: _parse_timestamp(item.get("updated_at")), reverse=True)
+    filtered.sort(
+        key=lambda item: _parse_timestamp(item.get("updated_at")), reverse=True
+    )
 
-    max_entries = int(memory_scope.truth_constraints.get("max_resolved_entries", 5) or 0)
+    max_entries = int(
+        memory_scope.truth_constraints.get("max_resolved_entries", 5) or 0
+    )
     selected = filtered[:max_entries] if max_entries > 0 else []
     boundary_application["resolved_memory_count"] = len(selected)
 
@@ -255,7 +272,9 @@ def assemble_owner_canonical_context(
     per_type_limits = request_payload.get("per_type_limits")
     text_query = _normalize_text(request_payload.get("text_query"))
     freshness_window_days = request_payload.get("freshness_window_days")
-    reference_timestamp = _normalize_text(request_payload.get("reference_timestamp")) or None
+    reference_timestamp = (
+        _normalize_text(request_payload.get("reference_timestamp")) or None
+    )
     limit_value = request_payload.get("limit", 5)
     try:
         limit = max(1, int(limit_value))
@@ -305,7 +324,9 @@ def assemble_owner_canonical_context(
             else (),
             freshness_window_days=freshness_window_days,
             reference_timestamp=reference_timestamp,
-            per_type_limits=per_type_limits if isinstance(per_type_limits, dict) else {},
+            per_type_limits=per_type_limits
+            if isinstance(per_type_limits, dict)
+            else {},
             limit=limit,
         ),
     )

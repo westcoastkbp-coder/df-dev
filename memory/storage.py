@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import re
@@ -210,7 +210,9 @@ def _extract_emails(text: object) -> list[str]:
 
 def _extract_phone_numbers(text: object) -> list[str]:
     matches = re.findall(r"(?:\+?\d[\d\-\s()]{6,}\d)", _normalize_text(text))
-    return _unique([_normalize_phone(item) for item in matches if _normalize_phone(item)])
+    return _unique(
+        [_normalize_phone(item) for item in matches if _normalize_phone(item)]
+    )
 
 
 def _extract_name(text: object) -> str:
@@ -258,9 +260,13 @@ def _find_contact_index(
     for index, record in enumerate(records):
         if contact_id and _normalize_text(record.get("contact_id")) == contact_id:
             return index
-        if phone and phone in [_normalize_phone(item) for item in record.get("phone_numbers", [])]:
+        if phone and phone in [
+            _normalize_phone(item) for item in record.get("phone_numbers", [])
+        ]:
             return index
-        if email and email in [_normalize_email(item) for item in record.get("emails", [])]:
+        if email and email in [
+            _normalize_email(item) for item in record.get("emails", [])
+        ]:
             return index
     return -1
 
@@ -313,11 +319,13 @@ def upsert_contact(
     if match_index >= 0:
         existing = dict(records[match_index])
         updated = _build_contact(
-            contact_id=_normalize_text(existing.get("contact_id")) or normalized_contact_id,
+            contact_id=_normalize_text(existing.get("contact_id"))
+            or normalized_contact_id,
             phone_numbers=list(existing.get("phone_numbers", [])) + phones,
             emails=list(existing.get("emails", [])) + emails,
             name=name or _normalize_text(existing.get("name")),
-            source_channel=normalized_channel or _normalize_text(existing.get("source_channel")),
+            source_channel=normalized_channel
+            or _normalize_text(existing.get("source_channel")),
             created_at=_normalize_text(existing.get("created_at")) or timestamp,
             last_seen=timestamp,
         )
@@ -349,4 +357,3 @@ def find_recent_tasks_by_contact_id(contact_id: object, limit: int = 3) -> list[
         if _normalize_text(record.get("contact_id")) == normalized_contact_id
     ]
     return records[:limit]
-

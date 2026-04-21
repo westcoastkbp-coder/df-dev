@@ -14,7 +14,9 @@ WORKFLOW_STATE_DB_FILE = STATE_DIR / "ownerbox_workflow_state.sqlite3"
 SQLITE_CONNECTION_TIMEOUT_SECONDS = 5.0
 SQLITE_BUSY_TIMEOUT_MS = 5_000
 MAX_TERMINAL_WORKFLOW_RECORDS = 200
-TERMINAL_WORKFLOW_STATUSES = frozenset({"completed", "failed", "rejected", "partial_failure"})
+TERMINAL_WORKFLOW_STATUSES = frozenset(
+    {"completed", "failed", "rejected", "partial_failure"}
+)
 
 
 def _root_relative(path: Path) -> Path:
@@ -29,7 +31,9 @@ def _json_dumps(payload: object) -> str:
     return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
 
 
-def _log_store_failure(*, code: str, workflow_id: str, operation: str, reason: str) -> None:
+def _log_store_failure(
+    *, code: str, workflow_id: str, operation: str, reason: str
+) -> None:
     log_event(
         "storage",
         {
@@ -159,7 +163,9 @@ class WorkflowStateStore:
             )
         if row is None:
             return None
-        return self._state_from_row(row, workflow_id=normalized_workflow_id, operation="load_state")
+        return self._state_from_row(
+            row, workflow_id=normalized_workflow_id, operation="load_state"
+        )
 
     def list_states(self) -> tuple[PersistedWorkflowState, ...]:
         try:
@@ -187,7 +193,9 @@ class WorkflowStateStore:
                 reason=str(exc) or "sqlite list failed",
             )
         return tuple(
-            self._state_from_row(row, workflow_id=str(row["workflow_id"]), operation="list_states")
+            self._state_from_row(
+                row, workflow_id=str(row["workflow_id"]), operation="list_states"
+            )
             for row in rows
         )
 
@@ -265,7 +273,9 @@ class WorkflowStateStore:
                 "workflow": dict(snapshot.get("workflow", {})),
                 "steps": list(snapshot.get("steps", [])),
                 "runtime": dict(snapshot.get("runtime", {})),
-                "current_step_index": snapshot.get("current_step_index", row["current_step_index"]),
+                "current_step_index": snapshot.get(
+                    "current_step_index", row["current_step_index"]
+                ),
             },
             workflow_id=workflow_id,
             workflow_status=str(row["workflow_status"]),
@@ -303,7 +313,9 @@ class WorkflowStateStore:
                 operation="normalize_snapshot",
                 reason="workflow snapshot missing workflow payload",
             )
-        if not isinstance(steps, list) or any(not isinstance(step, Mapping) for step in steps):
+        if not isinstance(steps, list) or any(
+            not isinstance(step, Mapping) for step in steps
+        ):
             self._raise_error(
                 code="state_corrupted",
                 workflow_id=workflow_id or "",
@@ -317,13 +329,28 @@ class WorkflowStateStore:
                 operation="normalize_snapshot",
                 reason="workflow snapshot missing runtime payload",
             )
-        resolved_workflow_id = workflow_id or _normalize_text(workflow.get("workflow_id"))
-        resolved_workflow_type = workflow_type or _normalize_text(workflow.get("workflow_type"))
+        resolved_workflow_id = workflow_id or _normalize_text(
+            workflow.get("workflow_id")
+        )
+        resolved_workflow_type = workflow_type or _normalize_text(
+            workflow.get("workflow_type")
+        )
         resolved_owner_id = owner_id or _normalize_text(workflow.get("owner_id"))
-        resolved_status = workflow_status or _normalize_text(workflow.get("status")).lower()
+        resolved_status = (
+            workflow_status or _normalize_text(workflow.get("status")).lower()
+        )
         resolved_created_at = created_at or _normalize_text(workflow.get("created_at"))
-        resolved_updated_at = updated_at or _normalize_text(workflow.get("updated_at")) or resolved_created_at
-        if not resolved_workflow_id or not resolved_workflow_type or not resolved_owner_id or not resolved_status:
+        resolved_updated_at = (
+            updated_at
+            or _normalize_text(workflow.get("updated_at"))
+            or resolved_created_at
+        )
+        if (
+            not resolved_workflow_id
+            or not resolved_workflow_type
+            or not resolved_owner_id
+            or not resolved_status
+        ):
             self._raise_error(
                 code="state_corrupted",
                 workflow_id=resolved_workflow_id,

@@ -8,7 +8,10 @@ def test_read_google_drive_file_returns_none_without_credentials(monkeypatch) ->
     monkeypatch.delenv("GOOGLE_CLIENT_SECRET", raising=False)
     monkeypatch.delenv("GOOGLE_REFRESH_TOKEN", raising=False)
 
-    assert google_drive_reader.read_google_drive_file({"drive_file_id": "file-001"}) is None
+    assert (
+        google_drive_reader.read_google_drive_file({"drive_file_id": "file-001"})
+        is None
+    )
 
 
 def test_read_google_drive_file_truncates_content(monkeypatch) -> None:

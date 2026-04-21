@@ -127,7 +127,9 @@ def register_artifact(
     )
     normalized_type = _normalize_text(artifact_type)
     normalized_timestamp = _normalize_text(timestamp) if timestamp else _utc_timestamp()
-    canonical_memory_class = _normalize_text(memory_class) or infer_memory_class(normalized_type)
+    canonical_memory_class = _normalize_text(memory_class) or infer_memory_class(
+        normalized_type
+    )
     entry = memory_object_from_mapping(
         {
             "id": _normalize_text(artifact_id),
@@ -139,8 +141,12 @@ def register_artifact(
             or infer_execution_role(canonical_memory_class),
             "created_at": _normalize_text(created_at) or normalized_timestamp,
             "updated_at": _normalize_text(updated_at) or normalized_timestamp,
-            "tags": [_normalize_text(tag) for tag in (tags or []) if _normalize_text(tag)],
-            "refs": [_normalize_text(ref) for ref in (refs or []) if _normalize_text(ref)],
+            "tags": [
+                _normalize_text(tag) for tag in (tags or []) if _normalize_text(tag)
+            ],
+            "refs": [
+                _normalize_text(ref) for ref in (refs or []) if _normalize_text(ref)
+            ],
             "local_path": str(Path(local_path)),
             "remote_path": _normalize_text(remote_path) if remote_path else None,
             "payload": payload,
@@ -167,13 +173,10 @@ def register_artifact(
     artifacts = registry["artifacts"]
     replaced = False
     for index, existing in enumerate(artifacts):
-        if (
-            existing.get("logical_key") == entry["logical_key"]
-            or (
-                existing.get("id") == entry["id"]
-                and existing.get("domain") == entry["domain"]
-                and existing.get("type") == entry["type"]
-            )
+        if existing.get("logical_key") == entry["logical_key"] or (
+            existing.get("id") == entry["id"]
+            and existing.get("domain") == entry["domain"]
+            and existing.get("type") == entry["type"]
         ):
             artifacts[index] = entry
             replaced = True

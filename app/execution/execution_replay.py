@@ -5,10 +5,18 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TypedDict
 
-from app.execution.lead_estimate_contract import WORKFLOW_TYPE, build_action_payload, validate_input_payload
+from app.execution.lead_estimate_contract import (
+    WORKFLOW_TYPE,
+    build_action_payload,
+    validate_input_payload,
+)
 from app.execution.lead_estimate_decision import resolve_estimate_decision
 from app.execution.paths import ROOT_DIR, TASKS_FILE
-from app.orchestrator.task_factory import build_idempotency_key, find_task_by_idempotency_key, get_task
+from app.orchestrator.task_factory import (
+    build_idempotency_key,
+    find_task_by_idempotency_key,
+    get_task,
+)
 
 
 class ReplayReport(TypedDict):
@@ -49,7 +57,9 @@ def _normalize_sequence(value: object) -> list[dict[str, object]]:
     return normalized
 
 
-def _stored_result(task_data: Mapping[str, object]) -> tuple[dict[str, object], dict[str, object]]:
+def _stored_result(
+    task_data: Mapping[str, object],
+) -> tuple[dict[str, object], dict[str, object]]:
     result = _normalize_mapping(task_data.get("result"))
     result_payload = _normalize_mapping(result.get("result_payload"))
     return (
@@ -86,8 +96,14 @@ def _normalize_trace_sequence(trace_sequence: object) -> list[dict[str, object]]
     return normalized_steps
 
 
-def _load_trace_for_run(run_id: str, *, log_path: Path | None = None) -> list[dict[str, object]]:
-    target = Path(log_path) if log_path is not None else ROOT_DIR / "runtime" / "logs" / "system.log"
+def _load_trace_for_run(
+    run_id: str, *, log_path: Path | None = None
+) -> list[dict[str, object]]:
+    target = (
+        Path(log_path)
+        if log_path is not None
+        else ROOT_DIR / "runtime" / "logs" / "system.log"
+    )
     if not target.exists():
         return []
     for line in target.read_text(encoding="utf-8").splitlines():
@@ -126,7 +142,9 @@ def _predict_binding(
 
     next_action = _normalize_text(decision.get("next_step"))
     parent_task_id = _normalize_text(task_data.get("task_id"))
-    lead_id = _normalize_text(_normalize_mapping(task_data.get("payload")).get("lead_id"))
+    lead_id = _normalize_text(
+        _normalize_mapping(task_data.get("payload")).get("lead_id")
+    )
     reason_code = decision_reason_code(next_action)
     stored_decision, stored_binding = _stored_result(task_data)
 
@@ -163,13 +181,22 @@ def _predict_binding(
             "next_step": next_action,
         },
     )
-    referenced_child = get_task(_normalize_text(stored_binding.get("child_task_id")), store_path=store_path)
-    matched_child = referenced_child or find_task_by_idempotency_key(idempotency_key, store_path=store_path)
-    child_task_id = _normalize_text((matched_child or {}).get("task_id")) or _normalize_text(
-        stored_binding.get("child_task_id")
+    referenced_child = get_task(
+        _normalize_text(stored_binding.get("child_task_id")), store_path=store_path
     )
-    child_task_intent = _normalize_text((matched_child or {}).get("intent")) or child_intent
-    if child_task_intent != child_intent and _normalize_text(stored_decision.get("next_step")) == next_action:
+    matched_child = referenced_child or find_task_by_idempotency_key(
+        idempotency_key, store_path=store_path
+    )
+    child_task_id = _normalize_text(
+        (matched_child or {}).get("task_id")
+    ) or _normalize_text(stored_binding.get("child_task_id"))
+    child_task_intent = (
+        _normalize_text((matched_child or {}).get("intent")) or child_intent
+    )
+    if (
+        child_task_intent != child_intent
+        and _normalize_text(stored_decision.get("next_step")) == next_action
+    ):
         child_task_intent = child_intent
     return (
         build_action_payload(
@@ -256,7 +283,9 @@ def _first_mismatch(
     stored_trace_sequence: Sequence[Mapping[str, object]],
     replay_trace_sequence: Sequence[Mapping[str, object]],
 ) -> str:
-    for index, (stored_step, replay_step) in enumerate(zip(stored_trace_sequence, replay_trace_sequence), start=1):
+    for index, (stored_step, replay_step) in enumerate(
+        zip(stored_trace_sequence, replay_trace_sequence), start=1
+    ):
         if dict(stored_step) != dict(replay_step):
             return f"trace_step_{index}"
     if len(stored_trace_sequence) != len(replay_trace_sequence):
@@ -304,7 +333,9 @@ def replay_execution(
     replay_binding: dict[str, object] | None = None
     replay_idempotency_key = ""
     if input_valid:
-        replay_decision = resolve_estimate_decision(task_id=normalized_run_id, payload=payload)
+        replay_decision = resolve_estimate_decision(
+            task_id=normalized_run_id, payload=payload
+        )
         replay_binding, replay_idempotency_key = _predict_binding(
             task_data=task_data,
             decision=replay_decision,
@@ -313,7 +344,9 @@ def replay_execution(
 
     stored_decision, stored_binding = _stored_result(task_data)
     normalized_stored_trace = _normalize_trace_sequence(
-        stored_trace_sequence if stored_trace_sequence is not None else _load_trace_for_run(normalized_run_id, log_path=log_path)
+        stored_trace_sequence
+        if stored_trace_sequence is not None
+        else _load_trace_for_run(normalized_run_id, log_path=log_path)
     )
     normalized_replay_trace = _replayed_trace(
         task_data=task_data,
@@ -330,7 +363,9 @@ def replay_execution(
             "notes": "decision output diverged",
         }
 
-    if input_valid and _normalize_binding(replay_binding or {}) != _normalize_binding(stored_binding):
+    if input_valid and _normalize_binding(replay_binding or {}) != _normalize_binding(
+        stored_binding
+    ):
         return {
             "run_id": normalized_run_id,
             "replay_status": "mismatch",
@@ -340,7 +375,10 @@ def replay_execution(
 
     if replay_idempotency_key:
         try:
-            stored_child = get_task(_normalize_text(stored_binding.get("child_task_id")), store_path=target_store)
+            stored_child = get_task(
+                _normalize_text(stored_binding.get("child_task_id")),
+                store_path=target_store,
+            )
         except Exception:
             stored_child = None
         stored_child_key = _normalize_text((stored_child or {}).get("idempotency_key"))

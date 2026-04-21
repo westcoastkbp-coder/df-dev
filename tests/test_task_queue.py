@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -9,10 +9,14 @@ from app.execution.task_schema import TASK_CONTRACT_VERSION
 
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 
 
 def _read_jsonl(path: Path) -> list[dict[str, object]]:
@@ -248,7 +252,9 @@ def test_process_next_queued_task_prints_and_logs_mode_trace(
     assert "compute: cpu_mode" in mode_entry["details"]["message"]
 
 
-def test_process_next_queued_task_skips_pending_approval(monkeypatch, tmp_path: Path) -> None:
+def test_process_next_queued_task_skips_pending_approval(
+    monkeypatch, tmp_path: Path
+) -> None:
     queue_file = tmp_path / "runtime" / "state" / "task_queue.json"
     log_file = tmp_path / "runtime" / "logs" / "tasks.log"
 
@@ -318,4 +324,3 @@ def test_process_next_queued_task_skips_pending_approval(monkeypatch, tmp_path: 
 
     assert executed_task is None
     assert queue.queued_task_ids() == ["DF-TASK-QUEUE-APPROVAL-V1"]
-

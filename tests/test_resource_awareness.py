@@ -7,6 +7,7 @@ from app.product.runner import dispatch_development_action
 from app.orchestrator.execution_router import materialize_routing_contract
 from runtime.policy_engine import decide_execution_mode
 
+
 def test_parse_command_maps_resources_command() -> None:
     assert parse_command("resources") == {
         "action": "resources",
@@ -57,7 +58,9 @@ def test_dispatch_development_action_returns_resource_snapshot(monkeypatch) -> N
     assert "CPU 16 cores" in str(result["result_summary"])
 
 
-def test_decide_execution_mode_uses_gpu_compute_mode_when_gpu_available(monkeypatch) -> None:
+def test_decide_execution_mode_uses_gpu_compute_mode_when_gpu_available(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
         "runtime.policy_engine.get_runtime_profile",
         lambda: "FULL",
@@ -95,7 +98,9 @@ def test_decide_execution_mode_uses_gpu_compute_mode_when_gpu_available(monkeypa
     assert decision[2]["execution_compute_mode"] == "gpu_mode"
 
 
-def test_decide_execution_mode_uses_cpu_compute_mode_when_gpu_unavailable(monkeypatch) -> None:
+def test_decide_execution_mode_uses_cpu_compute_mode_when_gpu_unavailable(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
         "runtime.policy_engine.get_runtime_profile",
         lambda: "FULL",

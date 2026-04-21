@@ -293,7 +293,9 @@ def ensure_dev_session(
     source_of_truth["dev_session_path"] = "/docs/dev_session.md"
     github_context = _github_context_payload(issue_number, repo_root=repo_root)
     if not github_context.get("issue_number"):
-        github_context = dict(source_of_truth.get("github_context", {})) or github_context
+        github_context = (
+            dict(source_of_truth.get("github_context", {})) or github_context
+        )
     source_of_truth["github_context"] = github_context
     state["source_of_truth"] = source_of_truth
     state["rules"] = list(DEFAULT_RULES)
@@ -351,8 +353,10 @@ def update_dev_session(
             {
                 "time": _utc_now(),
                 "did": _normalize_text(did),
-                "status": _normalize_text(status) or _normalize_text(state.get("status")),
-                "next_step": _normalize_text(next_step) or _normalize_text(state.get("next_step")),
+                "status": _normalize_text(status)
+                or _normalize_text(state.get("status")),
+                "next_step": _normalize_text(next_step)
+                or _normalize_text(state.get("next_step")),
             }
         )
         state["step_log"] = step_log
@@ -370,11 +374,13 @@ def build_codex_execution_prompt(
     session_path = _session_path(repo_root)
     session_text = session_path.read_text(encoding="utf-8")
     github_context = dict(state.get("source_of_truth", {}).get("github_context", {}))
-    issue_number_text = _normalize_text(github_context.get("issue_number")) or "unlinked"
-    issue_title = _normalize_text(github_context.get("title")) or "missing"
-    issue_status = _normalize_text(github_context.get("source_status")) or _normalize_text(
-        github_context.get("status")
+    issue_number_text = (
+        _normalize_text(github_context.get("issue_number")) or "unlinked"
     )
+    issue_title = _normalize_text(github_context.get("title")) or "missing"
+    issue_status = _normalize_text(
+        github_context.get("source_status")
+    ) or _normalize_text(github_context.get("status"))
     issue_labels = ", ".join(github_context.get("labels", [])) or "(none)"
     issue_url = _normalize_text(github_context.get("raw_url")) or "(not linked)"
     github_body = _normalize_text(github_context.get("body")) or "(no body available)"

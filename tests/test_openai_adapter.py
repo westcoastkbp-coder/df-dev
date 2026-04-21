@@ -309,7 +309,10 @@ def test_unknown_adapter_config_fields_are_rejected() -> None:
     assert validate_action_result_contract(result) == result
     assert result["status"] == "failed"
     assert result["error_code"] == "validation_error"
-    assert result["error_message"] == "adapter config contains unsupported fields: unexpected"
+    assert (
+        result["error_message"]
+        == "adapter config contains unsupported fields: unexpected"
+    )
 
 
 def test_adapter_does_not_mutate_input_contract_or_external_state() -> None:

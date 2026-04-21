@@ -9,7 +9,9 @@ from app.execution.execution_boundary import require_execution_boundary
 
 
 ExternalScalar: TypeAlias = str | int | float | bool | None
-ExternalValue: TypeAlias = ExternalScalar | tuple["ExternalValue", ...] | Mapping[str, "ExternalValue"]
+ExternalValue: TypeAlias = (
+    ExternalScalar | tuple["ExternalValue", ...] | Mapping[str, "ExternalValue"]
+)
 
 ALLOWED_EXTERNAL_MODULE_STATUSES = {
     "success",
@@ -109,7 +111,9 @@ def _deep_clone_json_like(value: object, *, field_name: str) -> ExternalValue:
         for key, item in value.items():
             normalized_key = _normalize_text(key)
             if not normalized_key:
-                raise ExternalModuleValidationError(f"{field_name} contains an empty key")
+                raise ExternalModuleValidationError(
+                    f"{field_name} contains an empty key"
+                )
             cloned[normalized_key] = _deep_clone_json_like(
                 item,
                 field_name=f"{field_name}.{normalized_key}",
@@ -117,8 +121,7 @@ def _deep_clone_json_like(value: object, *, field_name: str) -> ExternalValue:
         return MappingProxyType(cloned)
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(
-            _deep_clone_json_like(item, field_name=f"{field_name}[]")
-            for item in value
+            _deep_clone_json_like(item, field_name=f"{field_name}[]") for item in value
         )
     raise ExternalModuleValidationError(
         f"{field_name} must contain only structured JSON-like values"
@@ -146,7 +149,9 @@ def _validate_timeout_ms(value: object) -> int:
     if value <= 0:
         raise ExternalModuleValidationError("timeout_ms must be greater than 0")
     if value > 300_000:
-        raise ExternalModuleValidationError("timeout_ms must be less than or equal to 300000")
+        raise ExternalModuleValidationError(
+            "timeout_ms must be less than or equal to 300000"
+        )
     return value
 
 
@@ -154,7 +159,9 @@ def _validate_duration_ms(value: object) -> int:
     if not isinstance(value, int):
         raise ExternalModuleValidationError("duration_ms must be an integer")
     if value < 0:
-        raise ExternalModuleValidationError("duration_ms must be greater than or equal to 0")
+        raise ExternalModuleValidationError(
+            "duration_ms must be greater than or equal to 0"
+        )
     return value
 
 
@@ -175,9 +182,14 @@ def _validate_metadata(value: object) -> ExternalModuleMetadata:
             )
     if "tags" in normalized:
         tags_value = normalized.get("tags")
-        if not isinstance(tags_value, Sequence) or isinstance(tags_value, (str, bytes, bytearray)):
+        if not isinstance(tags_value, Sequence) or isinstance(
+            tags_value, (str, bytes, bytearray)
+        ):
             raise ExternalModuleValidationError("metadata.tags must be a list")
-        tags = [_validate_identifier(tag, field_name="metadata.tags[]") for tag in tags_value]
+        tags = [
+            _validate_identifier(tag, field_name="metadata.tags[]")
+            for tag in tags_value
+        ]
         metadata["tags"] = tags
     return metadata
 
@@ -197,9 +209,13 @@ def _validate_raw_reference(value: object) -> ExternalRawReference:
                 field_name=f"raw_reference.{field_name}",
             )
     if "preview" in normalized:
-        preview = _validate_identifier(normalized.get("preview"), field_name="raw_reference.preview")
+        preview = _validate_identifier(
+            normalized.get("preview"), field_name="raw_reference.preview"
+        )
         if len(preview) > 256:
-            raise ExternalModuleValidationError("raw_reference.preview must be 256 characters or fewer")
+            raise ExternalModuleValidationError(
+                "raw_reference.preview must be 256 characters or fewer"
+            )
         raw_reference["preview"] = preview
     return raw_reference
 
@@ -259,14 +275,17 @@ class ExternalModuleResult:
 class ExternalModuleAdapter(Protocol):
     module_type: str
 
-    def execute(self, request: ExternalModuleRequest) -> Mapping[str, object] | ExternalModuleResult:
-        ...
+    def execute(
+        self, request: ExternalModuleRequest
+    ) -> Mapping[str, object] | ExternalModuleResult: ...
 
-    def validate_request_payload(self, operation: str, payload: Mapping[str, object]) -> None:
-        ...
+    def validate_request_payload(
+        self, operation: str, payload: Mapping[str, object]
+    ) -> None: ...
 
-    def validate_result_payload(self, operation: str, payload: Mapping[str, object]) -> None:
-        ...
+    def validate_result_payload(
+        self, operation: str, payload: Mapping[str, object]
+    ) -> None: ...
 
 
 class ExternalModuleRegistry:
@@ -294,7 +313,8 @@ def build_external_module_request(payload: object) -> ExternalModuleRequest:
     missing_fields = sorted(REQUEST_REQUIRED_FIELDS - set(normalized))
     if missing_fields:
         raise ExternalModuleValidationError(
-            "external_module_request missing required fields: " + ", ".join(missing_fields)
+            "external_module_request missing required fields: "
+            + ", ".join(missing_fields)
         )
     unexpected_fields = sorted(set(normalized) - REQUEST_FIELDS)
     if unexpected_fields:
@@ -303,7 +323,9 @@ def build_external_module_request(payload: object) -> ExternalModuleRequest:
             + ", ".join(unexpected_fields)
         )
 
-    request_payload = _normalize_mapping(normalized.get("payload"), field_name="payload")
+    request_payload = _normalize_mapping(
+        normalized.get("payload"), field_name="payload"
+    )
     metadata_payload = normalized.get("metadata", {})
     if metadata_payload is None:
         metadata_payload = {}
@@ -311,11 +333,19 @@ def build_external_module_request(payload: object) -> ExternalModuleRequest:
         raise ExternalModuleValidationError("metadata must be a dict")
 
     return ExternalModuleRequest(
-        request_id=_validate_identifier(normalized.get("request_id"), field_name="request_id"),
+        request_id=_validate_identifier(
+            normalized.get("request_id"), field_name="request_id"
+        ),
         task_id=_validate_identifier(normalized.get("task_id"), field_name="task_id"),
-        task_type=_validate_identifier(normalized.get("task_type"), field_name="task_type"),
-        module_type=_validate_identifier(normalized.get("module_type"), field_name="module_type"),
-        operation=_validate_identifier(normalized.get("operation"), field_name="operation"),
+        task_type=_validate_identifier(
+            normalized.get("task_type"), field_name="task_type"
+        ),
+        module_type=_validate_identifier(
+            normalized.get("module_type"), field_name="module_type"
+        ),
+        operation=_validate_identifier(
+            normalized.get("operation"), field_name="operation"
+        ),
         payload=cast(
             Mapping[str, ExternalValue],
             _deep_clone_json_like(request_payload, field_name="payload"),
@@ -334,7 +364,8 @@ def build_external_module_result(payload: object) -> ExternalModuleResult:
     missing_fields = sorted(RESULT_REQUIRED_FIELDS - set(normalized))
     if missing_fields:
         raise ExternalModuleValidationError(
-            "external_module_result missing required fields: " + ", ".join(missing_fields)
+            "external_module_result missing required fields: "
+            + ", ".join(missing_fields)
         )
     unexpected_fields = sorted(set(normalized) - RESULT_FIELDS)
     if unexpected_fields:
@@ -345,7 +376,9 @@ def build_external_module_result(payload: object) -> ExternalModuleResult:
 
     status = _validate_identifier(normalized.get("status"), field_name="status").lower()
     if status not in ALLOWED_EXTERNAL_MODULE_STATUSES:
-        raise ExternalModuleValidationError(f"unsupported external module status: {status}")
+        raise ExternalModuleValidationError(
+            f"unsupported external module status: {status}"
+        )
 
     raw_reference_value = normalized.get("raw_reference")
     raw_reference: ExternalRawReference | None = None
@@ -359,13 +392,21 @@ def build_external_module_result(payload: object) -> ExternalModuleResult:
             "success result must not include error_code or error_message"
         )
 
-    result_payload = _normalize_mapping(normalized.get("result_payload"), field_name="result_payload")
+    result_payload = _normalize_mapping(
+        normalized.get("result_payload"), field_name="result_payload"
+    )
 
     return ExternalModuleResult(
-        request_id=_validate_identifier(normalized.get("request_id"), field_name="request_id"),
+        request_id=_validate_identifier(
+            normalized.get("request_id"), field_name="request_id"
+        ),
         status=status,
-        module_type=_validate_identifier(normalized.get("module_type"), field_name="module_type"),
-        operation=_validate_identifier(normalized.get("operation"), field_name="operation"),
+        module_type=_validate_identifier(
+            normalized.get("module_type"), field_name="module_type"
+        ),
+        operation=_validate_identifier(
+            normalized.get("operation"), field_name="operation"
+        ),
         result_payload=cast(
             Mapping[str, ExternalValue],
             _deep_clone_json_like(result_payload, field_name="result_payload"),
@@ -443,7 +484,10 @@ def validate_external_module_result_for_df(
         try:
             adapter.validate_result_payload(
                 request.operation,
-                cast(dict[str, object], _deep_unfreeze(cast(ExternalValue, validated.result_payload))),
+                cast(
+                    dict[str, object],
+                    _deep_unfreeze(cast(ExternalValue, validated.result_payload)),
+                ),
             )
         except ExternalModuleValidationError as exc:
             return _result_signal(
@@ -479,10 +523,14 @@ def execute_external_module(
     try:
         adapter.validate_request_payload(
             request.operation,
-            cast(dict[str, object], _deep_unfreeze(cast(ExternalValue, request.payload))),
+            cast(
+                dict[str, object], _deep_unfreeze(cast(ExternalValue, request.payload))
+            ),
         )
     except ExternalModuleValidationError as exc:
-        raise ExternalModuleValidationError(f"external module request payload invalid: {exc}") from exc
+        raise ExternalModuleValidationError(
+            f"external module request payload invalid: {exc}"
+        ) from exc
 
     try:
         raw_result = adapter.execute(request)

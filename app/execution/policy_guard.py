@@ -1,9 +1,12 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from collections.abc import Mapping
 
 from app.execution.context_types import ContextSnapshot
-from app.execution.system_context import build_system_rules_envelope, load_system_context
+from app.execution.system_context import (
+    build_system_rules_envelope,
+    load_system_context,
+)
 
 
 class PolicyViolationError(ValueError):
@@ -56,15 +59,21 @@ def _collect_policy_violations(
     if bool(assumptions.get("product_box_is_dev_environment")) or bool(
         session_product_box.get("is_dev_environment")
     ):
-        violations.append("system context overrides session assumption about product box dev status")
+        violations.append(
+            "system context overrides session assumption about product box dev status"
+        )
 
     if bool(assumptions.get("product_box_code_generation_allowed")) or bool(
         session_product_box.get("code_generation_allowed")
     ):
-        violations.append("system context overrides session assumption about product box code generation")
+        violations.append(
+            "system context overrides session assumption about product box code generation"
+        )
 
     if assumptions.get("strict_separation") is False:
-        violations.append("system context overrides weaker session isolation assumptions")
+        violations.append(
+            "system context overrides weaker session isolation assumptions"
+        )
 
     return tuple(dict.fromkeys(violations))
 
@@ -85,4 +94,3 @@ def load_validated_system_context(
     snapshot = context.snapshot()
     validate_plan_against_system_context(plan, snapshot)
     return snapshot, build_system_rules_envelope(snapshot)
-

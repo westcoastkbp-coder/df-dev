@@ -47,7 +47,9 @@ def _parse_timestamp(value: object) -> datetime:
     if not normalized:
         return datetime.min.replace(tzinfo=timezone.utc)
     try:
-        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(timezone.utc)
+        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(
+            timezone.utc
+        )
     except ValueError:
         return datetime.min.replace(tzinfo=timezone.utc)
 
@@ -65,7 +67,9 @@ class MemoryRetrievalQuery:
     freshness_window_days: int | None = None
     reference_timestamp: str | None = None
     limit: int = 10
-    type_priority: tuple[str, ...] = field(default_factory=lambda: DEFAULT_TYPE_PRIORITY)
+    type_priority: tuple[str, ...] = field(
+        default_factory=lambda: DEFAULT_TYPE_PRIORITY
+    )
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -74,19 +78,38 @@ class MemoryRetrievalQuery:
             _normalize_text(self.domain_scope or self.domain_type).lower(),
         )
         object.__setattr__(self, "domain_type", self.domain_scope)
-        object.__setattr__(self, "memory_types", _normalize_identifiers(self.memory_types))
+        object.__setattr__(
+            self, "memory_types", _normalize_identifiers(self.memory_types)
+        )
         object.__setattr__(self, "owner_ref", _normalize_text(self.owner_ref) or None)
-        object.__setattr__(self, "subject_ref", _normalize_text(self.subject_ref) or None)
-        object.__setattr__(self, "status_filters", _normalize_identifiers(self.status_filters))
-        object.__setattr__(self, "trust_classes", _normalize_identifiers(self.trust_classes))
+        object.__setattr__(
+            self, "subject_ref", _normalize_text(self.subject_ref) or None
+        )
+        object.__setattr__(
+            self, "status_filters", _normalize_identifiers(self.status_filters)
+        )
+        object.__setattr__(
+            self, "trust_classes", _normalize_identifiers(self.trust_classes)
+        )
         object.__setattr__(self, "text_query", _normalize_text(self.text_query))
-        if self.freshness_window_days is None or _normalize_text(self.freshness_window_days) == "":
+        if (
+            self.freshness_window_days is None
+            or _normalize_text(self.freshness_window_days) == ""
+        ):
             object.__setattr__(self, "freshness_window_days", None)
         else:
-            object.__setattr__(self, "freshness_window_days", max(0, int(self.freshness_window_days)))
-        object.__setattr__(self, "reference_timestamp", _normalize_text(self.reference_timestamp) or None)
+            object.__setattr__(
+                self, "freshness_window_days", max(0, int(self.freshness_window_days))
+            )
+        object.__setattr__(
+            self,
+            "reference_timestamp",
+            _normalize_text(self.reference_timestamp) or None,
+        )
         object.__setattr__(self, "limit", max(1, int(self.limit)))
-        object.__setattr__(self, "type_priority", _normalize_identifiers(self.type_priority))
+        object.__setattr__(
+            self, "type_priority", _normalize_identifiers(self.type_priority)
+        )
         if not self.domain_scope:
             raise ValueError("domain_scope must not be empty")
         if not self.status_filters:
@@ -121,10 +144,15 @@ def retrieve_memory_objects(
         limit=max(query.limit * 5, query.limit),
     )
     filtered = [
-        item for item in base_records if not query.memory_types or item.memory_type in query.memory_types
+        item
+        for item in base_records
+        if not query.memory_types or item.memory_type in query.memory_types
     ]
     type_rank = {
-        memory_type: index for index, memory_type in enumerate(query.type_priority or DEFAULT_TYPE_PRIORITY)
+        memory_type: index
+        for index, memory_type in enumerate(
+            query.type_priority or DEFAULT_TYPE_PRIORITY
+        )
     }
     filtered.sort(
         key=lambda item: (

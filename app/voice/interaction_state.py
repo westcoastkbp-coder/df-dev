@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from collections.abc import Iterable
 
@@ -72,7 +72,10 @@ def suggested_replies_for_context(
             "ÐŸÐ¾Ð¼Ð¾Ñ‰ÑŒ",
         ]
     if normalized_mode == "task_run":
-        replies = ["ÐŸÐ¾ÐºÐ°Ð¶Ð¸ ÑÑ‚Ð°Ñ‚ÑƒÑ", "ÐŸÐ¾ÐºÐ°Ð¶Ð¸ Ð¿Ð¾ÑÐ»ÐµÐ´Ð½Ð¸Ðµ Ð·Ð°Ð´Ð°Ñ‡Ð¸"]
+        replies = [
+            "ÐŸÐ¾ÐºÐ°Ð¶Ð¸ ÑÑ‚Ð°Ñ‚ÑƒÑ",
+            "ÐŸÐ¾ÐºÐ°Ð¶Ð¸ Ð¿Ð¾ÑÐ»ÐµÐ´Ð½Ð¸Ðµ Ð·Ð°Ð´Ð°Ñ‡Ð¸",
+        ]
         if normalized_last_task_id:
             replies[0] = f"Status for {normalized_last_task_id}"
         return replies
@@ -172,4 +175,3 @@ def advance_voice_session(
             pending_objective=pending_objective,
         )
     return updated
-

@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
@@ -24,8 +24,16 @@ from app.execution.business_signal import (
     build_decision_from_business_signal,
     decision_to_task_input,
 )
-from app.execution.external_actions import MAKE_CALL, SEND_EMAIL, SEND_SMS, execute_external
-from app.execution.policy_guard import PolicyViolationError, load_validated_system_context
+from app.execution.external_actions import (
+    MAKE_CALL,
+    SEND_EMAIL,
+    SEND_SMS,
+    execute_external,
+)
+from app.execution.policy_guard import (
+    PolicyViolationError,
+    load_validated_system_context,
+)
 from app.execution.paths import OUTPUT_DIR, TASKS_FILE
 from app.execution.role_routing import build_routed_steps
 from memory.memory_store import build_agent_context, build_assistant_context
@@ -198,7 +206,9 @@ def approve_decision_task_creation(
         else build_decision_from_business_signal(signal)
     )
     if decision.execution_mode != "strict":
-        raise ValueError("approve_decision_task_creation is only required for strict decisions")
+        raise ValueError(
+            "approve_decision_task_creation is only required for strict decisions"
+        )
     if not approved:
         return {
             "task_created": False,
@@ -312,7 +322,9 @@ def create_task(task: TaskRequest) -> dict:
         "done_condition_met": task.done_condition_met,
         "entry_point": task.entry_point,
         "confirmed": bool(task.confirmed),
-        "timeout_seconds": max(0.01, float(task.timeout_seconds or DEFAULT_TIMEOUT_SECONDS)),
+        "timeout_seconds": max(
+            0.01, float(task.timeout_seconds or DEFAULT_TIMEOUT_SECONDS)
+        ),
         "max_retry": max(0, int(task.max_retry or DEFAULT_MAX_RETRY)),
     }
     task_payload.update(dict(task.payload or {}))
@@ -385,7 +397,9 @@ def update_linear_phase(task_data: dict, phase: str) -> dict:
 
 
 def _policy_input_from_task_data(task_data: dict) -> dict[str, object]:
-    return policy_input_from_task_input({"payload": task_data, "constraints": task_data.get("constraints", "")})
+    return policy_input_from_task_input(
+        {"payload": task_data, "constraints": task_data.get("constraints", "")}
+    )
 
 
 def enforce_task_system_policy(task_data: dict) -> dict:
@@ -495,7 +509,9 @@ def _run_agent_with_retry(task_data: dict, step: dict) -> str:
             last_error = str(exc).strip() or "execution failed"
             _record_task_history(
                 task_data,
-                event="execution_retry" if attempt < attempts_allowed else "execution_error",
+                event="execution_retry"
+                if attempt < attempts_allowed
+                else "execution_error",
                 detail=(
                     f"{step['name']} attempt {attempt}/{attempts_allowed}: {last_error}"
                 ),
@@ -583,16 +599,16 @@ def _execute_outbound_message(task_data: dict) -> dict:
     if contact is None:
         raise ValueError(f"contact not found: {contact_id}")
 
-    outbound_channel = str(payload.get("outbound_channel", "sms")).strip().lower() or "sms"
+    outbound_channel = (
+        str(payload.get("outbound_channel", "sms")).strip().lower() or "sms"
+    )
     phone_numbers = [
         str(item).strip()
         for item in contact.get("phone_numbers", [])
         if str(item).strip()
     ]
     emails = [
-        str(item).strip()
-        for item in contact.get("emails", [])
-        if str(item).strip()
+        str(item).strip() for item in contact.get("emails", []) if str(item).strip()
     ]
     if outbound_channel in {"sms", "phone"} and not phone_numbers:
         raise ValueError(f"contact has no phone number: {contact_id}")
@@ -617,7 +633,9 @@ def _execute_outbound_message(task_data: dict) -> dict:
             },
         )
         if str(email_result.get("status", "")).strip().lower() != "completed":
-            raise ValueError(str(email_result.get("error_message") or "email send failed"))
+            raise ValueError(
+                str(email_result.get("error_message") or "email send failed")
+            )
         append_history_event(
             task_data,
             action="email_sent",
@@ -640,7 +658,9 @@ def _execute_outbound_message(task_data: dict) -> dict:
             },
         )
         if str(call_result.get("status", "")).strip().lower() != "completed":
-            raise ValueError(str(call_result.get("error_message") or "phone call failed"))
+            raise ValueError(
+                str(call_result.get("error_message") or "phone call failed")
+            )
         append_history_event(
             task_data,
             action="phone_call_scheduled",
@@ -879,9 +899,7 @@ def _memory_override_roles(task_data: dict) -> set[str]:
     else:
         values = []
     return {
-        str(value or "").strip().lower()
-        for value in values
-        if str(value or "").strip()
+        str(value or "").strip().lower() for value in values if str(value or "").strip()
     }
 
 
@@ -1158,7 +1176,9 @@ def execute_task(task_data: dict) -> dict:
 
                 update_linear_phase(task_data, "implement")
                 review_retry_step = dict(step)
-                review_retry_result = _run_agent_with_retry(task_data, review_retry_step)
+                review_retry_result = _run_agent_with_retry(
+                    task_data, review_retry_step
+                )
                 if review_retry_result != "ok":
                     return _fail_task_execution(
                         task_data,
@@ -1397,7 +1417,9 @@ def run_task(task: TaskRequest) -> dict:
                 "linear_task_title": task.linear_task_title,
                 "linear_status": "To Do",
                 "mvp_priority": task.mvp_priority,
-                "done_condition_met": normalize_done_condition_met(task.done_condition_met),
+                "done_condition_met": normalize_done_condition_met(
+                    task.done_condition_met
+                ),
                 "next_step": "Use /api/secretary/entry.",
                 "last_result": {
                     "task_id": "",
@@ -1521,4 +1543,3 @@ def run_prepared_task(task_data: dict) -> dict:
         else "Task was already present in the execution queue."
     )
     return response
-

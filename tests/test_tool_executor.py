@@ -20,7 +20,11 @@ from control.tool_registry import (
     has_registered_tool,
     resolve_tool_executor,
 )
-from integrations.claude_tool import CLAUDE_ANALYZE_MODEL, ClaudeToolError, run_claude_analyze
+from integrations.claude_tool import (
+    CLAUDE_ANALYZE_MODEL,
+    ClaudeToolError,
+    run_claude_analyze,
+)
 from scripts.run_codex_task import run_codex_task
 
 
@@ -59,7 +63,7 @@ def test_execute_tool_returns_structured_http_request_result(monkeypatch) -> Non
             self.headers = {"Content-Type": "application/json"}
 
         def read(self) -> bytes:
-            return b'{\"ok\": true}'
+            return b'{"ok": true}'
 
         def geturl(self) -> str:
             return "https://example.com/ping"
@@ -70,7 +74,9 @@ def test_execute_tool_returns_structured_http_request_result(monkeypatch) -> Non
         def __exit__(self, exc_type, exc, tb) -> None:
             return None
 
-    monkeypatch.setattr("control.tool_executor.urlopen", lambda request, timeout=15: _FakeResponse())
+    monkeypatch.setattr(
+        "control.tool_executor.urlopen", lambda request, timeout=15: _FakeResponse()
+    )
 
     result = execute_tool(
         HTTP_REQUEST_TOOL,
@@ -126,7 +132,9 @@ def test_execute_tool_call_supports_email_send() -> None:
     _assert_execution_observability(result)
 
 
-def test_execute_tool_returns_structured_error_when_http_request_fails(monkeypatch) -> None:
+def test_execute_tool_returns_structured_error_when_http_request_fails(
+    monkeypatch,
+) -> None:
     from control.tool_executor import execute_tool
 
     monkeypatch.setattr(
@@ -153,7 +161,9 @@ def test_execute_tool_returns_structured_error_when_http_request_fails(monkeypat
     }
 
 
-def test_execute_tool_returns_fallback_source_when_claude_api_fails(monkeypatch) -> None:
+def test_execute_tool_returns_fallback_source_when_claude_api_fails(
+    monkeypatch,
+) -> None:
     from control.tool_executor import execute_tool
 
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
@@ -573,7 +583,9 @@ def test_execute_tool_call_returns_standard_google_docs_result(monkeypatch) -> N
     _assert_execution_observability(result)
 
 
-def test_execute_tool_call_returns_standard_gemini_google_operator_result(monkeypatch) -> None:
+def test_execute_tool_call_returns_standard_gemini_google_operator_result(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
         "integrations.gemini_tool.call_gemini_google_operator",
         lambda task, context: {
@@ -629,7 +641,9 @@ def test_execute_tool_call_returns_standard_gemini_google_operator_result(monkey
     _assert_execution_observability(result)
 
 
-def test_execute_tool_call_returns_standard_claude_web_operator_result(monkeypatch) -> None:
+def test_execute_tool_call_returns_standard_claude_web_operator_result(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
         "integrations.claude_web_tool.run_claude_web_operator_external",
         lambda payload: {
@@ -647,7 +661,9 @@ def test_execute_tool_call_returns_standard_claude_web_operator_result(monkeypat
     monkeypatch.setattr(
         "control.tool_registry._TOOL_REGISTRY",
         {
-            **__import__("control.tool_registry", fromlist=["_TOOL_REGISTRY"])._TOOL_REGISTRY,
+            **__import__(
+                "control.tool_registry", fromlist=["_TOOL_REGISTRY"]
+            )._TOOL_REGISTRY,
             CLAUDE_WEB_OPERATOR_TOOL: __import__(
                 "integrations.claude_web_tool",
                 fromlist=["run_claude_web_operator_external"],
@@ -847,7 +863,9 @@ def test_execute_tool_call_returns_standard_gmail_read_result(monkeypatch) -> No
     _assert_execution_observability(result)
 
 
-def test_execute_tool_call_returns_standard_google_gmail_send_result(monkeypatch) -> None:
+def test_execute_tool_call_returns_standard_google_gmail_send_result(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
         "integrations.gmail_tool.run_google_gmail_send_external",
         lambda payload: {
@@ -894,7 +912,9 @@ def test_execute_tool_call_returns_standard_google_gmail_send_result(monkeypatch
     _assert_execution_observability(result)
 
 
-def test_run_codex_task_executes_email_pipeline_successfully(tmp_path, monkeypatch) -> None:
+def test_run_codex_task_executes_email_pipeline_successfully(
+    tmp_path, monkeypatch
+) -> None:
     calls: list[dict[str, object]] = []
 
     def fake_execute_tool_call(tool_call):
@@ -934,7 +954,9 @@ def test_run_codex_task_executes_email_pipeline_successfully(tmp_path, monkeypat
             }
         raise AssertionError(f"unexpected tool call: {tool_call}")
 
-    monkeypatch.setattr(run_codex_task_module, "execute_tool_call", fake_execute_tool_call)
+    monkeypatch.setattr(
+        run_codex_task_module, "execute_tool_call", fake_execute_tool_call
+    )
 
     task, artifact_path = run_codex_task(
         {
@@ -1048,10 +1070,14 @@ def test_execute_tool_call_returns_standard_google_drive_result(monkeypatch) -> 
     _assert_execution_observability(result)
 
 
-def test_execute_tool_call_returns_drive_read_failed_for_invalid_file_id(monkeypatch) -> None:
+def test_execute_tool_call_returns_drive_read_failed_for_invalid_file_id(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
         "integrations.google_drive_tool.run_google_drive_read_file",
-        lambda payload: (_ for _ in ()).throw(RuntimeError("File not found: bad-file-id")),
+        lambda payload: (_ for _ in ()).throw(
+            RuntimeError("File not found: bad-file-id")
+        ),
     )
     monkeypatch.setattr(
         "control.tool_registry._TOOL_REGISTRY",
@@ -1086,7 +1112,9 @@ def test_execute_tool_call_returns_drive_read_failed_for_invalid_file_id(monkeyp
     _assert_execution_observability(result)
 
 
-def test_execute_tool_call_returns_offline_claude_analysis_when_api_fails(monkeypatch) -> None:
+def test_execute_tool_call_returns_offline_claude_analysis_when_api_fails(
+    monkeypatch,
+) -> None:
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setenv("CLAUDE_API_KEY", "bad-key")
     monkeypatch.setattr(
@@ -1212,7 +1240,9 @@ def test_run_codex_task_executes_pipeline_successfully(tmp_path, monkeypatch) ->
             }
         raise AssertionError(f"unexpected tool call: {tool_call}")
 
-    monkeypatch.setattr(run_codex_task_module, "execute_tool_call", fake_execute_tool_call)
+    monkeypatch.setattr(
+        run_codex_task_module, "execute_tool_call", fake_execute_tool_call
+    )
 
     task, artifact_path = run_codex_task(
         {
@@ -1291,21 +1321,28 @@ def test_run_codex_task_executes_pipeline_successfully(tmp_path, monkeypatch) ->
         },
     ]
     assert len(artifact["step_metrics"]) == 3
-    assert all(isinstance(step["step_duration_ms"], int) for step in artifact["step_metrics"])
+    assert all(
+        isinstance(step["step_duration_ms"], int) for step in artifact["step_metrics"]
+    )
     assert artifact["retry_info"]["total_retry_count"] == 0
 
 
-def test_run_codex_task_pipeline_reports_missing_variable_reference(tmp_path, monkeypatch) -> None:
+def test_run_codex_task_pipeline_reports_missing_variable_reference(
+    tmp_path, monkeypatch
+) -> None:
     calls: list[dict[str, object]] = []
     monkeypatch.setattr(
         run_codex_task_module,
         "execute_tool_call",
-        lambda tool_call: calls.append(dict(tool_call)) or {
-            "ok": True,
-            "tool_name": tool_call["tool_name"],
-            "output": {},
-            "error": None,
-        },
+        lambda tool_call: (
+            calls.append(dict(tool_call))
+            or {
+                "ok": True,
+                "tool_name": tool_call["tool_name"],
+                "output": {},
+                "error": None,
+            }
+        ),
     )
 
     _, artifact_path = run_codex_task(
@@ -1366,7 +1403,9 @@ def test_run_codex_task_pipeline_propagates_tool_failure(tmp_path, monkeypatch) 
             }
         raise AssertionError("pipeline should stop before later steps")
 
-    monkeypatch.setattr(run_codex_task_module, "execute_tool_call", fake_execute_tool_call)
+    monkeypatch.setattr(
+        run_codex_task_module, "execute_tool_call", fake_execute_tool_call
+    )
 
     task, artifact_path = run_codex_task(
         {
@@ -1413,7 +1452,9 @@ def test_run_codex_task_pipeline_propagates_tool_failure(tmp_path, monkeypatch) 
     assert artifact["step_metrics"][-1]["failure_reason"] == "anthropic unavailable"
 
 
-def test_execute_tool_call_records_network_diagnostics_for_network_failure(monkeypatch) -> None:
+def test_execute_tool_call_records_network_diagnostics_for_network_failure(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
         "control.tool_registry._TOOL_REGISTRY",
         {
@@ -1470,7 +1511,9 @@ def test_run_codex_task_pipeline_creates_execution_log(tmp_path, monkeypatch) ->
     log_path = tmp_path / "logs" / "execution.log"
     assert artifact_path.exists()
     assert log_path.exists()
-    entries = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+    entries = [
+        json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()
+    ]
     assert len(entries) == 1
     assert entries[0]["command"] == "Write observability log"
     assert entries[0]["status"] == "success"
@@ -1479,7 +1522,9 @@ def test_run_codex_task_pipeline_creates_execution_log(tmp_path, monkeypatch) ->
     assert isinstance(entries[0]["steps"][0]["step_duration_ms"], int)
 
 
-def test_run_codex_task_debug_mode_prints_step_timing(tmp_path, monkeypatch, capsys) -> None:
+def test_run_codex_task_debug_mode_prints_step_timing(
+    tmp_path, monkeypatch, capsys
+) -> None:
     monkeypatch.setattr(
         run_codex_task_module,
         "execute_tool_call",
@@ -1509,6 +1554,11 @@ def test_run_codex_task_debug_mode_prints_step_timing(tmp_path, monkeypatch, cap
     )
 
     output = capsys.readouterr().out
-    assert "DEBUG: pipeline step 1 start tool=google_drive.read_file retries=0" in output
-    assert "DEBUG: pipeline step 1 finish tool=google_drive.read_file status=success" in output
+    assert (
+        "DEBUG: pipeline step 1 start tool=google_drive.read_file retries=0" in output
+    )
+    assert (
+        "DEBUG: pipeline step 1 finish tool=google_drive.read_file status=success"
+        in output
+    )
     assert "duration_ms=" in output

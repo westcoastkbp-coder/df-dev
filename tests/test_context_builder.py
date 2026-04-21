@@ -9,8 +9,8 @@ from control.context_builder import (
 
 def test_build_context_packet_respects_fixed_file_limit(tmp_path) -> None:
     (tmp_path / "config").mkdir()
-    (tmp_path / "config" / "a.json").write_text("{\"a\":1}\n", encoding="utf-8")
-    (tmp_path / "config" / "b.json").write_text("{\"b\":1}\n", encoding="utf-8")
+    (tmp_path / "config" / "a.json").write_text('{"a":1}\n', encoding="utf-8")
+    (tmp_path / "config" / "b.json").write_text('{"b":1}\n', encoding="utf-8")
     (tmp_path / "README.md").write_text("README", encoding="utf-8")
     (tmp_path / "control").mkdir()
     (tmp_path / "control" / "task_to_codex.py").write_text("pass\n", encoding="utf-8")
@@ -31,7 +31,8 @@ def test_build_context_packet_respects_fixed_file_limit(tmp_path) -> None:
     )
 
     included_paths = [
-        entry["relative_path"] for entry in packet["config_files"] + packet["related_files"]
+        entry["relative_path"]
+        for entry in packet["config_files"] + packet["related_files"]
     ]
 
     assert len(included_paths) == MAX_INCLUDED_FILES
@@ -63,13 +64,19 @@ def test_write_context_packet_uses_subtask_identifier_when_present(tmp_path) -> 
     assert path == tmp_path / "tasks" / "context" / "task-9-2-context.json"
 
 
-def test_build_context_packet_uses_personal_fallback_for_personal_tasks(tmp_path) -> None:
+def test_build_context_packet_uses_personal_fallback_for_personal_tasks(
+    tmp_path,
+) -> None:
     (tmp_path / "modules" / "personal").mkdir(parents=True)
-    (tmp_path / "modules" / "personal" / "schema.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "modules" / "personal" / "schema.json").write_text(
+        "{}", encoding="utf-8"
+    )
     (tmp_path / "personal").mkdir()
     (tmp_path / "personal" / "personal_context.json").write_text("{}", encoding="utf-8")
     (tmp_path / "scripts").mkdir()
-    (tmp_path / "scripts" / "update_personal_context.py").write_text("pass\n", encoding="utf-8")
+    (tmp_path / "scripts" / "update_personal_context.py").write_text(
+        "pass\n", encoding="utf-8"
+    )
 
     packet = build_context_packet(
         {
@@ -128,7 +135,9 @@ def test_build_context_packet_returns_empty_external_files_on_google_drive_failu
     tmp_path,
     monkeypatch,
 ) -> None:
-    monkeypatch.setattr("control.context_builder.read_google_drive_file", lambda payload: None)
+    monkeypatch.setattr(
+        "control.context_builder.read_google_drive_file", lambda payload: None
+    )
 
     packet = build_context_packet(
         {

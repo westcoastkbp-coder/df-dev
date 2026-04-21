@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
@@ -137,7 +137,13 @@ def dump_yaml_value(value: object, *, indent: int = 0) -> list[str]:
                 lines.append(f"{prefix}{key}:")
                 lines.extend(dump_yaml_value(nested_value, indent=indent + 2))
             else:
-                rendered = "true" if nested_value is True else "false" if nested_value is False else nested_value
+                rendered = (
+                    "true"
+                    if nested_value is True
+                    else "false"
+                    if nested_value is False
+                    else nested_value
+                )
                 lines.append(f"{prefix}{key}: {rendered}")
         return lines
     if isinstance(value, (list, tuple)):
@@ -147,7 +153,9 @@ def dump_yaml_value(value: object, *, indent: int = 0) -> list[str]:
                 lines.append(f"{prefix}-")
                 lines.extend(dump_yaml_value(item, indent=indent + 2))
             else:
-                rendered = "true" if item is True else "false" if item is False else item
+                rendered = (
+                    "true" if item is True else "false" if item is False else item
+                )
                 lines.append(f"{prefix}- {rendered}")
         return lines
     rendered = "true" if value is True else "false" if value is False else value
@@ -178,7 +186,9 @@ def build_system_rules_envelope(snapshot: ContextSnapshot) -> dict[str, object]:
         "product_box_is_dev_environment": snapshot.product_box.is_dev_environment,
         "product_box_code_generation_allowed": snapshot.product_box.code_generation_allowed,
         "product_box_roles": [role.value for role in snapshot.product_box.roles],
-        "primary_channels": [channel.value for channel in snapshot.interaction.primary_channels],
+        "primary_channels": [
+            channel.value for channel in snapshot.interaction.primary_channels
+        ],
     }
 
 
@@ -187,9 +197,13 @@ def _normalize_operational_updates(updates: Mapping[str, object]) -> dict[str, o
     if not payload:
         return {}
     if any(field in payload for field in IMMUTABLE_TOP_LEVEL_FIELDS):
-        raise ContextUpdateError("immutable system fields cannot be updated via operational path")
+        raise ContextUpdateError(
+            "immutable system fields cannot be updated via operational path"
+        )
     if "context" in payload:
-        raise ContextUpdateError("context metadata cannot be updated via operational path")
+        raise ContextUpdateError(
+            "context metadata cannot be updated via operational path"
+        )
     if "operational" in payload:
         nested = payload.pop("operational")
         if not isinstance(nested, Mapping):
@@ -251,7 +265,9 @@ class SystemContext:
         return tuple(role.value for role in self._snapshot.product_box.roles)
 
     def get_primary_channels(self) -> tuple[str, ...]:
-        return tuple(channel.value for channel in self._snapshot.interaction.primary_channels)
+        return tuple(
+            channel.value for channel in self._snapshot.interaction.primary_channels
+        )
 
     def update_operational_context(
         self,
@@ -262,7 +278,9 @@ class SystemContext:
         snapshot = self.snapshot()
         normalized_actor_role = str(actor_role or "").strip()
         if normalized_actor_role != snapshot.operational.owner_role:
-            raise ContextUpdateError("operational context updates require actor role = owner")
+            raise ContextUpdateError(
+                "operational context updates require actor role = owner"
+            )
 
         normalized_updates = _normalize_operational_updates(updates)
         if not normalized_updates:
@@ -279,4 +297,3 @@ class SystemContext:
 
 def load_system_context(path: Path | None = None) -> SystemContext:
     return SystemContext.load(path)
-

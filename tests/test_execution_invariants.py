@@ -82,7 +82,9 @@ def _task_packet(
     return packet
 
 
-def _store_trace(tmp_path: Path, *, task_id: str, status: str, relative_name: str) -> None:
+def _store_trace(
+    tmp_path: Path, *, task_id: str, status: str, relative_name: str
+) -> None:
     trace_payload = create_execution_trace(
         {
             "task_id": task_id,
@@ -93,8 +95,14 @@ def _store_trace(tmp_path: Path, *, task_id: str, status: str, relative_name: st
             "memory_policy": {"allowed": True, "reason": "no_recent_duplicate"},
             "conflict_gate": {"allowed": True, "reason": "no_cross_domain_conflict"},
             "replay_protection": {"allowed": True, "reason": "not_previously_executed"},
-            "execution_invariants": {"allowed": True, "violations": [], "action": "allow"},
-            "final_decision": {"action": "execute" if status == "executed" else "block"},
+            "execution_invariants": {
+                "allowed": True,
+                "violations": [],
+                "action": "allow",
+            },
+            "final_decision": {
+                "action": "execute" if status == "executed" else "block"
+            },
             "execution_status": status,
         },
     )
@@ -261,7 +269,9 @@ def test_run_codex_task_blocks_when_invariant_conflict_state_detected(
         run_codex_task_module,
         "_contextual_tool_call",
         lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("execution should not continue after invariant conflict block")
+            AssertionError(
+                "execution should not continue after invariant conflict block"
+            )
         ),
     )
 
@@ -371,7 +381,9 @@ def test_run_codex_task_blocks_when_invariant_state_is_missing(
         run_codex_task_module,
         "_contextual_tool_call",
         lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("execution should not continue after state-consistency block")
+            AssertionError(
+                "execution should not continue after state-consistency block"
+            )
         ),
     )
 

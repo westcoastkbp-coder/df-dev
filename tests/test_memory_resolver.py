@@ -113,7 +113,9 @@ def test_resolve_memory_can_filter_by_memory_class(monkeypatch, tmp_path: Path) 
         timestamp="2026-04-14T11:00:00Z",
     )
 
-    resolved = memory_resolver.resolve_memory({"domain": "dev", "memory_class": "trace"})
+    resolved = memory_resolver.resolve_memory(
+        {"domain": "dev", "memory_class": "trace"}
+    )
 
     assert [entry["id"] for entry in resolved] == ["trace-1"]
     assert resolved[0]["type"] == "execution_trace"

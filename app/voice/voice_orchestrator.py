@@ -113,7 +113,9 @@ def _response_metadata(
     }
 
 
-def _dispatcher_supports_kwarg(dispatcher: Callable[..., dict[str, object]], name: str) -> bool:
+def _dispatcher_supports_kwarg(
+    dispatcher: Callable[..., dict[str, object]], name: str
+) -> bool:
     try:
         signature = inspect.signature(dispatcher)
     except (TypeError, ValueError):
@@ -229,8 +231,12 @@ class VoiceTurnOutput:
         return {
             "session": self.session.to_dict(),
             "turn": self.turn.to_dict(),
-            "action_contract": None if self.action_contract is None else dict(self.action_contract),
-            "action_result": None if self.action_result is None else dict(self.action_result),
+            "action_contract": None
+            if self.action_contract is None
+            else dict(self.action_contract),
+            "action_result": None
+            if self.action_result is None
+            else dict(self.action_result),
         }
 
 
@@ -264,7 +270,9 @@ class VoiceOrchestrator:
         execution_mode: str = "live",
     ) -> VoiceTurnOutput:
         normalized_domain_binding = normalize_ownerbox_domain_binding(
-            session.domain_binding if session is not None and domain_binding is None else domain_binding
+            session.domain_binding
+            if session is not None and domain_binding is None
+            else domain_binding
         )
         voice_session = session or create_voice_session(
             caller_id=caller_id,
@@ -276,7 +284,9 @@ class VoiceOrchestrator:
             session_id=session_id,
         )
         normalized_input_text = _collapse_whitespace(input_text)
-        resolved_detected_language = _normalize_text(detected_language) or voice_session.active_language
+        resolved_detected_language = (
+            _normalize_text(detected_language) or voice_session.active_language
+        )
         started_at = _utc_timestamp()
 
         if not normalized_input_text:
@@ -293,7 +303,9 @@ class VoiceOrchestrator:
                 action_result=None,
             )
 
-        normalized_intent_ref, _normalized_payload = normalize_input(text=normalized_input_text)
+        normalized_intent_ref, _normalized_payload = normalize_input(
+            text=normalized_input_text
+        )
         turn_seed = create_voice_turn(
             session_id=voice_session.session_id,
             input_text=normalized_input_text,
@@ -339,15 +351,21 @@ class VoiceOrchestrator:
             dispatch_kwargs["memory_domain"] = (
                 _normalize_text(normalized_domain_binding.get("domain_type")) or "dev"
             )
-        if normalized_domain_binding and _dispatcher_supports_kwarg(self._dispatcher, "domain_binding"):
+        if normalized_domain_binding and _dispatcher_supports_kwarg(
+            self._dispatcher, "domain_binding"
+        ):
             dispatch_kwargs["domain_binding"] = normalized_domain_binding
         action_result = self._dispatcher(action_contract, **dispatch_kwargs)
         response_plan = create_response_plan(
-            response_type=_response_type_from_result_status(_normalize_text(action_result.get("status"))),
+            response_type=_response_type_from_result_status(
+                _normalize_text(action_result.get("status"))
+            ),
             target_language=resolved_detected_language,
             text_payload=_result_payload_text(action_result),
             action_refs=[str(action_contract["action_id"])],
-            requires_confirmation=bool(action_contract["confirmation_policy"] == "required"),
+            requires_confirmation=bool(
+                action_contract["confirmation_policy"] == "required"
+            ),
             execution_mode=str(action_contract["execution_mode"]),
             metadata=_response_metadata(
                 session=voice_session,
@@ -377,7 +395,9 @@ class VoiceOrchestrator:
             normalized_intent_ref=normalized_intent_ref,
             response_plan=response_plan,
             output_text=response_plan.text_payload,
-            turn_status=_turn_status_from_result_status(str(action_result.get("status"))),
+            turn_status=_turn_status_from_result_status(
+                str(action_result.get("status"))
+            ),
             turn_id=turn_seed.turn_id,
             created_at=started_at,
             trace_metadata=trace_metadata,

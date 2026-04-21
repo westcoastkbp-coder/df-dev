@@ -81,7 +81,10 @@ def test_business_signal_maps_to_task_input() -> None:
 
     assert task_input["intent"] == "business_signal_response"
     assert task_input["task_type"] == "lead"
-    assert dict(task_input["payload"])["decision"]["decision_type"] == "low_review_count_decision"
+    assert (
+        dict(task_input["payload"])["decision"]["decision_type"]
+        == "low_review_count_decision"
+    )
     assert dict(task_input["payload"])["decision"]["reason"] == "reduced_visibility"
     assert dict(task_input["payload"])["recommended_action"] == "request_more_reviews"
     assert dict(task_input["payload"])["impact"] == "reduced_visibility"
@@ -93,7 +96,10 @@ def test_business_signal_builds_structured_decision() -> None:
     signal = build_business_signal(_payload())
     decision = build_decision_from_business_signal(signal)
 
-    assert decision.decision_id == "low_review_count:reputation_monitor:request_more_reviews"
+    assert (
+        decision.decision_id
+        == "low_review_count:reputation_monitor:request_more_reviews"
+    )
     assert decision.decision_type == "low_review_count_decision"
     assert decision.priority == "high"
     assert decision.confidence == 1.0
@@ -124,7 +130,9 @@ def test_decision_outcome_is_structured_from_real_metric_comparison() -> None:
     assert outcome.confidence == 1.0
 
 
-def test_decision_adjustment_reduces_priority_and_confidence_after_repeated_failures() -> None:
+def test_decision_adjustment_reduces_priority_and_confidence_after_repeated_failures() -> (
+    None
+):
     signal = build_business_signal(_payload())
     decision = build_decision_from_business_signal(signal)
     outcomes = [
@@ -161,33 +169,53 @@ def test_decision_adjustment_reduces_priority_and_confidence_after_repeated_fail
         "refresh_business_profile",
     ]
     assert dict(adjustment.explanation)["non_success_count"] == 3
-    assert dict(adjustment.explanation)["change_reason"] == "repeated_no_effect_or_negative_outcomes"
+    assert (
+        dict(adjustment.explanation)["change_reason"]
+        == "repeated_no_effect_or_negative_outcomes"
+    )
 
 
-def test_orchestrator_creates_task_from_business_signal(monkeypatch, tmp_path: Path) -> None:
+def test_orchestrator_creates_task_from_business_signal(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
 
     created = orchestrator_module.create_task_from_business_signal(_payload())
-    restored = task_factory.get_task(str(created.get("task_id", "")).strip(), store_path)
+    restored = task_factory.get_task(
+        str(created.get("task_id", "")).strip(), store_path
+    )
 
     assert restored is not None
     assert restored["intent"] == "business_signal_response"
     assert restored["task_type"] == "lead"
     assert restored["approval_status"] == "approved"
     assert restored["execution_mode"] == "auto"
-    assert dict(restored["payload"])["business_signal"]["signal_type"] == "low_review_count"
-    assert dict(restored["payload"])["decision"]["decision_id"] == "low_review_count:reputation_monitor:request_more_reviews"
-    assert dict(restored["payload"])["decision"]["decision_type"] == "low_review_count_decision"
+    assert (
+        dict(restored["payload"])["business_signal"]["signal_type"]
+        == "low_review_count"
+    )
+    assert (
+        dict(restored["payload"])["decision"]["decision_id"]
+        == "low_review_count:reputation_monitor:request_more_reviews"
+    )
+    assert (
+        dict(restored["payload"])["decision"]["decision_type"]
+        == "low_review_count_decision"
+    )
     assert dict(restored["payload"])["recommended_action"] == "request_more_reviews"
 
 
-def test_confirmation_mode_creates_task_awaiting_approval(monkeypatch, tmp_path: Path) -> None:
+def test_confirmation_mode_creates_task_awaiting_approval(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     payload = _payload()
     payload["severity"] = "low"
 
     created = orchestrator_module.create_task_from_business_signal(payload)
-    restored = task_factory.get_task(str(created.get("task_id", "")).strip(), store_path)
+    restored = task_factory.get_task(
+        str(created.get("task_id", "")).strip(), store_path
+    )
 
     assert restored is not None
     assert restored["status"] == "AWAITING_APPROVAL"
@@ -225,7 +253,9 @@ def test_strict_mode_creates_task_only_after_explicit_approval(
         approved=True,
         approved_by="dev_officer",
     )
-    restored = task_factory.get_task(str(created.get("task_id", "")).strip(), store_path)
+    restored = task_factory.get_task(
+        str(created.get("task_id", "")).strip(), store_path
+    )
 
     assert restored is not None
     assert restored["status"] == "CREATED"
@@ -285,7 +315,10 @@ def test_build_executive_state_aggregates_pending_approvals_and_risks() -> None:
     assert executive_state.pending_approvals == ("low_review_count_decision",)
     assert executive_state.top_priority == "low_review_count_decision"
     assert "decision outcome(s) turned negative" in executive_state.risks[0]
-    assert executive_state.actions_required[0] == "Approve or reject: low_review_count_decision"
+    assert (
+        executive_state.actions_required[0]
+        == "Approve or reject: low_review_count_decision"
+    )
 
 
 def test_build_executive_state_returns_compact_sections_when_stable() -> None:

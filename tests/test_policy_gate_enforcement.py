@@ -13,7 +13,11 @@ def test_policy_gate_allows_only_supported_action_in_executable_state() -> None:
     result = evaluate_policy(
         {
             "action_type": "WRITE_FILE",
-            "payload": {"task_id": "DF-POLICY-ENFORCEMENT-V1", "path": r"runtime\out\a.log", "content": "ok"},
+            "payload": {
+                "task_id": "DF-POLICY-ENFORCEMENT-V1",
+                "path": r"runtime\out\a.log",
+                "content": "ok",
+            },
         },
         {"task_id": "DF-POLICY-ENFORCEMENT-V1", "status": "running"},
     )
@@ -46,7 +50,10 @@ def test_policy_gate_blocks_malformed_descriptor_payload_and_state() -> None:
         {"task_id": "DF-POLICY-ENFORCEMENT-V2", "status": "running"},
     )
     invalid_state = evaluate_policy(
-        {"action_type": "READ_FILE", "payload": {"task_id": "DF-POLICY-ENFORCEMENT-V2"}},
+        {
+            "action_type": "READ_FILE",
+            "payload": {"task_id": "DF-POLICY-ENFORCEMENT-V2"},
+        },
         {"task_id": "DF-POLICY-ENFORCEMENT-V2", "status": "completed"},
     )
 
@@ -106,7 +113,10 @@ def test_workflow_contract_and_policy_block_malformed_payloads() -> None:
     )
 
     assert malformed_payload.execution_allowed is False
-    assert malformed_payload.reason == "workflow payload contains unsupported fields: unexpected_field"
+    assert (
+        malformed_payload.reason
+        == "workflow payload contains unsupported fields: unexpected_field"
+    )
 
 
 def test_task_creation_policy_allows_valid_office_branching() -> None:
@@ -224,9 +234,15 @@ def test_task_creation_policy_blocks_invalid_transition_and_duplicate() -> None:
     )
 
     assert invalid_transition_result.execution_allowed is False
-    assert invalid_transition_result.reason == "invalid office lineage transition: estimate -> payment"
+    assert (
+        invalid_transition_result.reason
+        == "invalid office lineage transition: estimate -> payment"
+    )
     assert duplicate_result.execution_allowed is False
-    assert duplicate_result.reason == "duplicate office child task type not allowed: estimate -> follow_up"
+    assert (
+        duplicate_result.reason
+        == "duplicate office child task type not allowed: estimate -> follow_up"
+    )
 
 
 def test_task_creation_policy_blocks_resource_conflict_with_active_decision() -> None:
@@ -238,7 +254,11 @@ def test_task_creation_policy_blocks_resource_conflict_with_active_decision() ->
         "task_type": "lead",
         "payload": {
             "summary": "active decision",
-            "decision": {"decision_id": "dec-1", "decision_type": "resource_lock", "priority": "high"},
+            "decision": {
+                "decision_id": "dec-1",
+                "decision_type": "resource_lock",
+                "priority": "high",
+            },
             "recommended_action": "request_more_reviews",
             "resource_id": "crew-west",
             "priority": "high",
@@ -256,7 +276,11 @@ def test_task_creation_policy_blocks_resource_conflict_with_active_decision() ->
         "task_type": "lead",
         "payload": {
             "summary": "new decision",
-            "decision": {"decision_id": "dec-2", "decision_type": "resource_lock", "priority": "high"},
+            "decision": {
+                "decision_id": "dec-2",
+                "decision_type": "resource_lock",
+                "priority": "high",
+            },
             "recommended_action": "request_more_reviews",
             "resource_id": "crew-west",
             "priority": "high",
@@ -273,7 +297,10 @@ def test_task_creation_policy_blocks_resource_conflict_with_active_decision() ->
     )
 
     assert result.execution_allowed is False
-    assert result.reason == "decision conflict flagged: resource conflict with active decision DF-DECISION-RESOURCE-ACTIVE-V1"
+    assert (
+        result.reason
+        == "decision conflict flagged: resource conflict with active decision DF-DECISION-RESOURCE-ACTIVE-V1"
+    )
 
 
 def test_task_creation_policy_blocks_priority_conflict_with_active_decision() -> None:
@@ -285,7 +312,11 @@ def test_task_creation_policy_blocks_priority_conflict_with_active_decision() ->
         "task_type": "lead",
         "payload": {
             "summary": "active priority",
-            "decision": {"decision_id": "dec-3", "decision_type": "queue_review", "priority": "urgent"},
+            "decision": {
+                "decision_id": "dec-3",
+                "decision_type": "queue_review",
+                "priority": "urgent",
+            },
             "recommended_action": "request_more_reviews",
             "priority": "urgent",
             "domain": "reputation",
@@ -302,7 +333,11 @@ def test_task_creation_policy_blocks_priority_conflict_with_active_decision() ->
         "task_type": "lead",
         "payload": {
             "summary": "new priority",
-            "decision": {"decision_id": "dec-4", "decision_type": "queue_review", "priority": "low"},
+            "decision": {
+                "decision_id": "dec-4",
+                "decision_type": "queue_review",
+                "priority": "low",
+            },
             "recommended_action": "request_more_reviews",
             "priority": "low",
             "domain": "reputation",
@@ -318,10 +353,15 @@ def test_task_creation_policy_blocks_priority_conflict_with_active_decision() ->
     )
 
     assert result.execution_allowed is False
-    assert result.reason == "decision conflict flagged: priority conflict with active decision DF-DECISION-PRIORITY-ACTIVE-V1"
+    assert (
+        result.reason
+        == "decision conflict flagged: priority conflict with active decision DF-DECISION-PRIORITY-ACTIVE-V1"
+    )
 
 
-def test_task_creation_policy_blocks_contradictory_action_with_active_decision() -> None:
+def test_task_creation_policy_blocks_contradictory_action_with_active_decision() -> (
+    None
+):
     active_task = {
         "task_contract_version": 1,
         "task_id": "DF-DECISION-ACTION-ACTIVE-V1",
@@ -330,7 +370,11 @@ def test_task_creation_policy_blocks_contradictory_action_with_active_decision()
         "task_type": "lead",
         "payload": {
             "summary": "active action",
-            "decision": {"decision_id": "dec-5", "decision_type": "contact_policy", "priority": "high"},
+            "decision": {
+                "decision_id": "dec-5",
+                "decision_type": "contact_policy",
+                "priority": "high",
+            },
             "recommended_action": "send_email",
             "priority": "high",
             "domain": "communications",
@@ -347,7 +391,11 @@ def test_task_creation_policy_blocks_contradictory_action_with_active_decision()
         "task_type": "lead",
         "payload": {
             "summary": "new action",
-            "decision": {"decision_id": "dec-6", "decision_type": "contact_policy", "priority": "high"},
+            "decision": {
+                "decision_id": "dec-6",
+                "decision_type": "contact_policy",
+                "priority": "high",
+            },
             "recommended_action": "do_not_send_email",
             "priority": "high",
             "domain": "communications",
@@ -363,7 +411,10 @@ def test_task_creation_policy_blocks_contradictory_action_with_active_decision()
     )
 
     assert result.execution_allowed is False
-    assert result.reason == "decision conflict flagged: contradictory actions with active decision DF-DECISION-ACTION-ACTIVE-V1"
+    assert (
+        result.reason
+        == "decision conflict flagged: contradictory actions with active decision DF-DECISION-ACTION-ACTIVE-V1"
+    )
 
 
 def test_task_creation_policy_allows_non_conflicting_decision() -> None:
@@ -375,7 +426,11 @@ def test_task_creation_policy_allows_non_conflicting_decision() -> None:
         "task_type": "lead",
         "payload": {
             "summary": "active decision",
-            "decision": {"decision_id": "dec-7", "decision_type": "resource_lock", "priority": "high"},
+            "decision": {
+                "decision_id": "dec-7",
+                "decision_type": "resource_lock",
+                "priority": "high",
+            },
             "recommended_action": "request_more_reviews",
             "resource_id": "crew-west",
             "priority": "high",
@@ -393,7 +448,11 @@ def test_task_creation_policy_allows_non_conflicting_decision() -> None:
         "task_type": "lead",
         "payload": {
             "summary": "new decision",
-            "decision": {"decision_id": "dec-8", "decision_type": "resource_lock", "priority": "high"},
+            "decision": {
+                "decision_id": "dec-8",
+                "decision_type": "resource_lock",
+                "priority": "high",
+            },
             "recommended_action": "request_more_reviews",
             "resource_id": "crew-east",
             "priority": "high",
@@ -644,7 +703,9 @@ def test_task_creation_policy_blocks_when_no_alternative_exists() -> None:
     assert "alternative_option" not in result.policy_trace
 
 
-def test_system_improvement_task_creation_allows_core_zone_but_flags_approval_requirement() -> None:
+def test_system_improvement_task_creation_allows_core_zone_but_flags_approval_requirement() -> (
+    None
+):
     task = {
         "task_contract_version": 1,
         "task_id": "DF-CORE-LOCK-BLOCK-V1",
@@ -669,7 +730,9 @@ def test_system_improvement_task_creation_allows_core_zone_but_flags_approval_re
     assert result.execution_allowed is True
     assert result.reason == ""
     assert result.policy_trace["core_impact"] is True
-    assert result.policy_trace["core_zone_files"] == ["app/orchestrator/execution_runner.py"]
+    assert result.policy_trace["core_zone_files"] == [
+        "app/orchestrator/execution_runner.py"
+    ]
     assert result.policy_trace["requires_high_approval"] is False
     assert result.policy_trace["execution_blocked_until_approval"] is True
 

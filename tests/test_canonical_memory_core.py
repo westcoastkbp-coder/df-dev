@@ -153,7 +153,10 @@ def test_memory_object_creation_by_type() -> None:
         owner_ref="owner-001",
         subject_ref="printer-profile",
         content_summary="Use the office printer for estimate packets.",
-        structured_payload={"decision_ref": "decision:001", "selected_path": "office-printer"},
+        structured_payload={
+            "decision_ref": "decision:001",
+            "selected_path": "office-printer",
+        },
         trust_level="validated",
         trust_class="structured_decision",
         source_type="decision_record",
@@ -165,7 +168,10 @@ def test_memory_object_creation_by_type() -> None:
         owner_ref="owner-001",
         subject_ref="printer-profile",
         content_summary="Prefer duplex printing.",
-        structured_payload={"preference_key": "printer.duplex", "preference_value": True},
+        structured_payload={
+            "preference_key": "printer.duplex",
+            "preference_value": True,
+        },
         trust_level="validated",
         trust_class="owner_validated",
         source_type="owner_input",
@@ -177,7 +183,10 @@ def test_memory_object_creation_by_type() -> None:
         owner_ref="owner-001",
         subject_ref="printer-profile",
         content_summary="Office printer entity.",
-        structured_payload={"entity_type": "printer", "entity_ref": "printer:office-main"},
+        structured_payload={
+            "entity_type": "printer",
+            "entity_ref": "printer:office-main",
+        },
         trust_level="validated",
         trust_class="bounded_reference",
         source_type="document_reference",
@@ -189,7 +198,10 @@ def test_memory_object_creation_by_type() -> None:
         owner_ref="owner-001",
         subject_ref="printer-profile",
         content_summary="Printer runbook document reference.",
-        structured_payload={"document_id": "doc-001", "document_locator": "ownerbox/docs/runbook.md"},
+        structured_payload={
+            "document_id": "doc-001",
+            "document_locator": "ownerbox/docs/runbook.md",
+        },
         trust_level="validated",
         trust_class="document_controlled",
         source_type="document_reference",
@@ -238,10 +250,30 @@ def test_memory_policy_accepts_valid_canonical_candidates() -> None:
 @pytest.mark.parametrize(
     ("candidate_kind", "memory_type", "source_type", "structured_payload"),
     [
-        ("execution_result", "fact", "trace_entry", {"fact_key": "trace.raw", "approved": True}),
-        ("owner_fact", "fact", "raw_transcript", {"fact_key": "call.raw", "validated": True}),
-        ("owner_fact", "fact", "raw_browser_dump", {"fact_key": "browser.raw", "validated": True}),
-        ("document_reference", "document_ref", "raw_mailbox_dump", {"document_id": "mail-001"}),
+        (
+            "execution_result",
+            "fact",
+            "trace_entry",
+            {"fact_key": "trace.raw", "approved": True},
+        ),
+        (
+            "owner_fact",
+            "fact",
+            "raw_transcript",
+            {"fact_key": "call.raw", "validated": True},
+        ),
+        (
+            "owner_fact",
+            "fact",
+            "raw_browser_dump",
+            {"fact_key": "browser.raw", "validated": True},
+        ),
+        (
+            "document_reference",
+            "document_ref",
+            "raw_mailbox_dump",
+            {"document_id": "mail-001"},
+        ),
     ],
 )
 def test_memory_policy_rejects_raw_trace_transcript_browser_and_mailbox(
@@ -460,7 +492,9 @@ def test_retrieval_ranking_respects_trust_freshness_and_type_filters(
         "memory-fact-high-trust-newer",
         "memory-fact-low-trust",
     ]
-    assert [item.memory_id for item in preference_only] == ["memory-preference-high-trust"]
+    assert [item.memory_id for item in preference_only] == [
+        "memory-preference-high-trust"
+    ]
 
 
 def test_context_assembly_returns_bounded_structured_context(tmp_path: Path) -> None:
@@ -594,7 +628,9 @@ def test_malformed_invalid_memory_candidates_fail_closed(tmp_path: Path) -> None
 def test_no_cross_domain_leakage(tmp_path: Path) -> None:
     store = _canonical_store(tmp_path)
     _persist_owner_memory_set(store)
-    owner_domain, _memory_scope, _action_scope, _trust_profile = _owner_boundary_bundle()
+    owner_domain, _memory_scope, _action_scope, _trust_profile = (
+        _owner_boundary_bundle()
+    )
 
     blocked_pack = assemble_owner_canonical_context(
         owner_domain=owner_domain,
@@ -651,7 +687,12 @@ def test_ownerbox_can_consume_assembled_canonical_memory_context_without_bypassi
     prompt = str(dict(captured["action_contract"])["parameters"]["prompt"])
 
     assert result.owner_context["canonical_memory_context"]["memory_refs"] != []
-    assert result.owner_context["canonical_memory_context"]["assembly_metadata"]["domain_type"] == "ownerbox"
+    assert (
+        result.owner_context["canonical_memory_context"]["assembly_metadata"][
+            "domain_type"
+        ]
+        == "ownerbox"
+    )
     assert result.owner_context["trace_metadata"]["domain_type"] == "ownerbox"
     assert dict(captured["dispatch_kwargs"])["memory_domain"] == "ownerbox"
     assert "canonical_memory_count=" in prompt
@@ -746,7 +787,9 @@ def test_superseding_a_preference_marks_prior_record_non_active(tmp_path: Path) 
     ] == [second.memory_id]
 
 
-def test_superseding_a_decision_preserves_prior_record_and_provenance(tmp_path: Path) -> None:
+def test_superseding_a_decision_preserves_prior_record_and_provenance(
+    tmp_path: Path,
+) -> None:
     store = _canonical_store(tmp_path)
     first = promote_candidate(
         MemoryPromotionCandidate(
@@ -902,7 +945,9 @@ def test_raw_external_payloads_remain_rejected_with_explicit_reason(
 ) -> None:
     candidate = MemoryPromotionCandidate(
         candidate_id=f"candidate-{source_type}",
-        candidate_kind="owner_fact" if source_type == "raw_printer_payload" else "document_reference",
+        candidate_kind="owner_fact"
+        if source_type == "raw_printer_payload"
+        else "document_reference",
         memory_type="fact" if source_type == "raw_printer_payload" else "document_ref",
         domain_type="ownerbox",
         owner_ref="owner-001",
@@ -1097,7 +1142,9 @@ def test_retrieval_ranking_remains_deterministic_across_equal_score_candidates(
     ]
 
 
-def test_context_assembly_excludes_deprecated_and_superseded_by_default(tmp_path: Path) -> None:
+def test_context_assembly_excludes_deprecated_and_superseded_by_default(
+    tmp_path: Path,
+) -> None:
     store = _canonical_store(tmp_path)
     first = promote_candidate(
         from_owner_preference(
@@ -1152,7 +1199,9 @@ def test_context_assembly_excludes_deprecated_and_superseded_by_default(tmp_path
         ),
     )
 
-    assert [entry["memory_id"] for entry in context_pack["memory_refs"]] == [second.memory_id]
+    assert [entry["memory_id"] for entry in context_pack["memory_refs"]] == [
+        second.memory_id
+    ]
     assert sorted(context_pack["assembly_metadata"]["excluded_memory_ids"]) == sorted(
         [first.memory_id, deprecated.memory_id]
     )
@@ -1189,7 +1238,9 @@ def test_context_assembly_enforces_bounded_per_type_caps(tmp_path: Path) -> None
     )
 
     assert len(context_pack["preferences"]) == 1
-    assert context_pack["assembly_metadata"]["counts_by_memory_type"] == {"preference": 1}
+    assert context_pack["assembly_metadata"]["counts_by_memory_type"] == {
+        "preference": 1
+    }
     assert context_pack["assembly_metadata"]["exclusion_reasons"] == {
         "type_cap:preference": 2
     }
@@ -1223,7 +1274,9 @@ def test_memory_write_audit_metadata_is_preserved(tmp_path: Path) -> None:
     }
 
 
-def test_direct_memory_writes_are_rejected_without_promotion_gate(tmp_path: Path) -> None:
+def test_direct_memory_writes_are_rejected_without_promotion_gate(
+    tmp_path: Path,
+) -> None:
     store = _canonical_store(tmp_path)
 
     with pytest.raises(CanonicalMemoryStoreError, match="direct_memory_write_rejected"):
@@ -1241,7 +1294,9 @@ def test_direct_memory_writes_are_rejected_without_promotion_gate(tmp_path: Path
         )
 
 
-def test_audit_layer_reports_active_truths_lineage_and_conflicts(tmp_path: Path) -> None:
+def test_audit_layer_reports_active_truths_lineage_and_conflicts(
+    tmp_path: Path,
+) -> None:
     store = _canonical_store(tmp_path)
     first = promote_candidate(
         from_owner_preference(
@@ -1282,7 +1337,10 @@ def test_audit_layer_reports_active_truths_lineage_and_conflicts(tmp_path: Path)
     )
 
     assert [item.memory_id for item in active_truths] == [second.memory_id]
-    assert [item.memory_id for item in supersession_chain] == [second.memory_id, first.memory_id]
+    assert [item.memory_id for item in supersession_chain] == [
+        second.memory_id,
+        first.memory_id,
+    ]
     assert lineage["memory_id"] == second.memory_id
     assert lineage["source_trace_id"] == second.source_trace_id
     assert lineage["evidence_ref"] == second.evidence_ref
@@ -1290,7 +1348,9 @@ def test_audit_layer_reports_active_truths_lineage_and_conflicts(tmp_path: Path)
     assert conflicts[0]["memory_ids"] == [second.memory_id, first.memory_id]
 
 
-def test_duplicate_active_fact_with_same_typed_key_and_value_is_rejected(tmp_path: Path) -> None:
+def test_duplicate_active_fact_with_same_typed_key_and_value_is_rejected(
+    tmp_path: Path,
+) -> None:
     store = _canonical_store(tmp_path)
     promote_candidate(
         from_execution_result(
@@ -1355,7 +1415,13 @@ def test_duplicate_active_document_ref_identity_is_rejected(tmp_path: Path) -> N
 
 
 @pytest.mark.parametrize(
-    ("candidate_kind", "memory_type", "source_type", "structured_payload", "expected_code"),
+    (
+        "candidate_kind",
+        "memory_type",
+        "source_type",
+        "structured_payload",
+        "expected_code",
+    ),
     [
         (
             "owner_fact",
@@ -1408,7 +1474,9 @@ def test_speculative_or_ungrounded_memory_candidates_fail_closed(
     assert decision.policy_code == expected_code
 
 
-def test_retrieval_filter_integrity_respects_combined_scope_constraints(tmp_path: Path) -> None:
+def test_retrieval_filter_integrity_respects_combined_scope_constraints(
+    tmp_path: Path,
+) -> None:
     store = _canonical_store(tmp_path)
     store.seed_memory_object(
         MemoryFact(
@@ -1432,7 +1500,10 @@ def test_retrieval_filter_integrity_respects_combined_scope_constraints(tmp_path
             owner_ref="owner-001",
             subject_ref="printer-profile",
             content_summary="Old validated printer profile fact.",
-            structured_payload={"fact_key": "printer.profile.old", "fact_value": "stale"},
+            structured_payload={
+                "fact_key": "printer.profile.old",
+                "fact_value": "stale",
+            },
             trust_level="validated",
             trust_class="owner_validated",
             source_type="owner_input",
@@ -1447,7 +1518,10 @@ def test_retrieval_filter_integrity_respects_combined_scope_constraints(tmp_path
             owner_ref="owner-001",
             subject_ref="printer-profile",
             content_summary="Working printer profile fact.",
-            structured_payload={"fact_key": "printer.profile.working", "fact_value": "draft"},
+            structured_payload={
+                "fact_key": "printer.profile.working",
+                "fact_value": "draft",
+            },
             trust_level="working",
             trust_class="working_source",
             source_type="evidence_summary",
@@ -1462,7 +1536,10 @@ def test_retrieval_filter_integrity_respects_combined_scope_constraints(tmp_path
             owner_ref="owner-002",
             subject_ref="printer-profile",
             content_summary="Other owner printer profile fact.",
-            structured_payload={"fact_key": "printer.profile", "fact_value": "other-owner"},
+            structured_payload={
+                "fact_key": "printer.profile",
+                "fact_value": "other-owner",
+            },
             trust_level="validated",
             trust_class="owner_validated",
             source_type="owner_input",
@@ -1613,7 +1690,9 @@ def test_ownerbox_does_not_receive_canonical_memory_without_explicit_assembly_re
     assert dict(captured["dispatch_kwargs"])["memory_domain"] == "ownerbox"
 
 
-def test_malformed_store_rows_fail_closed_with_explicit_store_error(tmp_path: Path) -> None:
+def test_malformed_store_rows_fail_closed_with_explicit_store_error(
+    tmp_path: Path,
+) -> None:
     store = _canonical_store(tmp_path)
     store.db_path.parent.mkdir(parents=True, exist_ok=True)
     store.list_memory_objects(domain_type="ownerbox")
@@ -1662,11 +1741,15 @@ def test_malformed_store_rows_fail_closed_with_explicit_store_error(tmp_path: Pa
         )
         connection.commit()
 
-    with pytest.raises(CanonicalMemoryStoreError, match="malformed canonical memory record"):
+    with pytest.raises(
+        CanonicalMemoryStoreError, match="malformed canonical memory record"
+    ):
         store.list_memory_objects(domain_type="ownerbox")
 
 
-def test_preexisting_duplicate_active_rows_are_constrained_on_retrieval(tmp_path: Path) -> None:
+def test_preexisting_duplicate_active_rows_are_constrained_on_retrieval(
+    tmp_path: Path,
+) -> None:
     store = _canonical_store(tmp_path)
     store.db_path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(str(store.db_path)) as connection:

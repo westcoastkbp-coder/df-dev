@@ -18,7 +18,12 @@ ALLOWED_OWNER_COMMANDS = {
     "force_recompute",
 }
 ALLOWED_DECISION_PRIORITIES = {"low", "medium", "high", "urgent"}
-ALLOWED_OVERRIDE_FIELDS = {"reason", "recommended_action", "recommended_actions", "confidence"}
+ALLOWED_OVERRIDE_FIELDS = {
+    "reason",
+    "recommended_action",
+    "recommended_actions",
+    "confidence",
+}
 OWNER_COMMAND_LOG_FILE = ROOT_DIR / LOGS_DIR / "owner_commands.log"
 
 
@@ -137,7 +142,9 @@ def _policy_validate_task_update(
     *,
     store_path: Path | None,
 ) -> dict[str, object]:
-    parent_task_id = _normalize_text(task.get("parent_task_id") or _task_payload(task).get("parent_task_id"))
+    parent_task_id = _normalize_text(
+        task.get("parent_task_id") or _task_payload(task).get("parent_task_id")
+    )
     existing_tasks = task_factory.load_tasks(store_path)
     parent_task = {}
     if parent_task_id:
@@ -221,12 +228,12 @@ def _handle_override_decision(
         applied["recommended_actions"] = [recommended_action]
     if "recommended_actions" in changes:
         raw_actions = changes.get("recommended_actions")
-        if not isinstance(raw_actions, Sequence) or isinstance(raw_actions, (str, bytes, bytearray)):
+        if not isinstance(raw_actions, Sequence) or isinstance(
+            raw_actions, (str, bytes, bytearray)
+        ):
             raise OwnerCommandError("recommended_actions must be a list")
         recommended_actions = [
-            _normalize_text(item)
-            for item in raw_actions
-            if _normalize_text(item)
+            _normalize_text(item) for item in raw_actions if _normalize_text(item)
         ]
         if not recommended_actions:
             raise OwnerCommandError("recommended_actions must not be empty")
@@ -242,7 +249,9 @@ def _handle_override_decision(
         applied["confidence"] = decision["confidence"]
 
     if not applied:
-        raise OwnerCommandError("override_decision requires at least one supported change")
+        raise OwnerCommandError(
+            "override_decision requires at least one supported change"
+        )
 
     payload["decision"] = decision
     task["payload"] = payload
@@ -259,7 +268,8 @@ def _handle_override_decision(
         actor=actor,
         reason=reason,
         changed=[applied],
-        target=_normalize_text(decision.get("decision_id")) or _normalize_text(updated_task.get("task_id")),
+        target=_normalize_text(decision.get("decision_id"))
+        or _normalize_text(updated_task.get("task_id")),
         task_id=_normalize_text(updated_task.get("task_id")),
     )
     return {
@@ -310,7 +320,8 @@ def _handle_change_priority(
         actor=actor,
         reason=reason,
         changed=[changed],
-        target=_normalize_text(decision.get("decision_id")) or _normalize_text(updated_task.get("task_id")),
+        target=_normalize_text(decision.get("decision_id"))
+        or _normalize_text(updated_task.get("task_id")),
         task_id=_normalize_text(updated_task.get("task_id")),
     )
     return {

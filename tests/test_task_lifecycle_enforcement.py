@@ -138,9 +138,13 @@ def test_deferred_to_executing_works(monkeypatch, tmp_path: Path) -> None:
     }
 
 
-def test_execution_runner_returns_invalid_transition_signal(monkeypatch, tmp_path: Path) -> None:
+def test_execution_runner_returns_invalid_transition_signal(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
-    monkeypatch.setattr(execution_runner_module, "store_task_result", lambda result: dict(result))
+    monkeypatch.setattr(
+        execution_runner_module, "store_task_result", lambda result: dict(result)
+    )
     task = _build_created_task(store_path, task_id="DF-LIFECYCLE-RUNNER-V1")
     task["status"] = "COMPLETED"
     task_factory.save_task(task, store_path)

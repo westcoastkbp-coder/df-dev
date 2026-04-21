@@ -35,7 +35,10 @@ def test_route_selects_claude_for_browser_actions() -> None:
 
 def test_route_selects_codex_for_repo_and_code_targets() -> None:
     vendor = route(
-        {"intent": "patch_repo", "payload": {"path": "app/orchestrator/execution_runner.py"}},
+        {
+            "intent": "patch_repo",
+            "payload": {"path": "app/orchestrator/execution_runner.py"},
+        },
         {"command_name": "update repo"},
         {
             "action": "write_file",

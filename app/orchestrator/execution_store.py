@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import hashlib
 import json
@@ -217,4 +217,3 @@ def find_execution_record(task_id: str) -> dict[str, object] | None:
             return record
 
     return None
-

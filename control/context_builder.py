@@ -104,7 +104,9 @@ def _resolve_repo_file(
         return None
 
     candidate_path = Path(normalized)
-    path = candidate_path if candidate_path.is_absolute() else repo_root / candidate_path
+    path = (
+        candidate_path if candidate_path.is_absolute() else repo_root / candidate_path
+    )
     resolved = path.resolve(strict=False)
 
     try:
@@ -182,18 +184,23 @@ def _personal_fallback_files(repo_root: Path) -> list[Path]:
 
 
 def _is_personal_context_task(task_source: dict[str, Any]) -> bool:
-    return (
-        str(task_source.get("task_type") or "").strip() == "personal_context_update"
-        or isinstance(task_source.get("personal_context_update"), dict)
+    return str(
+        task_source.get("task_type") or ""
+    ).strip() == "personal_context_update" or isinstance(
+        task_source.get("personal_context_update"), dict
     )
 
 
-def _selected_files(task_source: dict[str, Any], repo_root: Path) -> tuple[list[Path], str]:
+def _selected_files(
+    task_source: dict[str, Any], repo_root: Path
+) -> tuple[list[Path], str]:
     explicit_paths = _explicit_files(task_source, repo_root)
     if explicit_paths:
         return explicit_paths[:MAX_INCLUDED_FILES], "explicit_paths"
     if _is_personal_context_task(task_source):
-        return _personal_fallback_files(repo_root)[:MAX_INCLUDED_FILES], "personal_context_fallback"
+        return _personal_fallback_files(repo_root)[
+            :MAX_INCLUDED_FILES
+        ], "personal_context_fallback"
     fallback_paths = _fallback_files(repo_root)
     if fallback_paths:
         return fallback_paths[:MAX_INCLUDED_FILES], "pipeline_fallback"
@@ -281,7 +288,8 @@ def build_context_packet(
         "task_id": _task_id(source),
         "title": title,
         "instruction": instruction,
-        "constraints": _normalize_text(source.get("constraints")) or DEFAULT_CONSTRAINTS,
+        "constraints": _normalize_text(source.get("constraints"))
+        or DEFAULT_CONSTRAINTS,
         "success_criteria": _normalize_text(source.get("success_criteria"))
         or DEFAULT_SUCCESS_CRITERIA,
         "related_files": related_files,

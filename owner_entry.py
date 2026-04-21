@@ -192,7 +192,9 @@ def handle_owner_input(input_text: str) -> dict[str, Any]:
             task_payload=task_payload,
             success=False,
             failure_reason=failure_reason,
-            vendor=str(action_plan.get("vendor") or run_command_module.DEFAULT_VENDOR).strip()
+            vendor=str(
+                action_plan.get("vendor") or run_command_module.DEFAULT_VENDOR
+            ).strip()
             or run_command_module.DEFAULT_VENDOR,
         )
         run_command_module._record_system_context_execution_summary(
@@ -232,7 +234,9 @@ def handle_owner_input(input_text: str) -> dict[str, Any]:
         context_summary=context_summary,
         task_payload=task_payload,
         success=True,
-        vendor=str(action_plan.get("vendor") or run_command_module.DEFAULT_VENDOR).strip()
+        vendor=str(
+            action_plan.get("vendor") or run_command_module.DEFAULT_VENDOR
+        ).strip()
         or run_command_module.DEFAULT_VENDOR,
     )
     result_payload = run_command_module._build_task_output_payload(

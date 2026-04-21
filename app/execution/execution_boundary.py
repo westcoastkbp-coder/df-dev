@@ -10,7 +10,9 @@ from app.execution.paths import LOGS_DIR, ROOT_DIR
 from runtime.system_log import log_event, write_json_log
 
 
-EXECUTION_BOUNDARY_VIOLATIONS_LOG = ROOT_DIR / LOGS_DIR / "execution_boundary_violations.jsonl"
+EXECUTION_BOUNDARY_VIOLATIONS_LOG = (
+    ROOT_DIR / LOGS_DIR / "execution_boundary_violations.jsonl"
+)
 _CURRENT_EXECUTION_SCOPE: ContextVar["ExecutionScope | None"] = ContextVar(
     "df_execution_scope",
     default=None,

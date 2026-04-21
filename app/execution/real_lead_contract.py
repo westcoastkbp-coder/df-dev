@@ -147,7 +147,9 @@ def validate_lead_input_payload(payload: object) -> LeadInputPayload:
             "lead_input_payload.contact_info contains unsupported fields: "
             + ", ".join(sorted(contact_fields - {"phone", "email"}))
         )
-    qualification_flags = normalize_mapping(normalized_payload.get("qualification_flags"))
+    qualification_flags = normalize_mapping(
+        normalized_payload.get("qualification_flags")
+    )
     return LeadInputPayload(
         {
             "lead_id": normalize_text(normalized_payload.get("lead_id")),
@@ -162,7 +164,9 @@ def validate_lead_input_payload(payload: object) -> LeadInputPayload:
             "notes": normalize_text(normalized_payload.get("notes")),
             "qualification_flags": dict(qualification_flags),
             "lead_invalid": bool(normalized_payload.get("lead_invalid", False)),
-            "unsupported_request": bool(normalized_payload.get("unsupported_request", False)),
+            "unsupported_request": bool(
+                normalized_payload.get("unsupported_request", False)
+            ),
             "lead_exists": bool(normalized_payload.get("lead_exists", True)),
         }
     )
@@ -238,8 +242,12 @@ def validate_reentry_task_metadata(payload: object) -> ReentryTaskMetadataPayloa
     )
     return {
         "source_lead_id": str(normalized_payload.get("source_lead_id") or "").strip(),
-        "followup_task_id": str(normalized_payload.get("followup_task_id") or "").strip(),
-        "original_task_id": str(normalized_payload.get("original_task_id") or "").strip(),
+        "followup_task_id": str(
+            normalized_payload.get("followup_task_id") or ""
+        ).strip(),
+        "original_task_id": str(
+            normalized_payload.get("original_task_id") or ""
+        ).strip(),
         "reentry_source": str(normalized_payload.get("reentry_source") or "").strip(),
     }
 
@@ -276,7 +284,9 @@ def build_lead_input_payload(payload: object) -> LeadInputPayload:
     return validate_lead_input_payload(normalize_real_lead_input(payload))
 
 
-def build_real_lead_workflow_payload(lead_input: Mapping[str, object]) -> dict[str, object]:
+def build_real_lead_workflow_payload(
+    lead_input: Mapping[str, object],
+) -> dict[str, object]:
     return {
         "workflow_type": WORKFLOW_TYPE,
         "lead_id": str(lead_input.get("lead_id", "")).strip(),
@@ -284,7 +294,9 @@ def build_real_lead_workflow_payload(lead_input: Mapping[str, object]) -> dict[s
             "project_type": str(lead_input.get("project_type", "")).strip(),
             "scope_summary": str(lead_input.get("scope_summary") or "").strip(),
             "contact_info": dict(lead_input.get("contact_info", {}) or {}),
-            "qualification_flags": dict(lead_input.get("qualification_flags", {}) or {}),
+            "qualification_flags": dict(
+                lead_input.get("qualification_flags", {}) or {}
+            ),
             "lead_invalid": bool(lead_input.get("lead_invalid", False)),
             "unsupported_request": bool(lead_input.get("unsupported_request", False)),
             "lead_exists": bool(lead_input.get("lead_exists", True)),
@@ -305,14 +317,19 @@ def build_followup_payload(
         "workflow_type": str(workflow_type or "").strip(),
         "parent_lead_id": str(parent_lead_id or "").strip(),
         "missing_fields": [
-            str(field).strip() for field in list(missing_fields or []) if str(field).strip()
+            str(field).strip()
+            for field in list(missing_fields or [])
+            if str(field).strip()
         ],
-        "required_action": str(required_action or "").strip() or "request_input_completion",
+        "required_action": str(required_action or "").strip()
+        or "request_input_completion",
         "status": str(status or "").strip() or "pending",
     }
     normalized_updated_input = normalize_mapping(updated_lead_input)
     if normalized_updated_input:
-        payload["updated_lead_input"] = build_lead_input_payload(normalized_updated_input)
+        payload["updated_lead_input"] = build_lead_input_payload(
+            normalized_updated_input
+        )
     return validate_followup_payload(payload)
 
 
@@ -336,13 +353,15 @@ def followup_payload_from_task(task_data: Mapping[str, object]) -> FollowupPaylo
     )
 
 
-def build_followup_context_payload(task_data: Mapping[str, object]) -> FollowupContextPayload:
+def build_followup_context_payload(
+    task_data: Mapping[str, object],
+) -> FollowupContextPayload:
     return validate_followup_context_payload(
         {
-        "task_id": str(task_data.get("task_id", "")).strip(),
-        "status": str(task_data.get("status", "")).strip().lower(),
-        "intent": str(task_data.get("intent", "")).strip(),
-        "payload": followup_payload_from_task(task_data),
+            "task_id": str(task_data.get("task_id", "")).strip(),
+            "status": str(task_data.get("status", "")).strip().lower(),
+            "intent": str(task_data.get("intent", "")).strip(),
+            "payload": followup_payload_from_task(task_data),
         }
     )
 
@@ -356,10 +375,10 @@ def build_reentry_task_metadata(
 ) -> ReentryTaskMetadataPayload:
     return validate_reentry_task_metadata(
         {
-        "source_lead_id": str(source_lead_id or "").strip(),
-        "followup_task_id": str(followup_task_id or "").strip(),
-        "original_task_id": str(original_task_id or "").strip(),
-        "reentry_source": str(reentry_source or "").strip(),
+            "source_lead_id": str(source_lead_id or "").strip(),
+            "followup_task_id": str(followup_task_id or "").strip(),
+            "original_task_id": str(original_task_id or "").strip(),
+            "reentry_source": str(reentry_source or "").strip(),
         }
     )
 

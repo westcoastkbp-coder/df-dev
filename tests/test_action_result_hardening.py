@@ -3,7 +3,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.execution.action_result import build_action_result, build_invalid_action_result_signal, validate_action_result
+from app.execution.action_result import (
+    build_action_result,
+    build_invalid_action_result_signal,
+    validate_action_result,
+)
 from app.execution.task_schema import TASK_CONTRACT_VERSION
 from app.orchestrator.execution_runner import run_execution
 
@@ -22,6 +26,7 @@ def _build_task(task_id: str) -> dict[str, object]:
         "job_id": task_id,
         "trace_id": task_id,
     }
+
 
 def _read_violation_log(path: Path) -> list[dict[str, object]]:
     if not path.exists():
@@ -55,7 +60,9 @@ def test_valid_typed_action_result_passes() -> None:
         diagnostic_message="lead captured",
     )
 
-    assert validate_action_result(result, expected_task_id="DF-ACTION-VALID-V1") == result
+    assert (
+        validate_action_result(result, expected_task_id="DF-ACTION-VALID-V1") == result
+    )
 
 
 def test_missing_required_field_fails() -> None:
@@ -70,7 +77,10 @@ def test_missing_required_field_fails() -> None:
             }
         )
     except ValueError as exc:
-        assert str(exc) == "action result missing required fields: decision_trace, error_message"
+        assert (
+            str(exc)
+            == "action result missing required fields: decision_trace, error_message"
+        )
     else:
         raise AssertionError("expected validation failure")
 
@@ -118,14 +128,20 @@ def test_malformed_nested_payload_fails() -> None:
             }
         )
     except ValueError as exc:
-        assert str(exc) == "result_payload must contain only structured JSON-like values"
+        assert (
+            str(exc) == "result_payload must contain only structured JSON-like values"
+        )
     else:
         raise AssertionError("expected validation failure")
 
 
-def test_execution_stops_on_invalid_result_and_logs(monkeypatch, tmp_path: Path) -> None:
+def test_execution_stops_on_invalid_result_and_logs(
+    monkeypatch, tmp_path: Path
+) -> None:
     violation_log = tmp_path / "runtime" / "logs" / "action_result_violations.jsonl"
-    monkeypatch.setattr("app.execution.action_result.ACTION_RESULT_VIOLATIONS_LOG", violation_log)
+    monkeypatch.setattr(
+        "app.execution.action_result.ACTION_RESULT_VIOLATIONS_LOG", violation_log
+    )
 
     task = _build_task("DF-ACTION-STOP-V1")
     persisted: list[str] = []
@@ -152,9 +168,13 @@ def test_execution_stops_on_invalid_result_and_logs(monkeypatch, tmp_path: Path)
     assert logged[-1]["reason"] == "action result must be a dict"
 
 
-def test_invalid_result_failure_is_deterministic_across_runs(monkeypatch, tmp_path: Path) -> None:
+def test_invalid_result_failure_is_deterministic_across_runs(
+    monkeypatch, tmp_path: Path
+) -> None:
     violation_log = tmp_path / "runtime" / "logs" / "action_result_violations.jsonl"
-    monkeypatch.setattr("app.execution.action_result.ACTION_RESULT_VIOLATIONS_LOG", violation_log)
+    monkeypatch.setattr(
+        "app.execution.action_result.ACTION_RESULT_VIOLATIONS_LOG", violation_log
+    )
 
     def execute_once() -> dict[str, object]:
         task = _build_task("DF-ACTION-DETERMINISTIC-V1")

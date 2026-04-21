@@ -21,6 +21,7 @@ def _configure_state_backend(monkeypatch, tmp_path: Path) -> Path:
         tmp_path / "data" / "task_system.json",
     )
     import runtime.system_log as system_log_module
+
     owner_command_module = importlib.import_module("app.product.owner_command")
 
     monkeypatch.setattr(
@@ -111,24 +112,38 @@ def test_owner_command_override_decision_updates_task_payload_and_logs(
     assert decision["reason"] == "owner_verified_priority_shift"
     assert decision["recommended_actions"] == ["investigate_visibility_drop"]
     assert decision["confidence"] == 0.45
-    assert dict(restored["payload"])["recommended_action"] == "investigate_visibility_drop"
+    assert (
+        dict(restored["payload"])["recommended_action"] == "investigate_visibility_drop"
+    )
 
     system_log = _read_jsonl(tmp_path / "runtime" / "logs" / "system.log")
-    owner_event = next(item for item in system_log if item["event_type"] == "owner_command")
+    owner_event = next(
+        item for item in system_log if item["event_type"] == "owner_command"
+    )
     assert owner_event["details"]["user"] == "owner"
     assert owner_event["details"]["target"] == "df-owner-override-v1_decision"
-    assert owner_event["details"]["change_applied"]["reason"] == "manual correction after call review"
+    assert (
+        owner_event["details"]["change_applied"]["reason"]
+        == "manual correction after call review"
+    )
 
     command_log = _read_jsonl(tmp_path / "runtime" / "logs" / "owner_commands.log")
-    command_entry = next(item for item in command_log if item["event_type"] == "command_log")
+    command_entry = next(
+        item for item in command_log if item["event_type"] == "command_log"
+    )
     assert command_entry["details"]["user"] == "owner"
     assert command_entry["details"]["command_type"] == "override_decision"
     assert command_entry["details"]["target"] == "df-owner-override-v1_decision"
-    assert command_entry["details"]["change_applied"]["changes"][0]["reason"] == "owner_verified_priority_shift"
+    assert (
+        command_entry["details"]["change_applied"]["changes"][0]["reason"]
+        == "owner_verified_priority_shift"
+    )
     assert command_entry["timestamp"]
 
 
-def test_owner_command_change_priority_updates_task_and_decision(monkeypatch, tmp_path: Path) -> None:
+def test_owner_command_change_priority_updates_task_and_decision(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     created = _build_task(store_path, task_id="DF-OWNER-PRIORITY-V1", priority="medium")
 
@@ -150,7 +165,9 @@ def test_owner_command_change_priority_updates_task_and_decision(monkeypatch, tm
     assert dict(dict(restored["payload"]).get("decision", {}))["priority"] == "urgent"
 
 
-def test_owner_command_approve_all_pending_uses_approval_gate(monkeypatch, tmp_path: Path) -> None:
+def test_owner_command_approve_all_pending_uses_approval_gate(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     first = _build_task(
         store_path,
@@ -187,7 +204,9 @@ def test_owner_command_approve_all_pending_uses_approval_gate(monkeypatch, tmp_p
     assert second_restored["approval_status"] == "approved"
 
 
-def test_owner_command_reject_task_fails_non_terminal_task(monkeypatch, tmp_path: Path) -> None:
+def test_owner_command_reject_task_fails_non_terminal_task(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     created = _build_task(store_path, task_id="DF-OWNER-REJECT-V1")
 

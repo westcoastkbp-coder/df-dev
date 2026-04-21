@@ -98,7 +98,9 @@ def _owner_boundary_bundle() -> tuple[object, object, object, object]:
     return owner_domain, memory_scope, action_scope, trust_profile
 
 
-def _workflow_dispatcher(openai_calls: list[str], browser_calls: list[str], email_calls: list[str]):
+def _workflow_dispatcher(
+    openai_calls: list[str], browser_calls: list[str], email_calls: list[str]
+):
     def openai_executor(action_contract: object) -> dict[str, object]:
         action_id = str(dict(action_contract)["action_id"])
         openai_calls.append(action_id)
@@ -276,7 +278,9 @@ def test_workflow_types_instantiate_deterministic_step_patterns() -> None:
     assert browser_email_steps[0].timeout_seconds == 10
 
 
-def test_workflow_orchestrator_creates_expected_step_sequence(monkeypatch, tmp_path: Path) -> None:
+def test_workflow_orchestrator_creates_expected_step_sequence(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
     openai_calls: list[str] = []
@@ -326,7 +330,9 @@ def test_workflow_orchestrator_creates_expected_step_sequence(monkeypatch, tmp_p
     assert result.workflow.status == "blocked"
 
 
-def test_step_requiring_approval_does_not_execute_before_approval(monkeypatch, tmp_path: Path) -> None:
+def test_step_requiring_approval_does_not_execute_before_approval(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
     openai_calls: list[str] = []
@@ -570,7 +576,9 @@ def test_rejected_step_blocks_workflow_correctly(monkeypatch, tmp_path: Path) ->
     assert rejected.steps[1].status == "pending"
 
 
-def test_workflow_status_updates_correctly_through_lifecycle(monkeypatch, tmp_path: Path) -> None:
+def test_workflow_status_updates_correctly_through_lifecycle(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
     openai_calls: list[str] = []
@@ -677,7 +685,9 @@ def test_workflow_state_persists_across_reload_and_preserves_current_step_index(
     assert restored.current_step.sequence_index == 1
 
 
-def test_blocked_approval_step_can_continue_after_restart(monkeypatch, tmp_path: Path) -> None:
+def test_blocked_approval_step_can_continue_after_restart(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
     openai_calls: list[str] = []
@@ -729,7 +739,9 @@ def test_blocked_approval_step_can_continue_after_restart(monkeypatch, tmp_path:
     assert approved.workflow.status == "blocked"
 
 
-def test_failed_workflow_state_restores_after_reload(monkeypatch, tmp_path: Path) -> None:
+def test_failed_workflow_state_restores_after_reload(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
     openai_calls: list[str] = []
@@ -747,7 +759,9 @@ def test_failed_workflow_state_restores_after_reload(monkeypatch, tmp_path: Path
         )
 
     def dispatcher(action_contract: object, **kwargs: object) -> dict[str, object]:
-        return dispatch_action(action_contract, openai_executor=openai_executor, **kwargs)
+        return dispatch_action(
+            action_contract, openai_executor=openai_executor, **kwargs
+        )
 
     failed = OwnerWorkflowOrchestrator(
         owner_orchestrator=OwnerOrchestrator(dispatcher=dispatcher)
@@ -792,7 +806,9 @@ def test_failed_workflow_state_restores_after_reload(monkeypatch, tmp_path: Path
     assert restored.steps[1].status == "pending"
 
 
-def test_rejected_workflow_state_restores_after_reload(monkeypatch, tmp_path: Path) -> None:
+def test_rejected_workflow_state_restores_after_reload(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
     openai_calls: list[str] = []
@@ -844,7 +860,9 @@ def test_rejected_workflow_state_restores_after_reload(monkeypatch, tmp_path: Pa
     assert restored.steps[1].status == "pending"
 
 
-def test_durable_workflow_state_stays_outside_memory_semantics(monkeypatch, tmp_path: Path) -> None:
+def test_durable_workflow_state_stays_outside_memory_semantics(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
     dispatcher = _workflow_dispatcher([], [], [])
@@ -885,13 +903,17 @@ def test_durable_workflow_state_stays_outside_memory_semantics(monkeypatch, tmp_
     assert durable_db.exists()
     assert (
         memory_registry.get_artifact_by_logical_key(
-            compute_artifact_key("ownerbox", "owner_workflow_state", created.workflow.workflow_id)
+            compute_artifact_key(
+                "ownerbox", "owner_workflow_state", created.workflow.workflow_id
+            )
         )
         is None
     )
 
 
-def test_workflow_persistence_failure_is_normalized(monkeypatch, tmp_path: Path) -> None:
+def test_workflow_persistence_failure_is_normalized(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
 
@@ -909,7 +931,9 @@ def test_workflow_persistence_failure_is_normalized(monkeypatch, tmp_path: Path)
             )
 
     result = OwnerWorkflowOrchestrator(
-        owner_orchestrator=OwnerOrchestrator(dispatcher=_workflow_dispatcher([], [], [])),
+        owner_orchestrator=OwnerOrchestrator(
+            dispatcher=_workflow_dispatcher([], [], [])
+        ),
         workflow_state_store=FailingWorkflowStateStore(),
     ).create_workflow(
         owner_id="owner-001",
@@ -979,7 +1003,9 @@ def test_retryable_timeout_retries_safe_step_and_records_retry_metadata(
         )
 
     def dispatcher(action_contract: object, **kwargs: object) -> dict[str, object]:
-        return dispatch_action(action_contract, openai_executor=openai_executor, **kwargs)
+        return dispatch_action(
+            action_contract, openai_executor=openai_executor, **kwargs
+        )
 
     orchestrator = OwnerWorkflowOrchestrator(
         owner_orchestrator=OwnerOrchestrator(dispatcher=dispatcher)
@@ -1026,14 +1052,17 @@ def test_retryable_timeout_retries_safe_step_and_records_retry_metadata(
 
     traces = _trace_entries(system_log_file)
     workflow_trace = next(
-        trace for trace in reversed(traces) if trace.get("type") == "owner_workflow_trace"
+        trace
+        for trace in reversed(traces)
+        if trace.get("type") == "owner_workflow_trace"
     )
     assert workflow_trace["attempt_count"] == 0
     assert workflow_trace["workflow_status"] == "blocked"
     action_traces = [
         trace
         for trace in traces
-        if trace.get("type") == "execution_trace" and trace.get("action_id") == result.steps[0].action_id
+        if trace.get("type") == "execution_trace"
+        and trace.get("action_id") == result.steps[0].action_id
     ]
     assert len(action_traces) == 2
     assert action_traces[-1]["attempt_count"] == 1
@@ -1219,7 +1248,9 @@ def test_trace_compatible_workflow_metadata_exists(monkeypatch, tmp_path: Path) 
 
     traces = _trace_entries(system_log_file)
     workflow_trace = next(
-        trace for trace in reversed(traces) if trace.get("type") == "owner_workflow_trace"
+        trace
+        for trace in reversed(traces)
+        if trace.get("type") == "owner_workflow_trace"
     )
     trace_key = compute_artifact_key(
         "ownerbox", "owner_workflow_trace", result.workflow.workflow_id
@@ -1239,7 +1270,9 @@ def test_trace_compatible_workflow_metadata_exists(monkeypatch, tmp_path: Path) 
     assert memory_registry.get_artifact_by_logical_key(evidence_key) is None
 
 
-def test_owner_response_includes_workflow_visibility_fields(monkeypatch, tmp_path: Path) -> None:
+def test_owner_response_includes_workflow_visibility_fields(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
     openai_calls: list[str] = []

@@ -4,7 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from app.execution.execution_boundary import ExecutionBoundaryViolationError, execution_boundary
+from app.execution.execution_boundary import (
+    ExecutionBoundaryViolationError,
+    execution_boundary,
+)
 from app.execution.external_actions import (
     API_REQUEST,
     MAKE_CALL,
@@ -25,17 +28,25 @@ from app.policy.policy_gate import evaluate_external_action_policy
 class EstimateAdapter:
     module_type = "estimate_service"
 
-    def validate_request_payload(self, operation: str, payload: dict[str, object]) -> None:
+    def validate_request_payload(
+        self, operation: str, payload: dict[str, object]
+    ) -> None:
         if operation != "generate_estimate":
             raise ExternalModuleValidationError("unsupported operation")
         if "scope" not in payload:
-            raise ExternalModuleValidationError("payload missing required fields: scope")
+            raise ExternalModuleValidationError(
+                "payload missing required fields: scope"
+            )
 
-    def validate_result_payload(self, operation: str, payload: dict[str, object]) -> None:
+    def validate_result_payload(
+        self, operation: str, payload: dict[str, object]
+    ) -> None:
         if operation != "generate_estimate":
             raise ExternalModuleValidationError("unsupported operation")
         if "estimate_id" not in payload:
-            raise ExternalModuleValidationError("result_payload missing required fields: estimate_id")
+            raise ExternalModuleValidationError(
+                "result_payload missing required fields: estimate_id"
+            )
 
     def execute(self, request: ExternalModuleRequest) -> dict[str, object]:
         return {
@@ -79,7 +90,9 @@ def test_external_action_policy_blocks_unknown_destination() -> None:
     assert "public_phone_gateway" in result.reason
 
 
-def test_execute_external_send_sms_returns_typed_action_result(tmp_path: Path, monkeypatch) -> None:
+def test_execute_external_send_sms_returns_typed_action_result(
+    tmp_path: Path, monkeypatch
+) -> None:
     monkeypatch.setattr("app.execution.paths.OUTPUT_DIR", tmp_path / "out")
     monkeypatch.setattr("integrations.sms_gateway.OUTPUT_DIR", tmp_path / "out")
     with execution_boundary(
@@ -123,7 +136,10 @@ def test_execute_external_api_request_is_centralized_through_module_registry() -
 
     assert result["status"] == "completed"
     assert result["action_type"] == API_REQUEST
-    assert result["result_payload"]["external_module_result"]["module_type"] == "estimate_service"
+    assert (
+        result["result_payload"]["external_module_result"]["module_type"]
+        == "estimate_service"
+    )
 
 
 def test_execute_external_requires_execution_boundary() -> None:

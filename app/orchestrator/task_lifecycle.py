@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import sys
 from collections.abc import Mapping
@@ -36,7 +36,13 @@ TASK_STATUS_ALIASES = {
     "DEFERRED": "DEFERRED",
     "deferred": "DEFERRED",
 }
-OPEN_TASK_STATUSES = {"AWAITING_APPROVAL", "CREATED", "VALIDATED", "EXECUTING", "DEFERRED"}
+OPEN_TASK_STATUSES = {
+    "AWAITING_APPROVAL",
+    "CREATED",
+    "VALIDATED",
+    "EXECUTING",
+    "DEFERRED",
+}
 TASK_STATUS_TRANSITIONS = {
     "AWAITING_APPROVAL": {"VALIDATED", "FAILED"},
     "CREATED": {"AWAITING_APPROVAL", "VALIDATED", "FAILED"},
@@ -49,7 +55,9 @@ TASK_STATUS_TRANSITIONS = {
 
 
 class InvalidTaskStateTransitionError(ValueError):
-    def __init__(self, *, task_id: object, from_state: object, to_state: object) -> None:
+    def __init__(
+        self, *, task_id: object, from_state: object, to_state: object
+    ) -> None:
         normalized_task_id = str(task_id or "").strip()
         normalized_from_state = normalize_task_status(from_state)
         normalized_to_state = normalize_task_status(to_state)
@@ -305,4 +313,3 @@ def transition_task_status(
 
 def task_history_snapshot(task_data: Mapping[str, object]) -> list[dict[str, object]]:
     return [dict(item) for item in task_data.get("history", [])]
-

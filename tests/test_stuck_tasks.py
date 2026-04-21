@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -9,10 +9,14 @@ import app.orchestrator.task_factory as task_factory_module
 import app.orchestrator.task_state_store as task_state_store_module
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 
 
 def _configure_runtime(monkeypatch, tmp_path: Path) -> Path:
@@ -43,7 +47,14 @@ def _read_jsonl(path: Path) -> list[dict[str, object]]:
     ]
 
 
-def _build_task(store_path: Path, *, task_id: str, created_at: str, last_updated_at: str, status: str) -> dict[str, object]:
+def _build_task(
+    store_path: Path,
+    *,
+    task_id: str,
+    created_at: str,
+    last_updated_at: str,
+    status: str,
+) -> dict[str, object]:
     task = task_factory_module.create_task(
         {
             "task_id": task_id,
@@ -74,8 +85,12 @@ def test_stalled_task_is_detected_and_failed(monkeypatch, tmp_path: Path) -> Non
     result = process_next_queued_task(
         queue=InMemoryTaskQueue(),
         now=lambda: "2026-04-05T00:01:00Z",
-        fetch_task=lambda task_id: task_factory_module.get_task(task_id, store_path=store_path),
-        persist=lambda task_data: task_factory_module.save_task(task_data, store_path=store_path),
+        fetch_task=lambda task_id: task_factory_module.get_task(
+            task_id, store_path=store_path
+        ),
+        persist=lambda task_data: task_factory_module.save_task(
+            task_data, store_path=store_path
+        ),
         timeout=0.0,
         telemetry_collector=lambda: {},
         network_snapshot_collector=lambda: {},
@@ -83,7 +98,9 @@ def test_stalled_task_is_detected_and_failed(monkeypatch, tmp_path: Path) -> Non
     )
 
     assert result is None
-    persisted = task_factory_module.get_task("DF-STUCK-CREATED-V1", store_path=store_path)
+    persisted = task_factory_module.get_task(
+        "DF-STUCK-CREATED-V1", store_path=store_path
+    )
     assert persisted is not None
     assert persisted["status"] == "FAILED"
     assert persisted["result"] == {
@@ -110,8 +127,12 @@ def test_recently_updated_task_is_not_flagged(monkeypatch, tmp_path: Path) -> No
     process_next_queued_task(
         queue=InMemoryTaskQueue(),
         now=lambda: "2026-04-05T00:01:00Z",
-        fetch_task=lambda task_id: task_factory_module.get_task(task_id, store_path=store_path),
-        persist=lambda task_data: task_factory_module.save_task(task_data, store_path=store_path),
+        fetch_task=lambda task_id: task_factory_module.get_task(
+            task_id, store_path=store_path
+        ),
+        persist=lambda task_data: task_factory_module.save_task(
+            task_data, store_path=store_path
+        ),
         timeout=0.0,
         telemetry_collector=lambda: {},
         network_snapshot_collector=lambda: {},
@@ -138,16 +159,23 @@ def test_repeated_detection_is_identical(monkeypatch, tmp_path: Path) -> None:
         "task_contract_version": 1,
     }
 
-    first = stuck_tasks_module.detect_stuck_tasks([task], now_timestamp="2026-04-05T00:03:00Z")
-    second = stuck_tasks_module.detect_stuck_tasks([task], now_timestamp="2026-04-05T00:03:00Z")
+    first = stuck_tasks_module.detect_stuck_tasks(
+        [task], now_timestamp="2026-04-05T00:03:00Z"
+    )
+    second = stuck_tasks_module.detect_stuck_tasks(
+        [task], now_timestamp="2026-04-05T00:03:00Z"
+    )
 
-    assert first == second == [
-        {
-            "status": "task_stuck",
-            "task_id": "DF-STUCK-REPEAT-V1",
-            "state": "DEFERRED",
-            "duration": 180,
-            "threshold_seconds": 180,
-        }
-    ]
-
+    assert (
+        first
+        == second
+        == [
+            {
+                "status": "task_stuck",
+                "task_id": "DF-STUCK-REPEAT-V1",
+                "state": "DEFERRED",
+                "duration": 180,
+                "threshold_seconds": 180,
+            }
+        ]
+    )

@@ -24,7 +24,9 @@ def test_google_drive_layer_tool_resolves_from_registry() -> None:
     assert callable(executor)
 
 
-def test_execute_tool_call_routes_google_layer_to_google_gmail_send(monkeypatch) -> None:
+def test_execute_tool_call_routes_google_layer_to_google_gmail_send(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
         "integrations.gmail_tool.run_google_gmail_send_external",
         lambda payload: {

@@ -71,8 +71,7 @@ class EmailRuntime(Protocol):
         subject: str,
         body: str,
         attachments: list[str],
-    ) -> EmailExecution:
-        ...
+    ) -> EmailExecution: ...
 
     def send_email(
         self,
@@ -81,8 +80,7 @@ class EmailRuntime(Protocol):
         subject: str,
         body: str,
         attachments: list[str],
-    ) -> EmailExecution:
-        ...
+    ) -> EmailExecution: ...
 
     def reply_email(
         self,
@@ -92,8 +90,7 @@ class EmailRuntime(Protocol):
         to: list[str],
         subject: str | None,
         attachments: list[str],
-    ) -> EmailExecution:
-        ...
+    ) -> EmailExecution: ...
 
 
 def _normalize_text(value: object) -> str:
@@ -131,7 +128,9 @@ def _normalize_recipients(value: object, *, required: bool) -> list[str]:
         raise ActionContractViolation("parameters.to exceeds max size")
     normalized: list[str] = []
     for recipient in recipients:
-        email = _bounded_text(recipient, field_name="parameters.to item", max_length=320).lower()
+        email = _bounded_text(
+            recipient, field_name="parameters.to item", max_length=320
+        ).lower()
         if _EMAIL_PATTERN.fullmatch(email) is None:
             raise ActionContractViolation(f"invalid recipient: {email}")
         if email not in normalized:
@@ -148,12 +147,16 @@ def _normalize_attachments(value: object) -> list[str]:
     normalized: list[str] = []
     for item in attachments:
         normalized.append(
-            _bounded_text(item, field_name="parameters.attachments item", max_length=256)
+            _bounded_text(
+                item, field_name="parameters.attachments item", max_length=256
+            )
         )
     return normalized
 
 
-def validate_email_action_parameters(parameters: Mapping[str, object]) -> dict[str, object]:
+def validate_email_action_parameters(
+    parameters: Mapping[str, object],
+) -> dict[str, object]:
     normalized = dict(parameters)
     unexpected_fields = sorted(set(normalized) - SUPPORTED_PARAMETER_FIELDS)
     if unexpected_fields:
@@ -170,7 +173,9 @@ def validate_email_action_parameters(parameters: Mapping[str, object]) -> dict[s
         raise ActionContractViolation(f"unsupported email operation: {operation}")
 
     requires_recipients = operation in {"create_draft", "send_email"}
-    recipients = _normalize_recipients(normalized.get("to"), required=requires_recipients)
+    recipients = _normalize_recipients(
+        normalized.get("to"), required=requires_recipients
+    )
     attachments = _normalize_attachments(normalized.get("attachments"))
 
     if operation in {"create_draft", "send_email"}:
@@ -201,7 +206,9 @@ def validate_email_action_parameters(parameters: Mapping[str, object]) -> dict[s
         )
 
     if operation != "reply_email" and _normalize_text(normalized.get("reply_to_id")):
-        raise ActionContractViolation(f"parameters.reply_to_id is not supported for {operation}")
+        raise ActionContractViolation(
+            f"parameters.reply_to_id is not supported for {operation}"
+        )
 
     return {
         "operation": operation,
@@ -244,7 +251,9 @@ class StubEmailRuntime:
         body: str,
         attachments: list[str],
     ) -> EmailExecution:
-        message_id = f"message-{sha1(f'{to}|{subject}|{body}'.encode('utf-8')).hexdigest()[:12]}"
+        message_id = (
+            f"message-{sha1(f'{to}|{subject}|{body}'.encode('utf-8')).hexdigest()[:12]}"
+        )
         return EmailExecution(
             result_type="email_send",
             summary=f"Sent email to {', '.join(to)}",
@@ -265,7 +274,9 @@ class StubEmailRuntime:
         subject: str | None,
         attachments: list[str],
     ) -> EmailExecution:
-        message_id = f"reply-{sha1(f'{reply_to_id}|{body}'.encode('utf-8')).hexdigest()[:12]}"
+        message_id = (
+            f"reply-{sha1(f'{reply_to_id}|{body}'.encode('utf-8')).hexdigest()[:12]}"
+        )
         return EmailExecution(
             result_type="email_reply",
             summary=f"Replied to {reply_to_id}",
@@ -366,12 +377,15 @@ class GmailEmailRuntime:
                 "gmail reply lookup returned no message headers",
             )
         subject = _normalize_text(gmail_tool._header_value(headers, "Subject")) or None
-        message_header_id = _normalize_text(gmail_tool._header_value(headers, "Message-ID")) or None
-        references = _normalize_text(gmail_tool._header_value(headers, "References")) or None
-        reply_to = (
-            _normalize_text(gmail_tool._header_value(headers, "Reply-To"))
-            or _normalize_text(gmail_tool._header_value(headers, "From"))
+        message_header_id = (
+            _normalize_text(gmail_tool._header_value(headers, "Message-ID")) or None
         )
+        references = (
+            _normalize_text(gmail_tool._header_value(headers, "References")) or None
+        )
+        reply_to = _normalize_text(
+            gmail_tool._header_value(headers, "Reply-To")
+        ) or _normalize_text(gmail_tool._header_value(headers, "From"))
         recipient = _normalize_text(reply_to)
         if "<" in recipient and ">" in recipient:
             recipient = recipient.split("<", 1)[1].split(">", 1)[0].strip()
@@ -405,7 +419,9 @@ class GmailEmailRuntime:
         )
         draft_id = _normalize_text(response.get("id"))
         if not draft_id:
-            raise EmailAdapterError("provider_error", "gmail draft creation returned no draft id")
+            raise EmailAdapterError(
+                "provider_error", "gmail draft creation returned no draft id"
+            )
         response_message = _normalize_mapping(response.get("message"))
         return EmailExecution(
             result_type="email_draft",
@@ -437,7 +453,9 @@ class GmailEmailRuntime:
         )
         message_id = _normalize_text(response.get("id"))
         if not message_id:
-            raise EmailAdapterError("provider_error", "gmail send returned no message id")
+            raise EmailAdapterError(
+                "provider_error", "gmail send returned no message id"
+            )
         return EmailExecution(
             result_type="email_send",
             summary=f"Sent email to {', '.join(to)}",
@@ -472,9 +490,14 @@ class GmailEmailRuntime:
         resolved_subject = subject or source_subject or "Re:"
         if not resolved_subject.lower().startswith("re:"):
             resolved_subject = f"Re: {resolved_subject}"
-        combined_references = " ".join(
-            part for part in [references, message_header_id] if _normalize_text(part)
-        ).strip() or None
+        combined_references = (
+            " ".join(
+                part
+                for part in [references, message_header_id]
+                if _normalize_text(part)
+            ).strip()
+            or None
+        )
         message = self._build_message(
             to=recipients,
             subject=resolved_subject,
@@ -492,7 +515,9 @@ class GmailEmailRuntime:
         )
         message_id = _normalize_text(response.get("id"))
         if not message_id:
-            raise EmailAdapterError("provider_error", "gmail reply returned no message id")
+            raise EmailAdapterError(
+                "provider_error", "gmail reply returned no message id"
+            )
         return EmailExecution(
             result_type="email_reply",
             summary=f"Replied to {reply_to_id}",
@@ -541,7 +566,8 @@ def _normalize_provider_mode(value: object) -> str:
     if normalized not in SUPPORTED_PROVIDER_MODES:
         raise EmailAdapterError(
             "validation_error",
-            "provider_mode must be one of: " + ", ".join(sorted(SUPPORTED_PROVIDER_MODES)),
+            "provider_mode must be one of: "
+            + ", ".join(sorted(SUPPORTED_PROVIDER_MODES)),
         )
     return normalized
 
@@ -554,15 +580,20 @@ def _resolve_email_adapter_config(
     if isinstance(config, EmailAdapterConfig):
         return config
     if not isinstance(config, Mapping):
-        raise EmailAdapterError("validation_error", "email adapter config must be a mapping")
+        raise EmailAdapterError(
+            "validation_error", "email adapter config must be a mapping"
+        )
     payload = dict(config)
     unexpected_fields = sorted(set(payload) - {"provider_mode"})
     if unexpected_fields:
         raise EmailAdapterError(
             "validation_error",
-            "email adapter config contains unsupported fields: " + ", ".join(unexpected_fields),
+            "email adapter config contains unsupported fields: "
+            + ", ".join(unexpected_fields),
         )
-    return EmailAdapterConfig(provider_mode=_normalize_provider_mode(payload.get("provider_mode")))
+    return EmailAdapterConfig(
+        provider_mode=_normalize_provider_mode(payload.get("provider_mode"))
+    )
 
 
 def _env_provider() -> str:
@@ -593,7 +624,9 @@ def _build_default_email_runtime(
     )
 
 
-def _runtime_backend_name(runtime: EmailRuntime | None, config: EmailAdapterConfig) -> str:
+def _runtime_backend_name(
+    runtime: EmailRuntime | None, config: EmailAdapterConfig
+) -> str:
     candidate = _normalize_text(getattr(runtime, "backend_name", ""))
     if candidate:
         return candidate
@@ -602,7 +635,9 @@ def _runtime_backend_name(runtime: EmailRuntime | None, config: EmailAdapterConf
     return "custom"
 
 
-def _simulation_payload(action_id: str, parameters: Mapping[str, object]) -> dict[str, object]:
+def _simulation_payload(
+    action_id: str, parameters: Mapping[str, object]
+) -> dict[str, object]:
     operation = _normalize_text(parameters.get("operation"))
     return build_action_result_contract(
         action_id=action_id,
@@ -646,7 +681,11 @@ def _failure_result(
     if normalized_diagnostic:
         payload["diagnostic"] = normalized_diagnostic
     operation = _normalize_text((parameters or {}).get("operation")) or "create_draft"
-    result_type = _operation_result_type(operation) if operation in SUPPORTED_OPERATIONS else "email_action"
+    result_type = (
+        _operation_result_type(operation)
+        if operation in SUPPORTED_OPERATIONS
+        else "email_action"
+    )
     return build_action_result_contract(
         action_id=action_id,
         status="failed",
@@ -664,8 +703,13 @@ def execute_email_action(
     config: EmailAdapterConfig | Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     started_at = time.monotonic()
-    action_id = _normalize_text(_normalize_mapping(action_contract).get("action_id")) or "unknown_action"
-    raw_parameters = _normalize_mapping(_normalize_mapping(action_contract).get("parameters"))
+    action_id = (
+        _normalize_text(_normalize_mapping(action_contract).get("action_id"))
+        or "unknown_action"
+    )
+    raw_parameters = _normalize_mapping(
+        _normalize_mapping(action_contract).get("parameters")
+    )
     effective_config = _resolve_email_adapter_config(config)
     backend_used = _runtime_backend_name(runtime, effective_config)
 
@@ -703,7 +747,9 @@ def execute_email_action(
                 body=str(parameters["body"]),
                 to=list(parameters["to"]),
                 subject=(
-                    None if parameters.get("subject") is None else str(parameters["subject"])
+                    None
+                    if parameters.get("subject") is None
+                    else str(parameters["subject"])
                 ),
                 attachments=list(parameters["attachments"]),
             )

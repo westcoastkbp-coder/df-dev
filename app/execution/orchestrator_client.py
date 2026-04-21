@@ -120,12 +120,17 @@ def _extract_output_text(response_payload: Mapping[str, object]) -> str:
         normalized_item = _normalize_mapping(item)
         for content in _normalize_sequence(normalized_item.get("content")):
             normalized_content = _normalize_mapping(content)
-            if _normalize_text(normalized_content.get("type")) in {"output_text", "text"}:
+            if _normalize_text(normalized_content.get("type")) in {
+                "output_text",
+                "text",
+            }:
                 candidate = _normalize_text(normalized_content.get("text"))
                 if candidate:
                     return candidate
 
-    raise OrchestratorInvalidResponseError("OpenAI response did not include output_text")
+    raise OrchestratorInvalidResponseError(
+        "OpenAI response did not include output_text"
+    )
 
 
 def call_orchestrator(
@@ -183,7 +188,9 @@ def call_orchestrator(
 
     http_request = request.Request(
         _responses_url(),
-        data=json.dumps(payload, ensure_ascii=True, separators=(",", ":")).encode("utf-8"),
+        data=json.dumps(payload, ensure_ascii=True, separators=(",", ":")).encode(
+            "utf-8"
+        ),
         headers={
             "Authorization": f"Bearer {_api_key()}",
             "Content-Type": "application/json",
@@ -209,13 +216,17 @@ def call_orchestrator(
     except TimeoutError as exc:
         raise OrchestratorUnavailableError("OpenAI request timed out") from exc
     except json.JSONDecodeError as exc:
-        raise OrchestratorUnavailableError("OpenAI response was not valid JSON") from exc
+        raise OrchestratorUnavailableError(
+            "OpenAI response was not valid JSON"
+        ) from exc
 
     output_text = _extract_output_text(response_payload)
     try:
         parsed = json.loads(output_text)
     except json.JSONDecodeError as exc:
-        raise OrchestratorInvalidResponseError("OpenAI output was not valid JSON") from exc
+        raise OrchestratorInvalidResponseError(
+            "OpenAI output was not valid JSON"
+        ) from exc
     if not isinstance(parsed, Mapping):
         raise OrchestratorInvalidResponseError("OpenAI output must be a JSON object")
     return dict(parsed)

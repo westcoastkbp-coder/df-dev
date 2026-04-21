@@ -74,7 +74,9 @@ def _wsl_command(
 ) -> list[str]:
     quoted_command = " ".join(shlex.quote(_normalize_argument(arg)) for arg in args)
     activation = venv_activation_snippet(repo_root=repo_root or cwd)
-    shell_command = f"cd {shlex.quote(repo_root_for_dev_env(cwd))} && {activation}{quoted_command}"
+    shell_command = (
+        f"cd {shlex.quote(repo_root_for_dev_env(cwd))} && {activation}{quoted_command}"
+    )
     distro = str(os.environ.get(WSL_DISTRO_ENV, "")).strip()
     command = ["wsl.exe"]
     if distro:
@@ -98,7 +100,12 @@ def run_in_dev_env(
     working_dir = Path(cwd) if cwd is not None else REPO_ROOT
     if not is_wsl_primary():
         return subprocess.run(
-            [str(arg) if not isinstance(arg, Path) else str(arg.resolve(strict=False)) for arg in args],
+            [
+                str(arg)
+                if not isinstance(arg, Path)
+                else str(arg.resolve(strict=False))
+                for arg in args
+            ],
             cwd=working_dir,
             env=dict(env) if env is not None else None,
             capture_output=capture_output,

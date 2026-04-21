@@ -28,11 +28,7 @@ def _normalized_tags(raw_tags: object) -> set[str]:
         candidates = list(raw_tags)
     else:
         return set()
-    return {
-        _normalize_text(item)
-        for item in candidates
-        if _normalize_text(item)
-    }
+    return {_normalize_text(item) for item in candidates if _normalize_text(item)}
 
 
 def _context_mapping(task_packet: dict[str, Any] | None) -> dict[str, Any]:
@@ -51,7 +47,9 @@ def _parse_timestamp(value: object) -> datetime | None:
     if not normalized:
         return None
     try:
-        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(timezone.utc)
+        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(
+            timezone.utc
+        )
     except ValueError:
         return None
 
@@ -68,9 +66,13 @@ def _infer_memory_class(artifact_type: object) -> str:
 def _normalized_memory_object(raw_object: dict[str, Any]) -> dict[str, Any]:
     artifact = dict(raw_object)
     artifact_type = _normalize_text(artifact.get("type"))
-    memory_class = _normalize_text(artifact.get("memory_class")) or _infer_memory_class(artifact_type)
+    memory_class = _normalize_text(artifact.get("memory_class")) or _infer_memory_class(
+        artifact_type
+    )
     updated_at = _normalize_text(
-        artifact.get("updated_at") or artifact.get("timestamp") or artifact.get("created_at")
+        artifact.get("updated_at")
+        or artifact.get("timestamp")
+        or artifact.get("created_at")
     )
     return {
         "id": _normalize_text(artifact.get("id")),
@@ -91,7 +93,9 @@ def _timestamp_score(
     oldest: datetime | None,
 ) -> float:
     artifact_timestamp = _parse_timestamp(
-        artifact.get("updated_at") or artifact.get("timestamp") or artifact.get("created_at")
+        artifact.get("updated_at")
+        or artifact.get("timestamp")
+        or artifact.get("created_at")
     )
     if artifact_timestamp is None or newest is None or oldest is None:
         return 0.0
@@ -100,7 +104,9 @@ def _timestamp_score(
     span_seconds = (newest - oldest).total_seconds()
     if span_seconds <= 0:
         return 1.0
-    return max(0.0, min(1.0, (artifact_timestamp - oldest).total_seconds() / span_seconds))
+    return max(
+        0.0, min(1.0, (artifact_timestamp - oldest).total_seconds() / span_seconds)
+    )
 
 
 def _requested_memory_class(context: dict[str, Any]) -> str:
@@ -201,7 +207,9 @@ def rank_memory(
         artifact = _normalized_memory_object(raw_object)
         normalized_objects.append(artifact)
         parsed_timestamp = _parse_timestamp(
-            artifact.get("updated_at") or artifact.get("timestamp") or artifact.get("created_at")
+            artifact.get("updated_at")
+            or artifact.get("timestamp")
+            or artifact.get("created_at")
         )
         if parsed_timestamp is not None:
             timestamps.append(parsed_timestamp)
@@ -238,9 +246,13 @@ def rank_memory(
     scored: list[dict[str, Any]] = []
     for artifact in normalized_objects:
         parsed_timestamp = _parse_timestamp(
-            artifact.get("updated_at") or artifact.get("timestamp") or artifact.get("created_at")
+            artifact.get("updated_at")
+            or artifact.get("timestamp")
+            or artifact.get("created_at")
         )
-        heuristic_score = _score_memory_object(context, artifact, newest=newest, oldest=oldest)
+        heuristic_score = _score_memory_object(
+            context, artifact, newest=newest, oldest=oldest
+        )
         model_score = model_scores.get(_normalize_text(artifact.get("id")))
         final_score = heuristic_score
         if combined_scoring_applied and model_score is not None:
@@ -252,7 +264,9 @@ def rank_memory(
             {
                 "memory_id": _normalize_text(artifact.get("id")),
                 "score": final_score,
-                "timestamp_value": parsed_timestamp.timestamp() if parsed_timestamp is not None else float("-inf"),
+                "timestamp_value": parsed_timestamp.timestamp()
+                if parsed_timestamp is not None
+                else float("-inf"),
             }
         )
 

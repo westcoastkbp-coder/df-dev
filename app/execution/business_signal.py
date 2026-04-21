@@ -8,7 +8,9 @@ from typing import Final, TypeAlias, cast
 
 
 BusinessScalar: TypeAlias = str | int | float | bool | None
-BusinessValue: TypeAlias = BusinessScalar | tuple["BusinessValue", ...] | Mapping[str, "BusinessValue"]
+BusinessValue: TypeAlias = (
+    BusinessScalar | tuple["BusinessValue", ...] | Mapping[str, "BusinessValue"]
+)
 
 ALLOWED_SIGNAL_SEVERITIES: Final[set[str]] = {"low", "medium", "high", "critical"}
 REQUIRED_SIGNAL_FIELDS: Final[set[str]] = {
@@ -39,7 +41,11 @@ ALLOWED_RECOMMENDED_ACTIONS: Final[dict[str, dict[str, str]]] = {
 }
 ALLOWED_DECISION_PRIORITIES: Final[set[str]] = {"low", "medium", "high", "urgent"}
 ALLOWED_EXECUTION_MODES: Final[set[str]] = {"auto", "confirmation", "strict"}
-ALLOWED_DECISION_OUTCOME_STATUSES: Final[set[str]] = {"success", "no_effect", "negative"}
+ALLOWED_DECISION_OUTCOME_STATUSES: Final[set[str]] = {
+    "success",
+    "no_effect",
+    "negative",
+}
 PRIORITY_ORDER: Final[tuple[str, ...]] = ("low", "medium", "high", "urgent")
 ALTERNATIVE_ACTIONS_BY_ACTION: Final[dict[str, tuple[str, ...]]] = {
     "request_more_reviews": ("investigate_visibility_drop", "refresh_business_profile"),
@@ -97,8 +103,7 @@ def _deep_clone_json_like(value: object, *, field_name: str) -> BusinessValue:
         return MappingProxyType(cloned)
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(
-            _deep_clone_json_like(item, field_name=f"{field_name}[]")
-            for item in value
+            _deep_clone_json_like(item, field_name=f"{field_name}[]") for item in value
         )
     raise BusinessSignalValidationError(
         f"{field_name} must contain only structured JSON-like values"
@@ -232,7 +237,8 @@ def build_business_signal(payload: object) -> BusinessSignal:
     unexpected_fields = sorted(set(normalized) - REQUIRED_SIGNAL_FIELDS)
     if unexpected_fields:
         raise BusinessSignalValidationError(
-            "business_signal contains unsupported fields: " + ", ".join(unexpected_fields)
+            "business_signal contains unsupported fields: "
+            + ", ".join(unexpected_fields)
         )
 
     severity = _validate_identifier(normalized.get("severity"), field_name="severity")
@@ -254,7 +260,9 @@ def build_business_signal(payload: object) -> BusinessSignal:
         raise BusinessSignalValidationError("metrics must not be empty")
 
     return BusinessSignal(
-        signal_type=_validate_identifier(normalized.get("signal_type"), field_name="signal_type"),
+        signal_type=_validate_identifier(
+            normalized.get("signal_type"), field_name="signal_type"
+        ),
         severity=severity,
         source=_validate_identifier(normalized.get("source"), field_name="source"),
         metrics=cast(
@@ -307,7 +315,9 @@ def _numeric_metric(value: object, *, field_name: str) -> float | None:
     if value is None:
         return None
     if isinstance(value, bool):
-        raise BusinessSignalValidationError(f"{field_name} must be numeric when provided")
+        raise BusinessSignalValidationError(
+            f"{field_name} must be numeric when provided"
+        )
     if isinstance(value, (int, float)):
         return float(value)
     raise BusinessSignalValidationError(f"{field_name} must be numeric when provided")
@@ -324,16 +334,26 @@ def evaluate_decision_outcome(
     normalized_before = _normalize_mapping(before_metrics, field_name="before_metrics")
     normalized_after = _normalize_mapping(after_metrics, field_name="after_metrics")
     if set(normalized_before) != set(normalized_after):
-        raise BusinessSignalValidationError("before_metrics and after_metrics must use identical keys")
+        raise BusinessSignalValidationError(
+            "before_metrics and after_metrics must use identical keys"
+        )
     deltas: dict[str, BusinessValue] = {}
     positive_delta_count = 0
     negative_delta_count = 0
     for key in sorted(normalized_before):
-        before_value = _numeric_metric(normalized_before.get(key), field_name=f"before_metrics.{key}")
-        after_value = _numeric_metric(normalized_after.get(key), field_name=f"after_metrics.{key}")
+        before_value = _numeric_metric(
+            normalized_before.get(key), field_name=f"before_metrics.{key}"
+        )
+        after_value = _numeric_metric(
+            normalized_after.get(key), field_name=f"after_metrics.{key}"
+        )
         if before_value is None or after_value is None:
-            raise BusinessSignalValidationError(f"metrics comparison requires numeric values for `{key}`")
-        deltas[_validate_identifier(key, field_name="metrics_delta.key")] = after_value - before_value
+            raise BusinessSignalValidationError(
+                f"metrics comparison requires numeric values for `{key}`"
+            )
+        deltas[_validate_identifier(key, field_name="metrics_delta.key")] = (
+            after_value - before_value
+        )
         if after_value > before_value:
             positive_delta_count += 1
         elif after_value < before_value:
@@ -345,8 +365,13 @@ def evaluate_decision_outcome(
     else:
         outcome_status = "no_effect"
     if outcome_status not in ALLOWED_DECISION_OUTCOME_STATUSES:
-        raise BusinessSignalValidationError(f"unsupported decision outcome status: {outcome_status}")
-    action_list = tuple(_validate_identifier(item, field_name="actions_executed[]") for item in actions_executed)
+        raise BusinessSignalValidationError(
+            f"unsupported decision outcome status: {outcome_status}"
+        )
+    action_list = tuple(
+        _validate_identifier(item, field_name="actions_executed[]")
+        for item in actions_executed
+    )
     return DecisionOutcome(
         decision_type=decision.decision_type,
         decision_id=decision.decision_id,
@@ -363,7 +388,9 @@ def evaluate_decision_outcome(
 
 def _lower_priority(priority: str) -> str:
     if priority not in PRIORITY_ORDER:
-        raise BusinessSignalValidationError(f"unsupported decision priority: {priority}")
+        raise BusinessSignalValidationError(
+            f"unsupported decision priority: {priority}"
+        )
     current_index = PRIORITY_ORDER.index(priority)
     return PRIORITY_ORDER[max(0, current_index - 1)]
 
@@ -379,18 +406,26 @@ def adjust_decision_with_outcomes(
         else:
             payload = _normalize_mapping(raw_outcome, field_name="decision_outcome")
             outcome = DecisionOutcome(
-                decision_type=_validate_identifier(payload.get("decision_type"), field_name="decision_type"),
-                decision_id=_validate_identifier(payload.get("decision_id"), field_name="decision_id"),
+                decision_type=_validate_identifier(
+                    payload.get("decision_type"), field_name="decision_type"
+                ),
+                decision_id=_validate_identifier(
+                    payload.get("decision_id"), field_name="decision_id"
+                ),
                 actions_executed=tuple(
                     _validate_identifier(item, field_name="actions_executed[]")
                     for item in payload.get("actions_executed", [])
                 ),
                 timestamp=_normalize_text(payload.get("timestamp")) or _timestamp(),
-                outcome_status=_validate_identifier(payload.get("outcome_status"), field_name="outcome_status"),
+                outcome_status=_validate_identifier(
+                    payload.get("outcome_status"), field_name="outcome_status"
+                ),
                 metrics_delta=cast(
                     Mapping[str, BusinessValue],
                     _deep_clone_json_like(
-                        _normalize_mapping(payload.get("metrics_delta"), field_name="metrics_delta"),
+                        _normalize_mapping(
+                            payload.get("metrics_delta"), field_name="metrics_delta"
+                        ),
                         field_name="metrics_delta",
                     ),
                 ),
@@ -400,7 +435,9 @@ def adjust_decision_with_outcomes(
             normalized_outcomes.append(outcome)
 
     failure_count = sum(
-        1 for outcome in normalized_outcomes if outcome.outcome_status in {"no_effect", "negative"}
+        1
+        for outcome in normalized_outcomes
+        if outcome.outcome_status in {"no_effect", "negative"}
     )
     alternative_actions = list(decision.recommended_actions)
     adjusted_priority = decision.priority
@@ -409,11 +446,16 @@ def adjust_decision_with_outcomes(
     if failure_count >= 3:
         adjusted_priority = _lower_priority(decision.priority)
         adjusted_confidence = max(0.1, round(decision.confidence - 0.3, 2))
-        primary_action = decision.recommended_actions[0] if decision.recommended_actions else ""
+        primary_action = (
+            decision.recommended_actions[0] if decision.recommended_actions else ""
+        )
         for alternative_action in ALTERNATIVE_ACTIONS_BY_ACTION.get(primary_action, ()):
             if alternative_action not in alternative_actions:
                 alternative_actions.append(alternative_action)
-        changed = adjusted_priority != decision.priority or adjusted_confidence != decision.confidence
+        changed = (
+            adjusted_priority != decision.priority
+            or adjusted_confidence != decision.confidence
+        )
 
     adjusted_decision = Decision(
         decision_id=decision.decision_id,
@@ -440,7 +482,9 @@ def adjust_decision_with_outcomes(
         decision=adjusted_decision,
         explanation=cast(
             Mapping[str, BusinessValue],
-            _deep_clone_json_like(explanation, field_name="decision_adjustment_explanation"),
+            _deep_clone_json_like(
+                explanation, field_name="decision_adjustment_explanation"
+            ),
         ),
     )
 
@@ -452,7 +496,9 @@ def decision_to_task_input(
     source: str = "internal",
 ) -> dict[str, object]:
     if not decision.recommended_actions:
-        raise BusinessSignalValidationError("decision.recommended_actions must not be empty")
+        raise BusinessSignalValidationError(
+            "decision.recommended_actions must not be empty"
+        )
     primary_action = _validate_identifier(
         decision.recommended_actions[0],
         field_name="decision.recommended_actions[0]",
@@ -464,11 +510,15 @@ def decision_to_task_input(
     action_mapping = dict(ALLOWED_RECOMMENDED_ACTIONS[primary_action])
     return {
         "source": _normalize_text(source).lower() or "internal",
-        "status": "awaiting_approval" if decision.execution_mode == "confirmation" else "created",
+        "status": "awaiting_approval"
+        if decision.execution_mode == "confirmation"
+        else "created",
         "intent": action_mapping["task_intent"],
         "task_type": action_mapping["task_type"],
         "execution_mode": decision.execution_mode,
-        "approval_status": "pending" if decision.execution_mode in {"confirmation", "strict"} else "approved",
+        "approval_status": "pending"
+        if decision.execution_mode in {"confirmation", "strict"}
+        else "approved",
         "payload": {
             "business_signal": signal.to_dict(),
             "decision": decision.to_dict(),
@@ -498,7 +548,9 @@ def _decision_mapping(decision: Decision | Mapping[str, object]) -> dict[str, ob
     return _normalize_mapping(decision, field_name="decision")
 
 
-def _outcome_mapping(outcome: DecisionOutcome | Mapping[str, object]) -> dict[str, object]:
+def _outcome_mapping(
+    outcome: DecisionOutcome | Mapping[str, object],
+) -> dict[str, object]:
     if isinstance(outcome, DecisionOutcome):
         return outcome.to_dict()
     return _normalize_mapping(outcome, field_name="decision_outcome")
@@ -520,7 +572,9 @@ def _first_non_empty(values: Sequence[object], fallback: str) -> str:
 
 def _summarize_pending_approval(task: Mapping[str, object]) -> str:
     payload = _normalize_mapping(task.get("payload", {}), field_name="task.payload")
-    decision = _normalize_mapping(payload.get("decision", {}), field_name="task.payload.decision")
+    decision = _normalize_mapping(
+        payload.get("decision", {}), field_name="task.payload.decision"
+    )
     return _first_non_empty(
         (
             decision.get("decision_type"),
@@ -547,7 +601,8 @@ def build_executive_state(
     lead_signal_count = sum(
         1
         for signal in normalized_signals
-        if _normalize_text(signal.get("recommended_action")) in {
+        if _normalize_text(signal.get("recommended_action"))
+        in {
             "request_more_reviews",
             "investigate_visibility_drop",
             "follow_up_missed_calls",
@@ -556,7 +611,8 @@ def build_executive_state(
     project_signal_count = sum(
         1
         for signal in normalized_signals
-        if _normalize_text(signal.get("recommended_action")) == "refresh_business_profile"
+        if _normalize_text(signal.get("recommended_action"))
+        == "refresh_business_profile"
     )
     open_project_tasks = sum(
         1
@@ -567,7 +623,8 @@ def build_executive_state(
     contractor_tasks = sum(
         1
         for task in normalized_tasks
-        if _normalize_text(task.get("task_type")) in {"procurement", "permit", "payment"}
+        if _normalize_text(task.get("task_type"))
+        in {"procurement", "permit", "payment"}
         and _normalize_text(task.get("status")) not in {"COMPLETED", "FAILED"}
     )
     pending_approval_tasks = [
@@ -597,9 +654,7 @@ def build_executive_state(
         else "stable"
     )
     project_status = (
-        "active"
-        if open_project_tasks > 0 or project_signal_count > 0
-        else "stable"
+        "active" if open_project_tasks > 0 or project_signal_count > 0 else "stable"
     )
     contractor_status = "attention needed" if contractor_tasks > 0 else "stable"
 
@@ -607,23 +662,32 @@ def build_executive_state(
     if negative_outcomes:
         risks.append(f"{len(negative_outcomes)} decision outcome(s) turned negative")
     if len(no_effect_outcomes) >= 2:
-        risks.append(f"{len(no_effect_outcomes)} recent decisions had no measurable effect")
+        risks.append(
+            f"{len(no_effect_outcomes)} recent decisions had no measurable effect"
+        )
     if pending_approval_tasks:
-        risks.append(f"{len(pending_approval_tasks)} important item(s) are waiting on approval")
+        risks.append(
+            f"{len(pending_approval_tasks)} important item(s) are waiting on approval"
+        )
     if contractor_tasks:
         risks.append(f"{contractor_tasks} contractor-facing task(s) remain open")
     if not risks and urgent_decisions:
         risks.append(f"{len(urgent_decisions)} urgent decision(s) need follow-through")
     risks = risks[:3]
 
-    pending_approvals = [_summarize_pending_approval(task) for task in pending_approval_tasks[:3]]
+    pending_approvals = [
+        _summarize_pending_approval(task) for task in pending_approval_tasks[:3]
+    ]
 
     top_priority = "stable"
     if pending_approval_tasks:
         top_priority = _first_non_empty(
             (
                 _normalize_mapping(
-                    _normalize_mapping(pending_approval_tasks[0].get("payload", {}), field_name="task.payload").get("decision", {}),
+                    _normalize_mapping(
+                        pending_approval_tasks[0].get("payload", {}),
+                        field_name="task.payload",
+                    ).get("decision", {}),
                     field_name="task.payload.decision",
                 ).get("decision_type"),
                 pending_approval_tasks[0].get("intent"),
@@ -632,7 +696,10 @@ def build_executive_state(
         )
     elif urgent_decisions:
         top_priority = _first_non_empty(
-            (urgent_decisions[0].get("decision_type"), urgent_decisions[0].get("decision_id")),
+            (
+                urgent_decisions[0].get("decision_type"),
+                urgent_decisions[0].get("decision_id"),
+            ),
             "urgent_decision",
         )
     elif risks:
@@ -673,9 +740,13 @@ def build_executive_state(
     if pending_approvals:
         actions_required.append(f"Approve or reject: {pending_approvals[0]}")
     if negative_outcomes:
-        actions_required.append("Review negative decision outcomes before repeating the same action")
+        actions_required.append(
+            "Review negative decision outcomes before repeating the same action"
+        )
     if contractor_tasks:
-        actions_required.append("Clear contractor-related open work blocking downstream execution")
+        actions_required.append(
+            "Clear contractor-related open work blocking downstream execution"
+        )
     if not actions_required:
         actions_required.append("No immediate owner action required")
 

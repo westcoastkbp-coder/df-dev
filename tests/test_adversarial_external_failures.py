@@ -109,13 +109,19 @@ class SequencedClock:
 class FailureAdapter:
     module_type = "estimate_service"
 
-    def __init__(self, *, raw_result: object | None = None, error: Exception | None = None) -> None:
+    def __init__(
+        self, *, raw_result: object | None = None, error: Exception | None = None
+    ) -> None:
         self.raw_result = raw_result
         self.error = error
 
-    def validate_request_payload(self, operation: str, payload: dict[str, object]) -> None:
+    def validate_request_payload(
+        self, operation: str, payload: dict[str, object]
+    ) -> None:
         if operation != "generate_estimate":
-            raise ExternalModuleValidationError("unsupported operation for estimate_service")
+            raise ExternalModuleValidationError(
+                "unsupported operation for estimate_service"
+            )
         required_fields = {"estimate_scope", "address"}
         missing_fields = sorted(required_fields - set(payload))
         if missing_fields:
@@ -123,9 +129,13 @@ class FailureAdapter:
                 "payload missing required fields: " + ", ".join(missing_fields)
             )
 
-    def validate_result_payload(self, operation: str, payload: dict[str, object]) -> None:
+    def validate_result_payload(
+        self, operation: str, payload: dict[str, object]
+    ) -> None:
         if operation != "generate_estimate":
-            raise ExternalModuleValidationError("unsupported operation for estimate_service")
+            raise ExternalModuleValidationError(
+                "unsupported operation for estimate_service"
+            )
         required_fields = {"estimate_id", "price_band"}
         missing_fields = sorted(required_fields - set(payload))
         if missing_fields:
@@ -293,7 +303,9 @@ def _executor_for(registry: ExternalModuleRegistry):
 
 
 def _persist(task_data: dict[str, object]) -> None:
-    task_factory_module.save_task(task_data, store_path=task_factory_module.TASK_SYSTEM_FILE)
+    task_factory_module.save_task(
+        task_data, store_path=task_factory_module.TASK_SYSTEM_FILE
+    )
 
 
 def _status_transitions(task_data: dict[str, object]) -> tuple[tuple[str, str], ...]:
@@ -311,7 +323,10 @@ def _status_transitions(task_data: dict[str, object]) -> tuple[tuple[str, str], 
 
 
 def _history_events(task_data: dict[str, object]) -> tuple[str, ...]:
-    return tuple(str(entry.get("event", "")).strip() for entry in list(task_data.get("history", [])))
+    return tuple(
+        str(entry.get("event", "")).strip()
+        for entry in list(task_data.get("history", []))
+    )
 
 
 def _observe_failure(
@@ -321,7 +336,9 @@ def _observe_failure(
     *,
     run_label: str,
 ) -> dict[str, object]:
-    runtime = _configure_runtime(monkeypatch, tmp_path / scenario.injection_type.lower() / run_label)
+    runtime = _configure_runtime(
+        monkeypatch, tmp_path / scenario.injection_type.lower() / run_label
+    )
     task = _build_task(runtime.store_path, task_id=scenario.task_id)
     registry = ExternalModuleRegistry()
     registry.register(scenario.build_adapter())
@@ -365,7 +382,8 @@ def _observe_failure(
         execution_record is not None
         and str(execution_record.get("status", "")).strip() == "executed"
         and str(ledger_result.get("status", "")).strip() == "failed"
-        and str(ledger_result.get("error_code", "")).strip() == str(result.get("error_code", "")).strip()
+        and str(ledger_result.get("error_code", "")).strip()
+        == str(result.get("error_code", "")).strip()
         and "execution_started" in history_events
         and "execution_failed" in history_events
     )
@@ -373,7 +391,8 @@ def _observe_failure(
         str((restored or {}).get("status", "")).strip() == "FAILED"
         and str((restored or {}).get("failed_at", "")).strip() != ""
         and str((restored or {}).get("error", "")).strip() != ""
-        and history_transitions[-2:] == (("VALIDATED", "EXECUTING"), ("EXECUTING", "FAILED"))
+        and history_transitions[-2:]
+        == (("VALIDATED", "EXECUTING"), ("EXECUTING", "FAILED"))
     )
 
     return {
@@ -400,7 +419,9 @@ def _observe_failure(
     }
 
 
-@pytest.mark.parametrize("scenario", SCENARIOS, ids=lambda scenario: scenario.injection_type.lower())
+@pytest.mark.parametrize(
+    "scenario", SCENARIOS, ids=lambda scenario: scenario.injection_type.lower()
+)
 def test_external_failure_modes_reach_deterministic_failed_state(
     monkeypatch,
     tmp_path: Path,

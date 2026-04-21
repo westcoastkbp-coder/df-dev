@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from dev_verification import assert_result, check_invariants, detect_failure, generate_report, run_scenario
+from dev_verification import (
+    assert_result,
+    check_invariants,
+    detect_failure,
+    generate_report,
+    run_scenario,
+)
 
 
 def test_run_scenario_returns_pass_for_valid_dev_only_scenario() -> None:
@@ -26,8 +32,14 @@ def test_run_scenario_returns_pass_for_valid_dev_only_scenario() -> None:
             "status": "completed",
             "payload": {"summary": "ok"},
         },
-        "final_state": {"task_id": "DF-DEV-VERIFICATION-LAYER-V1", "status": "verified"},
-        "expected_state": {"task_id": "DF-DEV-VERIFICATION-LAYER-V1", "status": "verified"},
+        "final_state": {
+            "task_id": "DF-DEV-VERIFICATION-LAYER-V1",
+            "status": "verified",
+        },
+        "expected_state": {
+            "task_id": "DF-DEV-VERIFICATION-LAYER-V1",
+            "status": "verified",
+        },
     }
 
     report = run_scenario(scenario)
@@ -71,7 +83,10 @@ def test_run_scenario_returns_pass_for_valid_dev_only_scenario() -> None:
                 "executed": True,
                 "actions": [{"action_id": "a-1", "type": "write"}],
                 "result": {"task_id": "DF-DEV-DETERMINISTIC-V1", "value": "first"},
-                "replay_output": {"task_id": "DF-DEV-DETERMINISTIC-V1", "value": "second"},
+                "replay_output": {
+                    "task_id": "DF-DEV-DETERMINISTIC-V1",
+                    "value": "second",
+                },
                 "final_state": {"task_id": "DF-DEV-DETERMINISTIC-V1"},
             },
             "Deterministic output violated: replay output does not match",
@@ -163,8 +178,14 @@ def test_check_invariants_and_generate_report_are_stable() -> None:
                 "executed": True,
                 "required_data_fields": ["customer_id", "scope"],
                 "input_data": {"scope": "adu conversion"},
-                "result": {"task_id": "DF-REALITY-MISSING-DATA-V1", "status": "success"},
-                "final_state": {"task_id": "DF-REALITY-MISSING-DATA-V1", "status": "running"},
+                "result": {
+                    "task_id": "DF-REALITY-MISSING-DATA-V1",
+                    "status": "success",
+                },
+                "final_state": {
+                    "task_id": "DF-REALITY-MISSING-DATA-V1",
+                    "status": "running",
+                },
             },
             "No false success violated: missing data produced success",
         ),
@@ -176,9 +197,18 @@ def test_check_invariants_and_generate_report_are_stable() -> None:
                 "policy": {"allowed": True},
                 "executed": True,
                 "delayed_updates": True,
-                "state_before_update": {"task_id": "DF-REALITY-DELAYED-UPDATES-V1", "status": "pending"},
-                "final_state": {"task_id": "DF-REALITY-DELAYED-UPDATES-V1", "status": "verified"},
-                "result": {"task_id": "DF-REALITY-DELAYED-UPDATES-V1", "status": "success"},
+                "state_before_update": {
+                    "task_id": "DF-REALITY-DELAYED-UPDATES-V1",
+                    "status": "pending",
+                },
+                "final_state": {
+                    "task_id": "DF-REALITY-DELAYED-UPDATES-V1",
+                    "status": "verified",
+                },
+                "result": {
+                    "task_id": "DF-REALITY-DELAYED-UPDATES-V1",
+                    "status": "success",
+                },
             },
             "No false success violated: delayed update produced success before state convergence",
         ),
@@ -190,8 +220,14 @@ def test_check_invariants_and_generate_report_are_stable() -> None:
                 "policy": {"allowed": True},
                 "executed": True,
                 "inconsistent_signals": True,
-                "result": {"task_id": "DF-REALITY-INCONSISTENT-SIGNALS-V1", "status": "success"},
-                "final_state": {"task_id": "DF-REALITY-INCONSISTENT-SIGNALS-V1", "status": "running"},
+                "result": {
+                    "task_id": "DF-REALITY-INCONSISTENT-SIGNALS-V1",
+                    "status": "success",
+                },
+                "final_state": {
+                    "task_id": "DF-REALITY-INCONSISTENT-SIGNALS-V1",
+                    "status": "running",
+                },
             },
             "No false success violated: inconsistent signals produced success",
         ),
@@ -205,8 +241,14 @@ def test_check_invariants_and_generate_report_are_stable() -> None:
                 "partial_execution": True,
                 "planned_steps": ["validate", "execute", "report"],
                 "completed_steps": ["validate"],
-                "result": {"task_id": "DF-REALITY-PARTIAL-EXECUTION-V1", "status": "success"},
-                "final_state": {"task_id": "DF-REALITY-PARTIAL-EXECUTION-V1", "status": "running"},
+                "result": {
+                    "task_id": "DF-REALITY-PARTIAL-EXECUTION-V1",
+                    "status": "success",
+                },
+                "final_state": {
+                    "task_id": "DF-REALITY-PARTIAL-EXECUTION-V1",
+                    "status": "running",
+                },
             },
             "No false success violated: partial execution produced success",
         ),
@@ -219,8 +261,14 @@ def test_check_invariants_and_generate_report_are_stable() -> None:
                 "executed": True,
                 "invalid_state": True,
                 "continued_after_invalid_state": True,
-                "result": {"task_id": "DF-REALITY-INVALID-STATE-V1", "status": "failed"},
-                "final_state": {"task_id": "DF-REALITY-INVALID-STATE-V1", "status": "invalid"},
+                "result": {
+                    "task_id": "DF-REALITY-INVALID-STATE-V1",
+                    "status": "failed",
+                },
+                "final_state": {
+                    "task_id": "DF-REALITY-INVALID-STATE-V1",
+                    "status": "invalid",
+                },
             },
             "No continue on invalid state violated: execution continued after invalid state",
         ),

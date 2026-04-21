@@ -96,7 +96,9 @@ def test_valid_office_lineage_chain_is_accepted(monkeypatch, tmp_path: Path) -> 
     assert payment["parent_task_type"] == "project"
 
 
-def test_invalid_office_lineage_transition_is_rejected(monkeypatch, tmp_path: Path) -> None:
+def test_invalid_office_lineage_transition_is_rejected(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     lead = _create_office_task(
         store_path=store_path,
@@ -156,7 +158,9 @@ def test_duplicate_invalid_child_is_rejected(monkeypatch, tmp_path: Path) -> Non
         )
 
 
-def test_non_office_task_behavior_remains_unchanged(monkeypatch, tmp_path: Path) -> None:
+def test_non_office_task_behavior_remains_unchanged(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
 
     task = task_factory.create_task(
@@ -174,7 +178,9 @@ def test_non_office_task_behavior_remains_unchanged(monkeypatch, tmp_path: Path)
     assert task.get("parent_task_id", "") == ""
 
 
-def test_create_task_blocks_conflicting_active_decision_before_persist(monkeypatch, tmp_path: Path) -> None:
+def test_create_task_blocks_conflicting_active_decision_before_persist(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
 
     task_factory.create_task(
@@ -226,7 +232,9 @@ def test_create_task_blocks_conflicting_active_decision_before_persist(monkeypat
         )
 
 
-def test_create_task_blocks_resource_conflict_before_persist(monkeypatch, tmp_path: Path) -> None:
+def test_create_task_blocks_resource_conflict_before_persist(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
 
     with pytest.raises(

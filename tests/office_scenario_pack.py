@@ -14,7 +14,10 @@ from app.execution.real_lead_runner import run_real_lead
 from app.execution.followup_reentry import reenter_completed_followup
 from app.execution.real_lead_contract import build_followup_context_payload
 from app.orchestrator.task_factory import create_task, get_task, load_tasks, save_task
-from app.orchestrator.task_lifecycle import can_transition_task_status, transition_task_status
+from app.orchestrator.task_lifecycle import (
+    can_transition_task_status,
+    transition_task_status,
+)
 
 
 @dataclass(frozen=True)
@@ -103,7 +106,14 @@ SCENARIOS = (
             "task_type": "project",
             "summary": "Project procurement handoff",
         },
-        expected_task_sequence=["lead", "estimate", "follow_up", "permit", "project", "procurement"],
+        expected_task_sequence=[
+            "lead",
+            "estimate",
+            "follow_up",
+            "permit",
+            "project",
+            "procurement",
+        ],
         expected_transitions=[
             "procurement:created->confirmed",
             "procurement:confirmed->pending",
@@ -120,7 +130,14 @@ SCENARIOS = (
             "task_type": "project",
             "summary": "Project payment handoff",
         },
-        expected_task_sequence=["lead", "estimate", "follow_up", "permit", "project", "payment"],
+        expected_task_sequence=[
+            "lead",
+            "estimate",
+            "follow_up",
+            "permit",
+            "project",
+            "payment",
+        ],
         expected_transitions=[
             "payment:created->confirmed",
             "payment:confirmed->pending",
@@ -145,9 +162,19 @@ def configure_scenario_runtime(monkeypatch, tmp_path: Path) -> Path:
     monkeypatch.setattr(paths_module, "TASKS_FILE", task_store_path)
     monkeypatch.setattr(lead_estimate_decision_module, "TASKS_FILE", task_store_path)
     monkeypatch.setattr(real_lead_runner_module, "TASKS_FILE", task_store_path)
-    monkeypatch.setattr(policy_gate_module, "POLICY_LOG_FILE", tmp_path / "runtime" / "logs" / "policy.log")
-    monkeypatch.setattr(system_log_module, "SYSTEM_LOG_FILE", tmp_path / "runtime" / "logs" / "system.log")
-    monkeypatch.setattr(system_log_module, "TASK_LOG_FILE", tmp_path / "runtime" / "logs" / "tasks.log")
+    monkeypatch.setattr(
+        policy_gate_module,
+        "POLICY_LOG_FILE",
+        tmp_path / "runtime" / "logs" / "policy.log",
+    )
+    monkeypatch.setattr(
+        system_log_module,
+        "SYSTEM_LOG_FILE",
+        tmp_path / "runtime" / "logs" / "system.log",
+    )
+    monkeypatch.setattr(
+        system_log_module, "TASK_LOG_FILE", tmp_path / "runtime" / "logs" / "tasks.log"
+    )
     task_factory_module.clear_task_runtime_store()
     return task_store_path
 
@@ -225,11 +252,15 @@ def _advance_task(
             ("pending", "running"),
             ("running", "completed"),
         }:
-            raise ValueError(f"invalid scenario transition: {display_status} -> {next_display_status}")
+            raise ValueError(
+                f"invalid scenario transition: {display_status} -> {next_display_status}"
+            )
         runtime_target_status = _runtime_status_for_scenario(next_display_status)
         current_runtime_status = str(task.get("status", "")).strip()
         if current_runtime_status != runtime_target_status:
-            if not can_transition_task_status(current_runtime_status, runtime_target_status):
+            if not can_transition_task_status(
+                current_runtime_status, runtime_target_status
+            ):
                 raise ValueError(
                     f"invalid scenario transition: {current_runtime_status} -> {runtime_target_status}"
                 )
@@ -245,7 +276,9 @@ def _advance_task(
     return transitions
 
 
-def _build_manual_chain(store_path: Path, *, scenario_id: str) -> dict[str, dict[str, object]]:
+def _build_manual_chain(
+    store_path: Path, *, scenario_id: str
+) -> dict[str, dict[str, object]]:
     lead = _create_office_task(
         store_path=store_path,
         task_id=f"{scenario_id}-lead",
@@ -284,11 +317,16 @@ def _build_manual_chain(store_path: Path, *, scenario_id: str) -> dict[str, dict
     }
 
 
-def run_scenario(definition: ScenarioDefinition, *, store_path: Path) -> dict[str, object]:
+def run_scenario(
+    definition: ScenarioDefinition, *, store_path: Path
+) -> dict[str, object]:
     if definition.scenario_id == "qualified_lead_to_project_start":
         report = run_real_lead(definition.initial_input, store_path=store_path)
         lead_task = get_task(str(report["parent_task_id"]), store_path=store_path) or {}
-        estimate_task = get_task(str(report["created_child_task_ids"][0]), store_path=store_path) or {}
+        estimate_task = (
+            get_task(str(report["created_child_task_ids"][0]), store_path=store_path)
+            or {}
+        )
         follow_up = _create_office_task(
             store_path=store_path,
             task_id="scenario-qualified-follow-up",
@@ -334,7 +372,13 @@ def run_scenario(definition: ScenarioDefinition, *, store_path: Path) -> dict[st
         )
         return {
             "scenario_id": definition.scenario_id,
-            "task_sequence": [_task_label(lead_task), _task_label(estimate_task), "follow_up", "permit", "project"],
+            "task_sequence": [
+                _task_label(lead_task),
+                _task_label(estimate_task),
+                "follow_up",
+                "permit",
+                "project",
+            ],
             "transitions": transitions,
             "actions": [str(report["next_action"])],
             "final_state": "project:running",
@@ -342,13 +386,20 @@ def run_scenario(definition: ScenarioDefinition, *, store_path: Path) -> dict[st
 
     if definition.scenario_id == "missing_data_followup_reentry_estimate":
         report = run_real_lead(definition.initial_input, store_path=store_path)
-        followup_task = get_task(str(report["created_child_task_ids"][0]), store_path=store_path) or {}
+        followup_task = (
+            get_task(str(report["created_child_task_ids"][0]), store_path=store_path)
+            or {}
+        )
         followup_payload = dict(followup_task.get("payload", {}) or {})
         followup_payload["updated_lead_input"] = {
             "lead_id": str(definition.initial_input.get("lead_id", "")).strip(),
             "contact_info": {"phone": "555-0202"},
-            "project_type": str(definition.initial_input.get("project_type", "")).strip(),
-            "scope_summary": str(definition.initial_input.get("scope_summary", "")).strip(),
+            "project_type": str(
+                definition.initial_input.get("project_type", "")
+            ).strip(),
+            "scope_summary": str(
+                definition.initial_input.get("scope_summary", "")
+            ).strip(),
         }
         followup_task["payload"] = followup_payload
         followup_task = save_task(followup_task, store_path=store_path)
@@ -375,19 +426,39 @@ def run_scenario(definition: ScenarioDefinition, *, store_path: Path) -> dict[st
         reentry_task = next(
             task
             for task in load_tasks(store_path)
-            if str(task.get("task_id", "")).strip() == str(reentry_result.get("reentry_task_id", "")).strip()
+            if str(task.get("task_id", "")).strip()
+            == str(reentry_result.get("reentry_task_id", "")).strip()
         )
-        estimate_task = get_task(
-            str(dict(reentry_task.get("result", {}) or {}).get("binding", {}).get("child_task_id", "")),
-            store_path=store_path,
-        ) or {}
+        estimate_task = (
+            get_task(
+                str(
+                    dict(reentry_task.get("result", {}) or {})
+                    .get("binding", {})
+                    .get("child_task_id", "")
+                ),
+                store_path=store_path,
+            )
+            or {}
+        )
         return {
             "scenario_id": definition.scenario_id,
-            "task_sequence": ["follow_up", _task_label(reentry_task), _task_label(estimate_task)],
+            "task_sequence": [
+                "follow_up",
+                _task_label(reentry_task),
+                _task_label(estimate_task),
+            ],
             "transitions": transitions,
             "actions": [
-                str(dict(followup_task.get("payload", {}) or {}).get("required_action", "")).strip(),
-                str(dict(reentry_task.get("result", {}) or {}).get("decision", {}).get("next_step", "")).strip(),
+                str(
+                    dict(followup_task.get("payload", {}) or {}).get(
+                        "required_action", ""
+                    )
+                ).strip(),
+                str(
+                    dict(reentry_task.get("result", {}) or {})
+                    .get("decision", {})
+                    .get("next_step", "")
+                ).strip(),
             ],
             "final_state": f"{_task_label(estimate_task)}:{_scenario_status(estimate_task.get('status', ''))}",
         }
@@ -451,7 +522,14 @@ def run_scenario(definition: ScenarioDefinition, *, store_path: Path) -> dict[st
         )
         return {
             "scenario_id": definition.scenario_id,
-            "task_sequence": ["lead", "estimate", "follow_up", "permit", "project", "procurement"],
+            "task_sequence": [
+                "lead",
+                "estimate",
+                "follow_up",
+                "permit",
+                "project",
+                "procurement",
+            ],
             "transitions": transitions,
             "actions": [],
             "final_state": "procurement:completed",
@@ -473,7 +551,14 @@ def run_scenario(definition: ScenarioDefinition, *, store_path: Path) -> dict[st
         )
         return {
             "scenario_id": definition.scenario_id,
-            "task_sequence": ["lead", "estimate", "follow_up", "permit", "project", "payment"],
+            "task_sequence": [
+                "lead",
+                "estimate",
+                "follow_up",
+                "permit",
+                "project",
+                "payment",
+            ],
             "transitions": transitions,
             "actions": [],
             "final_state": "payment:completed",

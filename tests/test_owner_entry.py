@@ -40,7 +40,9 @@ def test_handle_owner_input_creates_owner_command_task(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
-    task_path, artifact_dir = _configure_paths(monkeypatch, tmp_path, task_id=202604120201)
+    task_path, artifact_dir = _configure_paths(
+        monkeypatch, tmp_path, task_id=202604120201
+    )
     analysis_text = "Action Steps:\n1. Review the owner queue."
 
     def fake_run_codex_task(task_source, artifact_dir=None, repo_root=None):
@@ -72,16 +74,18 @@ def test_handle_owner_input_creates_owner_command_task(
     assert written_task["context_mode"] == "owner"
     assert written_task["pipeline_route"] == "owner task"
     assert written_task["context_summary"]["product"]["name"] == "Execution OS"
-    assert written_task["pipeline"][0]["input"]["context"]["context_summary"]["product"]["name"] == (
-        "Execution OS"
-    )
+    assert written_task["pipeline"][0]["input"]["context"]["context_summary"][
+        "product"
+    ]["name"] == ("Execution OS")
 
 
 def test_handle_owner_input_runs_through_decision_engine(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
-    _task_path, artifact_dir = _configure_paths(monkeypatch, tmp_path, task_id=202604120202)
+    _task_path, artifact_dir = _configure_paths(
+        monkeypatch, tmp_path, task_id=202604120202
+    )
     captured: dict[str, object] = {}
 
     def fake_decide(task, context):
@@ -114,7 +118,8 @@ def test_handle_owner_input_runs_through_decision_engine(
         artifact_path = Path(artifact_dir) / f"pipeline-{payload['task_id']}.json"
         artifact_path.parent.mkdir(parents=True, exist_ok=True)
         artifact_path.write_text(
-            json.dumps({"final_output": {"analysis": "Decision path ok"}}, indent=2) + "\n",
+            json.dumps({"final_output": {"analysis": "Decision path ok"}}, indent=2)
+            + "\n",
             encoding="utf-8",
         )
         return {
@@ -146,7 +151,9 @@ def test_handle_owner_input_executes_action_and_returns_decision_trace(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
-    _task_path, artifact_dir = _configure_paths(monkeypatch, tmp_path, task_id=202604120203)
+    _task_path, artifact_dir = _configure_paths(
+        monkeypatch, tmp_path, task_id=202604120203
+    )
     analysis_text = (
         "Action Steps:\n1. Review open priorities.\n\n"
         "Priorities:\n1. Resolve blocker.\n\n"
@@ -183,7 +190,9 @@ def test_handle_owner_input_executes_action_and_returns_decision_trace(
     assert result["decision_trace"]["reason"] == (
         "owner task review open priorities executed successfully"
     )
-    assert result["decision_trace"]["action_type"] == "owner task review open priorities"
+    assert (
+        result["decision_trace"]["action_type"] == "owner task review open priorities"
+    )
     assert result["decision_trace"]["policy_result"] == (
         "allowed: context loaded and command routed"
     )
@@ -210,7 +219,9 @@ def test_run_interface_routes_owner_requests_through_owner_entry(monkeypatch) ->
         fake_handle_owner_input,
     )
 
-    exit_code, payload = run_interface_module.run_interface("Need help with immigration plan")
+    exit_code, payload = run_interface_module.run_interface(
+        "Need help with immigration plan"
+    )
 
     assert exit_code == 0
     assert captured["input_text"] == "Need help with immigration plan"

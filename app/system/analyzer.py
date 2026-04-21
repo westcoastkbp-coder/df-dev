@@ -96,9 +96,15 @@ def build_gap_priority(
     normalized_severity = _normalize_text(severity).lower() or LOW_PRIORITY
     normalized_impact_score = _normalize_text(impact_score).lower() or LOW_PRIORITY
     normalized_frequency = _normalize_frequency(frequency)
-    severity_score = SEVERITY_SCORES.get(normalized_severity, SEVERITY_SCORES[LOW_PRIORITY])
-    impact_value = IMPACT_SCORES.get(normalized_impact_score, IMPACT_SCORES[LOW_PRIORITY])
-    priority_score = severity_score + _frequency_score(normalized_frequency) + impact_value
+    severity_score = SEVERITY_SCORES.get(
+        normalized_severity, SEVERITY_SCORES[LOW_PRIORITY]
+    )
+    impact_value = IMPACT_SCORES.get(
+        normalized_impact_score, IMPACT_SCORES[LOW_PRIORITY]
+    )
+    priority_score = (
+        severity_score + _frequency_score(normalized_frequency) + impact_value
+    )
     priority_level = _priority_level_from_score(priority_score)
     return {
         "severity": normalized_severity,
@@ -189,13 +195,21 @@ def _task_summary(task_context: Mapping[str, object]) -> str:
             value = _normalize_text(payload.get(key))
             if value:
                 return value
-    return _normalize_text(task_context.get("intent")) or _task_id(task_context) or "task"
+    return (
+        _normalize_text(task_context.get("intent")) or _task_id(task_context) or "task"
+    )
 
 
 def _task_signature(task_context: Mapping[str, object]) -> str:
     payload = task_context.get("payload")
     if isinstance(payload, Mapping):
-        for key in ("workflow_type", "step_name", "intent", "summary", "idempotency_key"):
+        for key in (
+            "workflow_type",
+            "step_name",
+            "intent",
+            "summary",
+            "idempotency_key",
+        ):
             value = _normalize_text(payload.get(key))
             if value:
                 return value.lower()
@@ -278,14 +292,18 @@ def _collect_repeated_failures(
     labels: dict[str, str] = {}
     task_ids: dict[str, str] = {}
     interaction_ids: dict[str, str] = {}
-    task_by_id = {_task_id(task): dict(task) for task in task_contexts if _task_id(task)}
+    task_by_id = {
+        _task_id(task): dict(task) for task in task_contexts if _task_id(task)
+    }
     for task in task_contexts:
         if _normalize_text(task.get("status")).upper() == "FAILED":
             signature = _task_signature(task)
             failures[signature] += 1
             labels.setdefault(signature, _task_summary(task))
             task_ids.setdefault(signature, _task_id(task))
-            interaction_ids.setdefault(signature, _normalize_text(task.get("interaction_id")))
+            interaction_ids.setdefault(
+                signature, _normalize_text(task.get("interaction_id"))
+            )
     for event in audit_events:
         if _normalize_text(event.get("event_type")).lower() not in FAILURE_EVENT_TYPES:
             continue
@@ -315,7 +333,9 @@ def _collect_repeated_failures(
                 frequency=count,
                 task_id=task_ids.get(signature),
                 interaction_id=interaction_ids.get(signature),
-                context_reference=f"active_task:{task_ids.get(signature)}" if task_ids.get(signature) else "",
+                context_reference=f"active_task:{task_ids.get(signature)}"
+                if task_ids.get(signature)
+                else "",
                 dedupe_key=f"repeated_failures:{signature}",
             )
         )
@@ -330,17 +350,23 @@ def _collect_repeated_delays(
     labels: dict[str, str] = {}
     task_ids: dict[str, str] = {}
     interaction_ids: dict[str, str] = {}
-    task_by_id = {_task_id(task): dict(task) for task in task_contexts if _task_id(task)}
+    task_by_id = {
+        _task_id(task): dict(task) for task in task_contexts if _task_id(task)
+    }
 
     for task in task_contexts:
         status = _normalize_text(task.get("status")).upper()
         delay_seconds = _extract_delay_seconds(task)
-        if status == "DEFERRED" or (delay_seconds is not None and delay_seconds >= HIGH_DELAY_SECONDS):
+        if status == "DEFERRED" or (
+            delay_seconds is not None and delay_seconds >= HIGH_DELAY_SECONDS
+        ):
             signature = _task_signature(task)
             delayed[signature] += 1
             labels.setdefault(signature, _task_summary(task))
             task_ids.setdefault(signature, _task_id(task))
-            interaction_ids.setdefault(signature, _normalize_text(task.get("interaction_id")))
+            interaction_ids.setdefault(
+                signature, _normalize_text(task.get("interaction_id"))
+            )
 
     for event in audit_events:
         event_type = _normalize_text(event.get("event_type")).lower()
@@ -375,7 +401,9 @@ def _collect_repeated_delays(
                 frequency=count,
                 task_id=task_ids.get(signature),
                 interaction_id=interaction_ids.get(signature),
-                context_reference=f"active_task:{task_ids.get(signature)}" if task_ids.get(signature) else "",
+                context_reference=f"active_task:{task_ids.get(signature)}"
+                if task_ids.get(signature)
+                else "",
                 dedupe_key=f"repeated_delays:{signature}",
             )
         )
@@ -391,7 +419,9 @@ def _collect_missing_execution_paths(
         task_id = _task_id(event)
         if not task_id:
             continue
-        events_by_task.setdefault(task_id, set()).add(_normalize_text(event.get("event_type")).lower())
+        events_by_task.setdefault(task_id, set()).add(
+            _normalize_text(event.get("event_type")).lower()
+        )
 
     gaps: list[dict[str, object]] = []
     for task in task_contexts:
@@ -410,7 +440,11 @@ def _collect_missing_execution_paths(
         if approval_status == "pending" and status == "AWAITING_APPROVAL":
             continue
         summary = _task_summary(task)
-        severity = "high" if approval_status == "approved" or status == "VALIDATED" else "medium"
+        severity = (
+            "high"
+            if approval_status == "approved" or status == "VALIDATED"
+            else "medium"
+        )
         gaps.append(
             _gap(
                 severity=severity,
@@ -435,7 +469,9 @@ def _collect_incomplete_flows(
     latest_timestamp = _latest_timestamp(audit_events)
     if not latest_timestamp:
         return []
-    task_by_id = {_task_id(task): dict(task) for task in task_contexts if _task_id(task)}
+    task_by_id = {
+        _task_id(task): dict(task) for task in task_contexts if _task_id(task)
+    }
     latest_by_task: dict[str, str] = {}
     started_without_terminal: dict[str, bool] = {}
     for event in audit_events:
@@ -446,7 +482,9 @@ def _collect_incomplete_flows(
         timestamp = _normalize_text(event.get("timestamp"))
         if timestamp:
             previous = latest_by_task.get(task_id, "")
-            latest_by_task[task_id] = max(previous, timestamp) if previous else timestamp
+            latest_by_task[task_id] = (
+                max(previous, timestamp) if previous else timestamp
+            )
         if event_type in START_EVENT_TYPES:
             started_without_terminal[task_id] = True
         if event_type in TERMINAL_EVENT_TYPES:
@@ -490,8 +528,12 @@ def analyze_system_gap_inputs(
     interaction_events: Sequence[Mapping[str, object]] | None = None,
 ) -> list[dict[str, object]]:
     normalized_shared_context = dict(shared_context or {})
-    normalized_task_contexts = [dict(item) for item in (task_contexts or []) if isinstance(item, Mapping)]
-    normalized_audit_events = [dict(item) for item in (audit_events or []) if isinstance(item, Mapping)]
+    normalized_task_contexts = [
+        dict(item) for item in (task_contexts or []) if isinstance(item, Mapping)
+    ]
+    normalized_audit_events = [
+        dict(item) for item in (audit_events or []) if isinstance(item, Mapping)
+    ]
     normalized_interaction_events = [
         dict(item) for item in (interaction_events or []) if isinstance(item, Mapping)
     ]

@@ -33,7 +33,9 @@ def _context() -> dict[str, object]:
     }
 
 
-def test_ai_decision_returns_valid_action_and_trace(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ai_decision_returns_valid_action_and_trace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def fake_call(*_args, **_kwargs) -> dict[str, object]:
         return {
             "action": "write_file",
@@ -66,12 +68,17 @@ def test_ai_decision_returns_valid_action_and_trace(monkeypatch: pytest.MonkeyPa
     assert plan["target"] == r"runtime\out\ai-decision.txt"
     assert plan["vendor"] == "openai"
     assert plan["policy_result"] == "allowed: policy gate passed"
-    assert trace["reason"] == "AI selected write_file because the task is an approved file write."
+    assert (
+        trace["reason"]
+        == "AI selected write_file because the task is an approved file write."
+    )
     assert "source=ai" in trace["context_used"]
     assert trace["vendor"] == "openai"
 
 
-def test_invalid_ai_output_fails_without_rule_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_invalid_ai_output_fails_without_rule_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(
         decision_engine_module.orchestrator_client_module,
         "call_orchestrator",

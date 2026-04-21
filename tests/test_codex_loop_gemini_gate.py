@@ -40,7 +40,9 @@ def test_codex_loop_blocks_when_review_is_blocked(monkeypatch, capsys):
             "gemini": {"verdict": "NOT_VERIFIED"},
         },
     )
-    monkeypatch.setattr(codex_loop, "save_context", lambda payload: saved.setdefault("payload", payload))
+    monkeypatch.setattr(
+        codex_loop, "save_context", lambda payload: saved.setdefault("payload", payload)
+    )
 
     codex_loop.main()
 
@@ -81,7 +83,9 @@ def test_codex_loop_continues_when_review_is_approved(monkeypatch, capsys):
             "gemini": {"verdict": "VERIFIED"},
         },
     )
-    monkeypatch.setattr(codex_loop, "save_context", lambda payload: saved.setdefault("payload", payload))
+    monkeypatch.setattr(
+        codex_loop, "save_context", lambda payload: saved.setdefault("payload", payload)
+    )
 
     codex_loop.main()
 

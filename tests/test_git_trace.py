@@ -49,15 +49,25 @@ def test_git_trace_fallback_when_git_unavailable(monkeypatch):
 
 
 def test_ensure_not_main_branch_allows_feature_branch(monkeypatch):
-    monkeypatch.setattr(git_trace, "run_in_dev_env", lambda *args, **kwargs: SimpleNamespace(stdout="codex/feature-branch\n"))
+    monkeypatch.setattr(
+        git_trace,
+        "run_in_dev_env",
+        lambda *args, **kwargs: SimpleNamespace(stdout="codex/feature-branch\n"),
+    )
 
     git_trace.ensure_not_main_branch()
 
 
 def test_ensure_not_main_branch_blocks_main(monkeypatch):
-    monkeypatch.setattr(git_trace, "run_in_dev_env", lambda *args, **kwargs: SimpleNamespace(stdout="main\n"))
+    monkeypatch.setattr(
+        git_trace,
+        "run_in_dev_env",
+        lambda *args, **kwargs: SimpleNamespace(stdout="main\n"),
+    )
 
-    with pytest.raises(RuntimeError, match="DIRECT_MODIFICATION_OF_MAIN_BRANCH_FORBIDDEN"):
+    with pytest.raises(
+        RuntimeError, match="DIRECT_MODIFICATION_OF_MAIN_BRANCH_FORBIDDEN"
+    ):
         git_trace.ensure_not_main_branch()
 
 
@@ -85,5 +95,7 @@ def test_codex_loop_checks_branch_before_loading_context(monkeypatch):
         lambda: (_ for _ in ()).throw(AssertionError("load_context should not run")),
     )
 
-    with pytest.raises(RuntimeError, match="DIRECT_MODIFICATION_OF_MAIN_BRANCH_FORBIDDEN"):
+    with pytest.raises(
+        RuntimeError, match="DIRECT_MODIFICATION_OF_MAIN_BRANCH_FORBIDDEN"
+    ):
         codex_loop.main()

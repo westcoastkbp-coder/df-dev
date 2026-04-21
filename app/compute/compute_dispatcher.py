@@ -66,11 +66,17 @@ def _load_record(domain: str, path: Path | str) -> dict[str, Any]:
     try:
         payload = json.loads(record_path.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        raise ComputeDispatcherError(f"Compute record not found: {record_path}") from None
+        raise ComputeDispatcherError(
+            f"Compute record not found: {record_path}"
+        ) from None
     except (OSError, json.JSONDecodeError) as exc:
-        raise ComputeDispatcherError(f"Compute record is not readable: {record_path}") from exc
+        raise ComputeDispatcherError(
+            f"Compute record is not readable: {record_path}"
+        ) from exc
     if not isinstance(payload, dict):
-        raise ComputeDispatcherError(f"Compute record must be a JSON object: {record_path}")
+        raise ComputeDispatcherError(
+            f"Compute record must be a JSON object: {record_path}"
+        )
     return payload
 
 
@@ -140,13 +146,17 @@ def _trace_storage_payload(
 def _job_registry_entry(job_id: str) -> dict[str, Any] | None:
     matches: list[dict[str, Any]] = []
     for domain in sorted(ALLOWED_DOMAINS):
-        entry = get_artifact_by_logical_key(compute_artifact_key(domain, JOB_ARTIFACT_TYPE, job_id))
+        entry = get_artifact_by_logical_key(
+            compute_artifact_key(domain, JOB_ARTIFACT_TYPE, job_id)
+        )
         if isinstance(entry, dict):
             matches.append(entry)
     if not matches:
         return None
     if len(matches) > 1:
-        raise ComputeDispatcherError(f"compute job lookup is ambiguous for job_id='{job_id}'")
+        raise ComputeDispatcherError(
+            f"compute job lookup is ambiguous for job_id='{job_id}'"
+        )
     return matches[0]
 
 
@@ -158,12 +168,24 @@ def _job_context(job_id: str) -> tuple[ComputeJob, dict[str, Any], Path, str | N
     record = _load_record(domain, _normalize_text(entry.get("local_path")))
     payload = record.get("payload")
     if not isinstance(payload, dict):
-        raise ComputeDispatcherError(f"compute job payload is malformed for job_id='{job_id}'")
+        raise ComputeDispatcherError(
+            f"compute job payload is malformed for job_id='{job_id}'"
+        )
     job = compute_job_from_mapping(payload)
-    return job, record, Path(str(entry["local_path"])), _task_id_from_refs(record.get("refs"))
+    return (
+        job,
+        record,
+        Path(str(entry["local_path"])),
+        _task_id_from_refs(record.get("refs")),
+    )
 
 
-def _persist_job(job: ComputeJob, *, source_task_id: str | None = None, result_path: Path | None = None) -> Path:
+def _persist_job(
+    job: ComputeJob,
+    *,
+    source_task_id: str | None = None,
+    result_path: Path | None = None,
+) -> Path:
     refs = []
     task_ref = _task_ref(source_task_id)
     if task_ref:
@@ -188,7 +210,9 @@ def _persist_result_artifact(
     source_task_id: str | None,
 ) -> Path:
     if job.result is None:
-        raise ComputeDispatcherError("terminal compute jobs must include a result artifact.")
+        raise ComputeDispatcherError(
+            "terminal compute jobs must include a result artifact."
+        )
     refs = []
     task_ref = _task_ref(source_task_id)
     if task_ref:
@@ -274,7 +298,9 @@ def create_compute_job(
     )
     task_id = _normalize_text(source_task_id) or None
     job_path = _persist_job(job, source_task_id=task_id)
-    trace_path = _persist_trace(job, transition="queued", job_path=job_path, source_task_id=task_id)
+    trace_path = _persist_trace(
+        job, transition="queued", job_path=job_path, source_task_id=task_id
+    )
     _persist_canonical_state(job, trace_path)
     print(f"[COMPUTE] queued job={job.job_id} mode={job.mode}")
     return job.to_dict()
@@ -305,13 +331,16 @@ def complete_compute_job(job_id: object, result_payload: object) -> dict[str, An
     result = build_compute_result_artifact(
         job_id=job.job_id,
         status="completed",
-        output_ref=_normalize_text(result_mapping.get("output_ref")) or job.payload.output_ref,
+        output_ref=_normalize_text(result_mapping.get("output_ref"))
+        or job.payload.output_ref,
         metrics=result_mapping.get("metrics"),
         error=None,
     )
     updated_job = transitioned_compute_job(job, status="completed", result=result)
     result_path = _persist_result_artifact(updated_job, source_task_id=task_id)
-    job_path = _persist_job(updated_job, source_task_id=task_id, result_path=result_path)
+    job_path = _persist_job(
+        updated_job, source_task_id=task_id, result_path=result_path
+    )
     trace_path = _persist_trace(
         updated_job,
         transition="completed",
@@ -337,13 +366,16 @@ def fail_compute_job(job_id: object, error_payload: object) -> dict[str, Any]:
     result = build_compute_result_artifact(
         job_id=job.job_id,
         status="failed",
-        output_ref=_normalize_text(error_mapping.get("output_ref")) or job.payload.output_ref,
+        output_ref=_normalize_text(error_mapping.get("output_ref"))
+        or job.payload.output_ref,
         metrics=error_mapping.get("metrics"),
         error=error_value,
     )
     updated_job = transitioned_compute_job(job, status="failed", result=result)
     result_path = _persist_result_artifact(updated_job, source_task_id=task_id)
-    job_path = _persist_job(updated_job, source_task_id=task_id, result_path=result_path)
+    job_path = _persist_job(
+        updated_job, source_task_id=task_id, result_path=result_path
+    )
     trace_path = _persist_trace(
         updated_job,
         transition="failed",
@@ -361,8 +393,12 @@ def get_compute_job(job_id: object) -> dict[str, Any] | None:
     entry = _job_registry_entry(normalized_job_id)
     if not isinstance(entry, dict):
         return None
-    record = _load_record(_normalize_text(entry.get("domain")), _normalize_text(entry.get("local_path")))
+    record = _load_record(
+        _normalize_text(entry.get("domain")), _normalize_text(entry.get("local_path"))
+    )
     payload = record.get("payload")
     if not isinstance(payload, dict):
-        raise ComputeDispatcherError(f"compute job payload is malformed for job_id='{normalized_job_id}'")
+        raise ComputeDispatcherError(
+            f"compute job payload is malformed for job_id='{normalized_job_id}'"
+        )
     return compute_job_from_mapping(payload).to_dict()

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import logging
@@ -41,7 +41,11 @@ def _utc_now_iso() -> str:
 
 
 def _twiml_response_xml(*parts: str) -> str:
-    return '<?xml version="1.0" encoding="UTF-8"?><Response>' + "".join(parts) + "</Response>"
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?><Response>'
+        + "".join(parts)
+        + "</Response>"
+    )
 
 
 def _twiml_say(message: str) -> str:
@@ -137,7 +141,9 @@ async def _dispatch_backend_input(
 
 def _adapt_incoming_event_payload(payload: dict[str, object]) -> dict[str, object]:
     message = str(payload.get("message", "")).strip()
-    user_id = str(payload.get("user_id", "")).strip() or f"voice:{uuid.uuid4().hex[:12]}"
+    user_id = (
+        str(payload.get("user_id", "")).strip() or f"voice:{uuid.uuid4().hex[:12]}"
+    )
     adapted_payload: dict[str, object] = {
         "message": message,
         "user_id": user_id,
@@ -156,8 +162,14 @@ def _adapt_incoming_event_payload(payload: dict[str, object]) -> dict[str, objec
 async def handle_incoming_event(payload: dict) -> dict[str, object]:
     print("EXECUTION START:", payload)
     execution_payload = _adapt_incoming_event_payload(payload)
-    interaction_id = str(payload.get("interaction_id", "")).strip() or f"test-{uuid.uuid4().hex[:12]}"
-    trace_id = str(payload.get("trace_id", "")).strip() or f"test-trace-{uuid.uuid4().hex[:12]}"
+    interaction_id = (
+        str(payload.get("interaction_id", "")).strip()
+        or f"test-{uuid.uuid4().hex[:12]}"
+    )
+    trace_id = (
+        str(payload.get("trace_id", "")).strip()
+        or f"test-trace-{uuid.uuid4().hex[:12]}"
+    )
     status_code, backend_body = await _dispatch_backend_input(
         payload=execution_payload,
         interaction_id=interaction_id,
@@ -194,13 +206,24 @@ def _backend_response_text(body: dict[str, object]) -> str:
 
 async def _twilio_voice_loop(request: Request) -> Response:
     raw_body = (await request.body()).decode("utf-8", errors="replace")
-    raw_form = {str(key): str(value) for key, value in parse_qsl(raw_body, keep_blank_values=True)}
-    call_sid = str(raw_form.get("CallSid", "")).strip() or f"call-{uuid.uuid4().hex[:12]}"
+    raw_form = {
+        str(key): str(value)
+        for key, value in parse_qsl(raw_body, keep_blank_values=True)
+    }
+    call_sid = (
+        str(raw_form.get("CallSid", "")).strip() or f"call-{uuid.uuid4().hex[:12]}"
+    )
     from_number = str(raw_form.get("From", "")).strip() or call_sid
     speech_result = str(raw_form.get("SpeechResult", "")).strip()
     session_id = str(request.query_params.get("session_id", "")).strip()
-    interaction_id = str(request.query_params.get("interaction_id", "")).strip() or f"twilio-{call_sid}"
-    trace_id = str(request.query_params.get("trace_id", "")).strip() or f"twilio-trace-{call_sid}"
+    interaction_id = (
+        str(request.query_params.get("interaction_id", "")).strip()
+        or f"twilio-{call_sid}"
+    )
+    trace_id = (
+        str(request.query_params.get("trace_id", "")).strip()
+        or f"twilio-trace-{call_sid}"
+    )
 
     logger.info(
         "TWILIO_INBOUND %s",
@@ -355,4 +378,3 @@ def create_execution_core_app() -> FastAPI:
 
     adapter_app.mount("", core_app)
     return adapter_app
-

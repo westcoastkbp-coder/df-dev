@@ -294,7 +294,9 @@ def _expected_owner_task(
     }
 
 
-def _expected_http_request_task(task_id: int, method: str, url: str) -> dict[str, object]:
+def _expected_http_request_task(
+    task_id: int, method: str, url: str
+) -> dict[str, object]:
     return {
         "task_id": task_id,
         "instruction": run_command_module.PIPELINE_TASK_INSTRUCTION,
@@ -400,7 +402,8 @@ def test_main_analyze_drive_file_maps_correctly_and_prints_success_only(
         artifact_path = Path(artifact_dir) / f"pipeline-{payload['task_id']}.json"
         artifact_path.parent.mkdir(parents=True, exist_ok=True)
         artifact_path.write_text(
-            json.dumps({"final_output": {"analysis": "Structured summary"}}, indent=2) + "\n",
+            json.dumps({"final_output": {"analysis": "Structured summary"}}, indent=2)
+            + "\n",
             encoding="utf-8",
         )
         return {
@@ -627,7 +630,10 @@ def test_main_empty_input_failure_prints_reason(
         artifact_path = Path(artifact_dir) / f"pipeline-{payload['task_id']}.json"
         artifact_path.parent.mkdir(parents=True, exist_ok=True)
         artifact_path.write_text(
-            json.dumps({"failure_reason": "EMPTY_INPUT", "reason": "EMPTY_INPUT"}, indent=2) + "\n",
+            json.dumps(
+                {"failure_reason": "EMPTY_INPUT", "reason": "EMPTY_INPUT"}, indent=2
+            )
+            + "\n",
             encoding="utf-8",
         )
         return {
@@ -680,7 +686,9 @@ def test_parse_command_process_email_maps_correctly(monkeypatch) -> None:
 def test_parse_command_owner_task_maps_correctly(monkeypatch) -> None:
     monkeypatch.setattr(run_command_module, "_timestamp_task_id", lambda: 444555666)
 
-    assert run_command_module.parse_command("owner task plan next immigration step") == {
+    assert run_command_module.parse_command(
+        "owner task plan next immigration step"
+    ) == {
         "task_id": 444555666,
         "instruction": run_command_module.PIPELINE_TASK_INSTRUCTION,
         "force_execution": True,
@@ -704,7 +712,9 @@ def test_parse_command_owner_task_maps_correctly(monkeypatch) -> None:
 def test_parse_command_linkedin_post_maps_correctly(monkeypatch) -> None:
     monkeypatch.setattr(run_command_module, "_timestamp_task_id", lambda: 777888999)
 
-    assert run_command_module.parse_command("linkedin post first DF system explanation") == {
+    assert run_command_module.parse_command(
+        "linkedin post first DF system explanation"
+    ) == {
         "task_id": 777888999,
         "instruction": run_command_module.PIPELINE_TASK_INSTRUCTION,
         "force_execution": True,
@@ -976,7 +986,9 @@ def test_main_linkedin_post_uses_owner_context_and_prints_draft(
         fake_run_codex_task,
     )
 
-    exit_code = run_command_module.main(["linkedin post", "first DF system explanation"])
+    exit_code = run_command_module.main(
+        ["linkedin post", "first DF system explanation"]
+    )
 
     written_task = json.loads(task_path.read_text(encoding="utf-8"))
     payload = json.loads(capsys.readouterr().out.strip())
@@ -985,7 +997,9 @@ def test_main_linkedin_post_uses_owner_context_and_prints_draft(
     assert exit_code == 0
     _assert_output_contract(payload, tool_source="external")
     assert payload["result"] == linkedin_output
-    assert written_task["pipeline"][0]["input"]["topic"] == "first DF system explanation"
+    assert (
+        written_task["pipeline"][0]["input"]["topic"] == "first DF system explanation"
+    )
     assert "Owner context summary:" in injected_context
     assert '"phase": "system integration"' in injected_context
     return
@@ -1082,7 +1096,9 @@ def test_main_prints_last_result_found_and_duplicate_warning(
     assert state_payload["commands"][-1]["result"] == "SUCCESS"
 
 
-def test_main_set_mode_owner_updates_context(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_main_set_mode_owner_updates_context(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     context_dir = tmp_path / "context"
     monkeypatch.setattr(run_command_module, "CONTEXT_DIR", context_dir)
 
@@ -1092,12 +1108,16 @@ def test_main_set_mode_owner_updates_context(monkeypatch, tmp_path: Path, capsys
     payload = json.loads(capsys.readouterr().out.strip())
     _assert_output_contract(payload, tool_source="external")
     assert payload["result"]["active_mode"] == "owner"
-    system_context = json.loads((context_dir / "system_context.json").read_text(encoding="utf-8"))
+    system_context = json.loads(
+        (context_dir / "system_context.json").read_text(encoding="utf-8")
+    )
     assert system_context["active_mode"] == "owner"
     assert system_context["last_update"]
 
 
-def test_main_show_context_prints_current_context(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_main_show_context_prints_current_context(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     context_dir = tmp_path / "context"
     monkeypatch.setattr(run_command_module, "CONTEXT_DIR", context_dir)
     run_command_module.set_active_mode("business", context_dir=context_dir)
@@ -1122,7 +1142,9 @@ def test_main_show_context_prints_current_context(monkeypatch, tmp_path: Path, c
     }
 
 
-def test_main_save_decision_persists_unified_memory(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_main_save_decision_persists_unified_memory(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     context_dir = tmp_path / "context"
     memory_dir = tmp_path / "memory"
     monkeypatch.setattr(run_command_module, "CONTEXT_DIR", context_dir)
@@ -1135,7 +1157,9 @@ def test_main_save_decision_persists_unified_memory(monkeypatch, tmp_path: Path,
 
     payload = json.loads(capsys.readouterr().out.strip())
     decision_payload = payload["result"]
-    stored_memory = json.loads((memory_dir / "decisions.json").read_text(encoding="utf-8"))
+    stored_memory = json.loads(
+        (memory_dir / "decisions.json").read_text(encoding="utf-8")
+    )
 
     assert exit_code == 0
     _assert_output_contract(payload, tool_source="external")
@@ -1176,7 +1200,10 @@ def test_main_show_memory_prints_unified_memory_payload(
     assert exit_code == 0
     _assert_output_contract(payload, tool_source="external")
     assert memory_payload["owner_memory"]["priorities"] == ["EB1", "Digital Foreman"]
-    assert memory_payload["memory_summary"]["owner_context"]["owner_name"] == "Anton Vorontsov"
+    assert (
+        memory_payload["memory_summary"]["owner_context"]["owner_name"]
+        == "Anton Vorontsov"
+    )
 
 
 def test_main_show_state_prints_project_state(
@@ -1254,10 +1281,15 @@ def test_main_show_decisions_and_architecture_commands(
 
     assert decisions_exit_code == 0
     _assert_output_contract(decisions_payload, tool_source="external")
-    assert decisions_payload["result"]["decisions"][-1]["decision"] == "Do not use database storage"
+    assert (
+        decisions_payload["result"]["decisions"][-1]["decision"]
+        == "Do not use database storage"
+    )
     assert architecture_exit_code == 0
     _assert_output_contract(architecture_payload, tool_source="external")
-    assert architecture_payload["result"]["system_rules"] == ["Keep deterministic routing"]
+    assert architecture_payload["result"]["system_rules"] == [
+        "Keep deterministic routing"
+    ]
 
 
 def test_main_prints_conflict_with_memory_for_contradicting_analysis(
@@ -1293,7 +1325,11 @@ def test_main_prints_conflict_with_memory_for_contradicting_analysis(
         artifact_path.parent.mkdir(parents=True, exist_ok=True)
         artifact_path.write_text(
             json.dumps(
-                {"final_output": {"analysis": "Use database storage for the next memory layer."}},
+                {
+                    "final_output": {
+                        "analysis": "Use database storage for the next memory layer."
+                    }
+                },
                 indent=2,
             )
             + "\n",
@@ -1395,7 +1431,9 @@ def test_main_http_role_pipeline_retries_once_and_returns_verified_result(
         run_command_module.run_codex_task_module,
         "run_codex_task",
         lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("run_codex_task should not be called for planned HTTP commands")
+            AssertionError(
+                "run_codex_task should not be called for planned HTTP commands"
+            )
         ),
     )
 
@@ -1474,7 +1512,9 @@ def test_main_http_role_pipeline_fails_after_single_retry(
         run_command_module.run_codex_task_module,
         "run_codex_task",
         lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("run_codex_task should not be called for planned HTTP commands")
+            AssertionError(
+                "run_codex_task should not be called for planned HTTP commands"
+            )
         ),
     )
     monkeypatch.setattr(
@@ -1734,7 +1774,15 @@ def test_main_injects_system_context_summary_and_updates_recent_actions(
         artifact_path = Path(artifact_dir) / f"pipeline-{payload['task_id']}.json"
         artifact_path.parent.mkdir(parents=True, exist_ok=True)
         artifact_path.write_text(
-            json.dumps({"final_output": {"url": "https://docs.google.com/document/d/test-doc"}}, indent=2) + "\n",
+            json.dumps(
+                {
+                    "final_output": {
+                        "url": "https://docs.google.com/document/d/test-doc"
+                    }
+                },
+                indent=2,
+            )
+            + "\n",
             encoding="utf-8",
         )
         return {
@@ -1751,7 +1799,9 @@ def test_main_injects_system_context_summary_and_updates_recent_actions(
     exit_code = run_command_module.main(["create doc from analysis"])
 
     written_task = json.loads(task_path.read_text(encoding="utf-8"))
-    system_context = json.loads((memory_dir / "system_context.json").read_text(encoding="utf-8"))
+    system_context = json.loads(
+        (memory_dir / "system_context.json").read_text(encoding="utf-8")
+    )
     claude_context = written_task["pipeline"][0]["input"]["context"]
 
     assert exit_code == 0

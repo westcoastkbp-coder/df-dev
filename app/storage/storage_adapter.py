@@ -271,12 +271,16 @@ def _normalize_webdav_remote_path(remote_path: str) -> str:
 def _webdav_remote_path_for_domain(domain: str, local_path: Path) -> str:
     normalized_domain = _normalize_domain(domain)
     domain_root = _domain_root(normalized_domain)
-    relative_path = _ensure_domain_path(normalized_domain, local_path).relative_to(domain_root)
+    relative_path = _ensure_domain_path(normalized_domain, local_path).relative_to(
+        domain_root
+    )
     remote_root = "DF/owner" if normalized_domain == "ownerbox" else "DF/dev"
     return _normalize_webdav_remote_path(f"{remote_root}/{relative_path.as_posix()}")
 
 
-def _normalize_remote_path(domain: str, remote_path: str, config: dict[str, Any]) -> str:
+def _normalize_remote_path(
+    domain: str, remote_path: str, config: dict[str, Any]
+) -> str:
     raw = str(remote_path or "").strip().replace("\\", "/")
     if not raw:
         raise OpenCloudError("remote_path must not be empty.")
@@ -294,7 +298,9 @@ def _normalize_remote_path(domain: str, remote_path: str, config: dict[str, Any]
     return f"{remote_root}/{normalized}"
 
 
-def _relative_local_path_for_remote(domain: str, remote_path: str, config: dict[str, Any]) -> Path:
+def _relative_local_path_for_remote(
+    domain: str, remote_path: str, config: dict[str, Any]
+) -> Path:
     normalized_remote = _normalize_remote_path(domain, remote_path, config)
     remote_root = _domain_remote_root(domain, config)
     relative = normalized_remote[len(remote_root) :].lstrip("/")
@@ -376,20 +382,29 @@ def _memory_object_for_artifact(
     refs_override: list[str] | None = None,
 ) -> dict[str, Any]:
     normalized_type = str(artifact_type or "").strip()
-    inferred_memory_class = str(memory_class_override or "").strip() or infer_memory_class(
-        normalized_type
-    )
+    inferred_memory_class = str(
+        memory_class_override or ""
+    ).strip() or infer_memory_class(normalized_type)
     created_at = None
     if isinstance(existing_artifact, dict):
-        created_at = str(
-            existing_artifact.get("created_at") or existing_artifact.get("timestamp") or ""
-        ).strip() or None
+        created_at = (
+            str(
+                existing_artifact.get("created_at")
+                or existing_artifact.get("timestamp")
+                or ""
+            ).strip()
+            or None
+        )
     updated_at = _utc_timestamp()
-    tags = list(tags_override) if isinstance(tags_override, list) else _string_list_from_payload(
-        payload, "tags"
+    tags = (
+        list(tags_override)
+        if isinstance(tags_override, list)
+        else _string_list_from_payload(payload, "tags")
     )
-    refs = list(refs_override) if isinstance(refs_override, list) else _string_list_from_payload(
-        payload, "refs"
+    refs = (
+        list(refs_override)
+        if isinstance(refs_override, list)
+        else _string_list_from_payload(payload, "refs")
     )
 
     if normalized_type == "execution_trace":
@@ -438,7 +453,8 @@ def _memory_object_for_artifact(
                 "memory_class": inferred_memory_class,
                 "status": str(artifact_status or "").strip() or "active",
                 "truth_level": str(truth_level_override or "").strip() or "working",
-                "execution_role": str(execution_role_override or "").strip() or "state_holder",
+                "execution_role": str(execution_role_override or "").strip()
+                or "state_holder",
                 "created_at": created_at or updated_at,
                 "updated_at": updated_at,
                 "tags": tags,
@@ -481,7 +497,9 @@ def _write_artifact_record(path: Path, record: dict[str, Any]) -> None:
     )
 
 
-def resolve_path(domain: str, artifact_type: str, artifact_id: str | None = None) -> Path:
+def resolve_path(
+    domain: str, artifact_type: str, artifact_id: str | None = None
+) -> Path:
     normalized_domain = _normalize_domain(domain)
     normalized_type = _normalize_name(artifact_type, field_name="artifact_type")
     if artifact_id is None:
@@ -489,7 +507,9 @@ def resolve_path(domain: str, artifact_type: str, artifact_id: str | None = None
     else:
         normalized_id = _normalize_name(artifact_id, field_name="artifact_id")
         filename = f"{normalized_type}_{normalized_id}.json"
-    return _ensure_domain_path(normalized_domain, _domain_root(normalized_domain) / filename)
+    return _ensure_domain_path(
+        normalized_domain, _domain_root(normalized_domain) / filename
+    )
 
 
 def save_artifact(
@@ -523,7 +543,9 @@ def save_artifact(
         if existing_local_path:
             existing_path = Path(existing_local_path)
             if existing_path.exists():
-                print(f"[STORAGE] idempotent_hit artifact={existing_artifact.get('id')}")
+                print(
+                    f"[STORAGE] idempotent_hit artifact={existing_artifact.get('id')}"
+                )
                 return existing_path
 
     artifact_id = _artifact_id_for_payload(normalized_domain, normalized_type, payload)
@@ -559,7 +581,9 @@ def save_artifact(
         logical_key=logical_key,
         artifact_status=artifact_status,
         resolution=resolution,
-        existing_artifact=existing_artifact if isinstance(existing_artifact, dict) else None,
+        existing_artifact=existing_artifact
+        if isinstance(existing_artifact, dict)
+        else None,
         memory_class_override=memory_class_override,
         truth_level_override=truth_level_override,
         execution_role_override=execution_role_override,
@@ -589,7 +613,9 @@ def save_artifact(
             logical_key=logical_key,
             artifact_status=artifact_status,
             resolution=resolution,
-            existing_artifact=existing_artifact if isinstance(existing_artifact, dict) else None,
+            existing_artifact=existing_artifact
+            if isinstance(existing_artifact, dict)
+            else None,
             memory_class_override=memory_class_override,
             truth_level_override=truth_level_override,
             execution_role_override=execution_role_override,
@@ -607,7 +633,9 @@ def save_artifact(
             remote_path=uploaded_remote_path,
             timestamp=str(record.get("timestamp") or "").strip() or None,
             status=effective_status(record) or None,
-            resolution=record.get("resolution") if isinstance(record.get("resolution"), dict) else None,
+            resolution=record.get("resolution")
+            if isinstance(record.get("resolution"), dict)
+            else None,
             refs=list(record.get("refs") or []),
             memory_class=str(record.get("memory_class") or "").strip() or None,
             truth_level=str(record.get("truth_level") or "").strip() or None,
@@ -636,7 +664,9 @@ def load_artifact(domain: str, path: Path | str) -> dict[str, Any]:
         ) from exc
 
     if not isinstance(payload, dict):
-        raise StorageAdapterError(f"Artifact must contain a JSON object: {artifact_path}")
+        raise StorageAdapterError(
+            f"Artifact must contain a JSON object: {artifact_path}"
+        )
 
     stored_domain = str(payload.get("domain") or "").strip().lower()
     if stored_domain != normalized_domain:
@@ -657,7 +687,9 @@ def archive_artifact(domain: str, path: Path | str) -> Path:
         _domain_root(normalized_domain) / ARCHIVE_DIRNAME,
     )
     archive_dir.mkdir(parents=True, exist_ok=True)
-    archived_path = _ensure_domain_path(normalized_domain, archive_dir / artifact_path.name)
+    archived_path = _ensure_domain_path(
+        normalized_domain, archive_dir / artifact_path.name
+    )
     shutil.move(str(artifact_path), str(archived_path))
     return archived_path
 
@@ -665,7 +697,9 @@ def archive_artifact(domain: str, path: Path | str) -> Path:
 def upload_to_webdav(local_path: Path | str, remote_path: str) -> str:
     config = get_storage_backend_config()
     if not bool(config.get("webdav_enabled", False)):
-        raise WebDAVConfigError("WebDAV backend is disabled in config/storage_backend.json.")
+        raise WebDAVConfigError(
+            "WebDAV backend is disabled in config/storage_backend.json."
+        )
 
     webdav_url = str(config.get("webdav_url") or "").strip().rstrip("/")
     webdav_user = str(os.environ.get("WEBDEV_USER") or "").strip()
@@ -720,7 +754,9 @@ def _opencloud_credentials(config: dict[str, Any]) -> tuple[str, str]:
 
 def _opencloud_base_url(config: dict[str, Any]) -> str:
     if not bool(config.get("opencloud_enabled", False)):
-        raise OpenCloudConfigError("OpenCloud backend is disabled in config/storage_backend.json.")
+        raise OpenCloudConfigError(
+            "OpenCloud backend is disabled in config/storage_backend.json."
+        )
     opencloud = dict(config.get("opencloud") or {})
     base_url = str(opencloud.get("base_url") or "").strip().rstrip("/")
     if not base_url:
@@ -799,7 +835,9 @@ def sync_to_opencloud(domain: str, local_path: Path | str) -> str:
     if not local_artifact_path.exists():
         raise ArtifactNotFoundError(f"Artifact not found: {local_artifact_path}")
 
-    relative_local_path = local_artifact_path.relative_to(_domain_root(normalized_domain))
+    relative_local_path = local_artifact_path.relative_to(
+        _domain_root(normalized_domain)
+    )
     remote_path = _normalize_remote_path(
         normalized_domain,
         relative_local_path.as_posix(),
@@ -824,7 +862,9 @@ def fetch_from_opencloud(domain: str, remote_path: str) -> Path:
         )
 
     config = get_storage_backend_config()
-    normalized_remote_path = _normalize_remote_path(normalized_domain, remote_path, config)
+    normalized_remote_path = _normalize_remote_path(
+        normalized_domain, remote_path, config
+    )
     response = _webdav_request("GET", normalized_remote_path, config)
     _ensure_opencloud_success(
         response,

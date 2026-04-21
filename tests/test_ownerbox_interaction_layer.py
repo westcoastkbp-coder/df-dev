@@ -13,7 +13,10 @@ from app.ownerbox.domain import (
     create_owner_memory_scope,
     create_owner_trust_profile,
 )
-from app.ownerbox.owner_action_queue import OwnerActionQueue, create_owner_action_queue_entry
+from app.ownerbox.owner_action_queue import (
+    OwnerActionQueue,
+    create_owner_action_queue_entry,
+)
 from app.ownerbox.owner_orchestrator import OwnerOrchestrator
 from app.ownerbox.owner_request import create_owner_request
 from app.ownerbox.owner_response_plan import create_owner_response_plan
@@ -220,7 +223,9 @@ def test_owner_orchestrator_routes_through_boundary_and_dispatcher(
 
     def dispatcher(action_contract: object, **kwargs: object) -> dict[str, object]:
         captured["dispatch_kwargs"] = dict(kwargs)
-        return dispatch_action(action_contract, openai_executor=openai_executor, **kwargs)
+        return dispatch_action(
+            action_contract, openai_executor=openai_executor, **kwargs
+        )
 
     result = OwnerOrchestrator(dispatcher=dispatcher).process_request(
         request_text="Show current owner queue status",
@@ -268,7 +273,9 @@ def test_owner_orchestrator_routes_through_boundary_and_dispatcher(
 
     assert dispatch_kwargs["memory_domain"] == "ownerbox"
     assert dict(dispatch_kwargs["domain_binding"])["domain_type"] == "ownerbox"
-    assert result.owner_context["boundary_application"]["blocked_cross_domain_count"] == 1
+    assert (
+        result.owner_context["boundary_application"]["blocked_cross_domain_count"] == 1
+    )
     assert result.owner_context["boundary_application"]["resolved_memory_count"] == 1
     assert "owner-safe memory" in prompt
     assert "dev-secret leak" not in prompt
@@ -276,7 +283,10 @@ def test_owner_orchestrator_routes_through_boundary_and_dispatcher(
     assert result.approval is None
     assert result.action_contract is not None
     assert result.action_result is not None
-    assert result.action_result["payload"]["metadata"]["domain_metadata"]["owner_id"] == "owner-001"
+    assert (
+        result.action_result["payload"]["metadata"]["domain_metadata"]["owner_id"]
+        == "owner-001"
+    )
     assert result.response_plan.trust_class == "low"
     assert result.response_plan.approval_id is None
     assert result.response_plan.preview_text is not None
@@ -285,7 +295,10 @@ def test_owner_orchestrator_routes_through_boundary_and_dispatcher(
     assert result.queue_entry.owner_id == "owner-001"
     assert result.trace_metadata["owner_session_id"] == result.session.owner_session_id
     assert result.trace_metadata["request_id"] == result.request.request_id
-    assert result.trace_metadata["response_plan_id"] == result.response_plan.response_plan_id
+    assert (
+        result.trace_metadata["response_plan_id"]
+        == result.response_plan.response_plan_id
+    )
     assert traces[-1]["domain_metadata"]["owner_id"] == "owner-001"
     assert traces[-1]["result_status"] == "success"
 

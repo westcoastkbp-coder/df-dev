@@ -103,13 +103,17 @@ def _status_transitions(task_data: dict[str, object]) -> list[tuple[str, str]]:
 
 
 def _execution_ledger_row(store_path: Path, execution_key: str) -> dict[str, object]:
-    record = task_state_store.read_execution_record(execution_key, store_path=store_path)
+    record = task_state_store.read_execution_record(
+        execution_key, store_path=store_path
+    )
     return dict(record or {})
 
 
 def test_double_start_only_one_execution_path_wins(monkeypatch, tmp_path: Path) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
-    task = _create_validated_task(store_path, task_id="DF-CONCURRENCY-RACE-DOUBLE-START-V1")
+    task = _create_validated_task(
+        store_path, task_id="DF-CONCURRENCY-RACE-DOUBLE-START-V1"
+    )
     execution_key = _execution_key(task)
     task_id = str(task["task_id"])
     start_barrier = Barrier(2)
@@ -174,12 +178,18 @@ def test_double_start_only_one_execution_path_wins(monkeypatch, tmp_path: Path) 
         ("VALIDATED", "EXECUTING"),
         ("EXECUTING", "COMPLETED"),
     ]
-    assert [snapshot["status"] for snapshot in persisted_snapshots].count("COMPLETED") >= 1
+    assert [snapshot["status"] for snapshot in persisted_snapshots].count(
+        "COMPLETED"
+    ) >= 1
 
 
-def test_stale_read_cannot_regress_completed_task_state(monkeypatch, tmp_path: Path) -> None:
+def test_stale_read_cannot_regress_completed_task_state(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
-    task = _create_validated_task(store_path, task_id="DF-CONCURRENCY-RACE-STALE-READ-V1")
+    task = _create_validated_task(
+        store_path, task_id="DF-CONCURRENCY-RACE-STALE-READ-V1"
+    )
     stale_snapshot = dict(_clone(task))
     task_id = str(task["task_id"])
     persist_lock = Lock()
@@ -234,7 +244,9 @@ def test_stale_read_cannot_regress_completed_task_state(monkeypatch, tmp_path: P
         result_b = future_b.result(timeout=3)
 
     restored = _task_snapshot(task_id, store_path)
-    persisted_statuses = [str(snapshot.get("status", "")).strip() for snapshot in persisted_snapshots]
+    persisted_statuses = [
+        str(snapshot.get("status", "")).strip() for snapshot in persisted_snapshots
+    ]
     first_completed_index = persisted_statuses.index("COMPLETED")
 
     assert len(side_effects) == 1
@@ -243,16 +255,22 @@ def test_stale_read_cannot_regress_completed_task_state(monkeypatch, tmp_path: P
     assert restored["status"] == "COMPLETED"
     assert restored["started_at"] == "2026-04-11T09:10:00Z"
     assert restored["completed_at"] == "2026-04-11T09:10:00Z"
-    assert all(status == "COMPLETED" for status in persisted_statuses[first_completed_index:])
+    assert all(
+        status == "COMPLETED" for status in persisted_statuses[first_completed_index:]
+    )
     assert _status_transitions(restored) == [
         ("VALIDATED", "EXECUTING"),
         ("EXECUTING", "COMPLETED"),
     ]
 
 
-def test_double_finalize_keeps_first_completion_result(monkeypatch, tmp_path: Path) -> None:
+def test_double_finalize_keeps_first_completion_result(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
-    task = _create_validated_task(store_path, task_id="DF-CONCURRENCY-RACE-DOUBLE-FINALIZE-V1")
+    task = _create_validated_task(
+        store_path, task_id="DF-CONCURRENCY-RACE-DOUBLE-FINALIZE-V1"
+    )
     execution_key = _execution_key(task)
     task_id = str(task["task_id"])
     executing_task = dict(_clone(task))
@@ -273,7 +291,9 @@ def test_double_finalize_keeps_first_completion_result(monkeypatch, tmp_path: Pa
 
     finalize_barrier = Barrier(2)
 
-    def finalize(writer: str, *, delay_seconds: float, timestamp: str) -> dict[str, object]:
+    def finalize(
+        writer: str, *, delay_seconds: float, timestamp: str
+    ) -> dict[str, object]:
         finalize_barrier.wait(timeout=2)
         if delay_seconds > 0:
             time.sleep(delay_seconds)

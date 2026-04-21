@@ -25,7 +25,9 @@ def _isoformat_utc(value: datetime) -> str:
 
 def _filename_timestamp(value: datetime) -> str:
     normalized = _coerce_utc(value)
-    return normalized.strftime("%Y%m%dT%H%M%S") + f"{normalized.microsecond // 1000:03d}Z"
+    return (
+        normalized.strftime("%Y%m%dT%H%M%S") + f"{normalized.microsecond // 1000:03d}Z"
+    )
 
 
 def _normalize_path(value: Path | str | None) -> str | None:

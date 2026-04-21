@@ -75,7 +75,9 @@ def _normalize_text(value: object) -> str:
 
 def _normalize_payload(value: object) -> dict[str, Any]:
     if isinstance(value, Mapping):
-        return {str(key).strip(): value[key] for key in sorted(value) if str(key).strip()}
+        return {
+            str(key).strip(): value[key] for key in sorted(value) if str(key).strip()
+        }
     raise MemoryPolicyError("structured_payload must be a mapping")
 
 
@@ -132,8 +134,12 @@ class MemoryPromotionCandidate:
             "candidate_id",
             _normalize_uuid(self.candidate_id, field_name="candidate_id"),
         )
-        object.__setattr__(self, "candidate_kind", _normalize_text(self.candidate_kind).lower())
-        object.__setattr__(self, "memory_type", _normalize_text(self.memory_type).lower())
+        object.__setattr__(
+            self, "candidate_kind", _normalize_text(self.candidate_kind).lower()
+        )
+        object.__setattr__(
+            self, "memory_type", _normalize_text(self.memory_type).lower()
+        )
         object.__setattr__(
             self,
             "domain_scope",
@@ -141,39 +147,67 @@ class MemoryPromotionCandidate:
         )
         object.__setattr__(self, "domain_type", self.domain_scope)
         object.__setattr__(self, "owner_ref", _normalize_text(self.owner_ref) or None)
-        object.__setattr__(self, "subject_ref", _normalize_text(self.subject_ref) or None)
-        object.__setattr__(self, "content_summary", _normalize_text(self.content_summary))
-        object.__setattr__(self, "structured_payload", _normalize_payload(self.structured_payload))
-        object.__setattr__(self, "trust_level", _normalize_text(self.trust_level).lower())
+        object.__setattr__(
+            self, "subject_ref", _normalize_text(self.subject_ref) or None
+        )
+        object.__setattr__(
+            self, "content_summary", _normalize_text(self.content_summary)
+        )
+        object.__setattr__(
+            self, "structured_payload", _normalize_payload(self.structured_payload)
+        )
+        object.__setattr__(
+            self, "trust_level", _normalize_text(self.trust_level).lower()
+        )
         object.__setattr__(self, "trust_class", _normalize_text(self.trust_class))
-        object.__setattr__(self, "source_type", _normalize_text(self.source_type).lower())
+        object.__setattr__(
+            self, "source_type", _normalize_text(self.source_type).lower()
+        )
         object.__setattr__(self, "source_ref", _normalize_text(self.source_ref))
         object.__setattr__(
             self,
             "source_trace_id",
-            _normalize_text(self.source_trace_id) or f"trace:{_normalize_text(self.source_ref)}",
+            _normalize_text(self.source_trace_id)
+            or f"trace:{_normalize_text(self.source_ref)}",
         )
         object.__setattr__(
             self,
             "evidence_ref",
-            _normalize_text(self.evidence_ref) or f"evidence:{_normalize_text(self.source_ref)}",
+            _normalize_text(self.evidence_ref)
+            or f"evidence:{_normalize_text(self.source_ref)}",
         )
         object.__setattr__(self, "confidence", _normalize_confidence(self.confidence))
         object.__setattr__(self, "validation_passed", bool(self.validation_passed))
         object.__setattr__(self, "trace_complete", bool(self.trace_complete))
         object.__setattr__(self, "evidence_exists", bool(self.evidence_exists))
-        object.__setattr__(self, "created_at", _normalize_text(self.created_at) or utc_timestamp())
-        object.__setattr__(self, "updated_at", _normalize_text(self.updated_at) or self.created_at)
-        object.__setattr__(self, "lifecycle_state", _normalize_text(self.lifecycle_state).lower() or "proposed")
+        object.__setattr__(
+            self, "created_at", _normalize_text(self.created_at) or utc_timestamp()
+        )
+        object.__setattr__(
+            self, "updated_at", _normalize_text(self.updated_at) or self.created_at
+        )
+        object.__setattr__(
+            self,
+            "lifecycle_state",
+            _normalize_text(self.lifecycle_state).lower() or "proposed",
+        )
 
         if self.candidate_kind not in ALLOWED_CANDIDATE_KINDS:
-            raise MemoryPolicyError("candidate_kind is not supported for canonical promotion")
+            raise MemoryPolicyError(
+                "candidate_kind is not supported for canonical promotion"
+            )
         if self.memory_type not in SUPPORTED_MEMORY_TYPES:
-            raise MemoryPolicyError("memory_type is not supported for canonical promotion")
+            raise MemoryPolicyError(
+                "memory_type is not supported for canonical promotion"
+            )
         if self.domain_scope not in SUPPORTED_MEMORY_DOMAINS:
-            raise MemoryPolicyError("domain_scope is not supported for canonical promotion")
+            raise MemoryPolicyError(
+                "domain_scope is not supported for canonical promotion"
+            )
         if self.trust_level not in SUPPORTED_TRUST_LEVELS:
-            raise MemoryPolicyError("trust_level is not supported for canonical promotion")
+            raise MemoryPolicyError(
+                "trust_level is not supported for canonical promotion"
+            )
         if self.lifecycle_state != "proposed":
             raise MemoryPolicyError("promotion candidates must start in proposed state")
         if not self.trust_class:
@@ -229,7 +263,9 @@ class MemoryPolicyDecision:
         }
 
 
-def evaluate_memory_candidate(candidate: MemoryPromotionCandidate) -> MemoryPolicyDecision:
+def evaluate_memory_candidate(
+    candidate: MemoryPromotionCandidate,
+) -> MemoryPolicyDecision:
     if candidate.source_type in DISALLOWED_SOURCE_TYPES:
         return MemoryPolicyDecision(
             allowed=False,
@@ -275,70 +311,178 @@ def evaluate_memory_candidate(candidate: MemoryPromotionCandidate) -> MemoryPoli
 
     if candidate.candidate_kind == "owner_fact":
         if candidate.source_type != "owner_input" or candidate.memory_type != "fact":
-            return MemoryPolicyDecision(False, "owner_fact_shape_invalid", "owner facts must come from validated owner input and promote to fact memory")
+            return MemoryPolicyDecision(
+                False,
+                "owner_fact_shape_invalid",
+                "owner facts must come from validated owner input and promote to fact memory",
+            )
         if not bool(candidate.structured_payload.get("validated")):
-            return MemoryPolicyDecision(False, "owner_fact_not_validated", "owner facts require explicit validation before canonical promotion")
+            return MemoryPolicyDecision(
+                False,
+                "owner_fact_not_validated",
+                "owner facts require explicit validation before canonical promotion",
+            )
         if not candidate.structured_payload.get("fact_key"):
-            return MemoryPolicyDecision(False, "owner_fact_missing_key", "owner facts require a stable fact_key")
-        return MemoryPolicyDecision(True, "allowed", "validated owner fact is eligible for canonical memory")
+            return MemoryPolicyDecision(
+                False, "owner_fact_missing_key", "owner facts require a stable fact_key"
+            )
+        return MemoryPolicyDecision(
+            True, "allowed", "validated owner fact is eligible for canonical memory"
+        )
 
     if candidate.candidate_kind == "owner_preference":
-        if candidate.source_type != "owner_input" or candidate.memory_type != "preference":
-            return MemoryPolicyDecision(False, "owner_preference_shape_invalid", "owner preferences must come from validated owner input and promote to preference memory")
+        if (
+            candidate.source_type != "owner_input"
+            or candidate.memory_type != "preference"
+        ):
+            return MemoryPolicyDecision(
+                False,
+                "owner_preference_shape_invalid",
+                "owner preferences must come from validated owner input and promote to preference memory",
+            )
         if not bool(candidate.structured_payload.get("validated")):
-            return MemoryPolicyDecision(False, "owner_preference_not_validated", "owner preferences require explicit validation before canonical promotion")
+            return MemoryPolicyDecision(
+                False,
+                "owner_preference_not_validated",
+                "owner preferences require explicit validation before canonical promotion",
+            )
         if not candidate.structured_payload.get("preference_key"):
-            return MemoryPolicyDecision(False, "owner_preference_missing_key", "owner preferences require a stable preference_key")
-        return MemoryPolicyDecision(True, "allowed", "validated owner preference is eligible for canonical memory")
+            return MemoryPolicyDecision(
+                False,
+                "owner_preference_missing_key",
+                "owner preferences require a stable preference_key",
+            )
+        return MemoryPolicyDecision(
+            True,
+            "allowed",
+            "validated owner preference is eligible for canonical memory",
+        )
 
     if candidate.candidate_kind == "execution_result":
         if candidate.source_type != "execution_result":
-            return MemoryPolicyDecision(False, "execution_result_source_invalid", "execution-result promotion requires execution_result source_type")
+            return MemoryPolicyDecision(
+                False,
+                "execution_result_source_invalid",
+                "execution-result promotion requires execution_result source_type",
+            )
         if candidate.memory_type != "fact":
-            return MemoryPolicyDecision(False, "execution_result_type_invalid", "execution-result promotion is bounded to fact memory in v1")
+            return MemoryPolicyDecision(
+                False,
+                "execution_result_type_invalid",
+                "execution-result promotion is bounded to fact memory in v1",
+            )
         if not bool(candidate.structured_payload.get("approved")):
-            return MemoryPolicyDecision(False, "execution_result_not_approved", "only approved execution results can become canonical memory")
-        if _normalize_text(candidate.structured_payload.get("result_status")).lower() not in {
+            return MemoryPolicyDecision(
+                False,
+                "execution_result_not_approved",
+                "only approved execution results can become canonical memory",
+            )
+        if _normalize_text(
+            candidate.structured_payload.get("result_status")
+        ).lower() not in {
             "approved",
             "completed",
             "success",
         }:
-            return MemoryPolicyDecision(False, "execution_result_status_invalid", "execution result must have a successful approved outcome")
+            return MemoryPolicyDecision(
+                False,
+                "execution_result_status_invalid",
+                "execution result must have a successful approved outcome",
+            )
         if not candidate.structured_payload.get("fact_key"):
-            return MemoryPolicyDecision(False, "execution_result_missing_key", "execution result facts require a stable fact_key")
-        return MemoryPolicyDecision(True, "allowed", "approved execution result is eligible for canonical memory")
+            return MemoryPolicyDecision(
+                False,
+                "execution_result_missing_key",
+                "execution result facts require a stable fact_key",
+            )
+        return MemoryPolicyDecision(
+            True,
+            "allowed",
+            "approved execution result is eligible for canonical memory",
+        )
 
     if candidate.candidate_kind == "decision":
-        if candidate.source_type != "decision_record" or candidate.memory_type != "decision":
-            return MemoryPolicyDecision(False, "decision_shape_invalid", "structured decisions must use decision_record source_type and decision memory type")
+        if (
+            candidate.source_type != "decision_record"
+            or candidate.memory_type != "decision"
+        ):
+            return MemoryPolicyDecision(
+                False,
+                "decision_shape_invalid",
+                "structured decisions must use decision_record source_type and decision memory type",
+            )
         if not candidate.structured_payload.get("decision_ref"):
-            return MemoryPolicyDecision(False, "decision_missing_ref", "structured decisions require a decision_ref")
+            return MemoryPolicyDecision(
+                False,
+                "decision_missing_ref",
+                "structured decisions require a decision_ref",
+            )
         if not (
             candidate.structured_payload.get("decision_scope")
             or candidate.structured_payload.get("decision_key")
             or candidate.structured_payload.get("decision_ref")
         ):
-            return MemoryPolicyDecision(False, "decision_missing_scope", "structured decisions require a stable scope or reference")
-        return MemoryPolicyDecision(True, "allowed", "structured decision is eligible for canonical memory")
+            return MemoryPolicyDecision(
+                False,
+                "decision_missing_scope",
+                "structured decisions require a stable scope or reference",
+            )
+        return MemoryPolicyDecision(
+            True, "allowed", "structured decision is eligible for canonical memory"
+        )
 
     if candidate.candidate_kind == "evidence_summary":
-        if candidate.source_type != "evidence_summary" or candidate.memory_type != "fact":
-            return MemoryPolicyDecision(False, "evidence_shape_invalid", "bounded evidence summaries must use evidence_summary source_type and fact memory type")
+        if (
+            candidate.source_type != "evidence_summary"
+            or candidate.memory_type != "fact"
+        ):
+            return MemoryPolicyDecision(
+                False,
+                "evidence_shape_invalid",
+                "bounded evidence summaries must use evidence_summary source_type and fact memory type",
+            )
         if not bool(candidate.structured_payload.get("bounded_summary")):
-            return MemoryPolicyDecision(False, "evidence_not_bounded", "evidence summaries must explicitly declare bounded_summary=true")
+            return MemoryPolicyDecision(
+                False,
+                "evidence_not_bounded",
+                "evidence summaries must explicitly declare bounded_summary=true",
+            )
         if not candidate.structured_payload.get("fact_key"):
-            return MemoryPolicyDecision(False, "evidence_missing_key", "bounded evidence summaries require a stable fact_key")
-        return MemoryPolicyDecision(True, "allowed", "bounded execution evidence summary is eligible for canonical memory")
+            return MemoryPolicyDecision(
+                False,
+                "evidence_missing_key",
+                "bounded evidence summaries require a stable fact_key",
+            )
+        return MemoryPolicyDecision(
+            True,
+            "allowed",
+            "bounded execution evidence summary is eligible for canonical memory",
+        )
 
     if candidate.candidate_kind == "document_reference":
-        if candidate.source_type != "document_reference" or candidate.memory_type != "document_ref":
-            return MemoryPolicyDecision(False, "document_reference_shape_invalid", "controlled document references must use document_reference source_type and document_ref memory type")
+        if (
+            candidate.source_type != "document_reference"
+            or candidate.memory_type != "document_ref"
+        ):
+            return MemoryPolicyDecision(
+                False,
+                "document_reference_shape_invalid",
+                "controlled document references must use document_reference source_type and document_ref memory type",
+            )
         if not (
             candidate.structured_payload.get("document_id")
             or candidate.structured_payload.get("document_locator")
         ):
-            return MemoryPolicyDecision(False, "document_reference_missing_identity", "controlled document references require document_id or document_locator")
-        return MemoryPolicyDecision(True, "allowed", "controlled document reference is eligible for canonical memory")
+            return MemoryPolicyDecision(
+                False,
+                "document_reference_missing_identity",
+                "controlled document references require document_id or document_locator",
+            )
+        return MemoryPolicyDecision(
+            True,
+            "allowed",
+            "controlled document reference is eligible for canonical memory",
+        )
 
     return MemoryPolicyDecision(
         allowed=False,

@@ -75,8 +75,18 @@ def test_valid_logs_produce_expected_report(tmp_path: Path) -> None:
     _write_jsonl(
         efficiency_log,
         [
-            {"run_id": "run-1", "tokens_per_step": 40.0, "tei": 0.06, "token_source": "real"},
-            {"run_id": "run-2", "tokens_per_step": 160.0, "tei": 0.01, "token_source": "estimated"},
+            {
+                "run_id": "run-1",
+                "tokens_per_step": 40.0,
+                "tei": 0.06,
+                "token_source": "real",
+            },
+            {
+                "run_id": "run-2",
+                "tokens_per_step": 160.0,
+                "tei": 0.01,
+                "token_source": "estimated",
+            },
         ],
     )
 
@@ -123,7 +133,14 @@ def test_report_reads_have_no_side_effects(tmp_path: Path) -> None:
     efficiency_log = tmp_path / "runtime" / "logs" / "token_efficiency.jsonl"
     _write_jsonl(
         usage_log,
-        [{"run_id": "run-1", "task_type": "task", "total_tokens": 25, "steps": [{"step_name": "only"}]}],
+        [
+            {
+                "run_id": "run-1",
+                "task_type": "task",
+                "total_tokens": 25,
+                "steps": [{"step_name": "only"}],
+            }
+        ],
     )
     _write_jsonl(
         efficiency_log,
@@ -147,18 +164,26 @@ def test_report_reads_have_no_side_effects(tmp_path: Path) -> None:
     assert _snapshot(efficiency_log) == before_efficiency
 
 
-def test_execution_remains_independent_from_reporting(monkeypatch, tmp_path: Path) -> None:
+def test_execution_remains_independent_from_reporting(
+    monkeypatch, tmp_path: Path
+) -> None:
     usage_log = tmp_path / "runtime" / "logs" / "token_usage.jsonl"
     efficiency_log = tmp_path / "runtime" / "logs" / "token_efficiency.jsonl"
     monkeypatch.setattr(token_report_module, "TOKEN_USAGE_LOG_FILE", usage_log)
-    monkeypatch.setattr(token_report_module, "TOKEN_EFFICIENCY_LOG_FILE", efficiency_log)
+    monkeypatch.setattr(
+        token_report_module, "TOKEN_EFFICIENCY_LOG_FILE", efficiency_log
+    )
     monkeypatch.setattr(token_telemetry_module, "TOKEN_USAGE_LOG_FILE", usage_log)
-    monkeypatch.setattr(token_efficiency_module, "TOKEN_EFFICIENCY_LOG_FILE", efficiency_log)
+    monkeypatch.setattr(
+        token_efficiency_module, "TOKEN_EFFICIENCY_LOG_FILE", efficiency_log
+    )
 
     token_telemetry_module._RUN_STATE.clear()
     token_telemetry_module.start_run("run-exec", task_type="lead_estimate_decision")
     token_telemetry_module.record_step("run-exec", "decision_step", 7, 5, 12)
-    record = token_telemetry_module.finalize_run("run-exec", task_type="lead_estimate_decision")
+    record = token_telemetry_module.finalize_run(
+        "run-exec", task_type="lead_estimate_decision"
+    )
 
     assert record is not None
     assert record["run_id"] == "run-exec"

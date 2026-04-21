@@ -27,7 +27,9 @@ def _stable_identifier(value: object, *, field_name: str) -> str:
 def _normalize_trust_class(value: object) -> str:
     normalized = _normalize_text(value).lower()
     if normalized not in TRUST_CLASSES:
-        raise ValueError("trust_class must be one of: " + ", ".join(sorted(TRUST_CLASSES)))
+        raise ValueError(
+            "trust_class must be one of: " + ", ".join(sorted(TRUST_CLASSES))
+        )
     return normalized
 
 
@@ -44,7 +46,9 @@ class ActionRiskProfile:
             "action_type",
             _stable_identifier(self.action_type, field_name="action_type"),
         )
-        object.__setattr__(self, "trust_class", _normalize_trust_class(self.trust_class))
+        object.__setattr__(
+            self, "trust_class", _normalize_trust_class(self.trust_class)
+        )
 
     @property
     def auto_execute_allowed(self) -> bool:

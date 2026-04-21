@@ -6,7 +6,11 @@ import app.orchestrator.task_queue as task_queue_module
 from app.context.shared_context_store import get_context
 from app.orchestrator.task_factory import get_task, save_task
 from app.orchestrator.task_queue import InMemoryTaskQueue
-from app.system.gap_tasks import gap_to_task_input, ingest_system_gap, ingest_system_gaps
+from app.system.gap_tasks import (
+    gap_to_task_input,
+    ingest_system_gap,
+    ingest_system_gaps,
+)
 
 
 def _configure_queue_files(tmp_path: Path, monkeypatch) -> InMemoryTaskQueue:
@@ -40,13 +44,16 @@ def _gap(
     }
 
 
-def test_repeated_identical_gap_creates_single_task(tmp_path: Path, monkeypatch) -> None:
+def test_repeated_identical_gap_creates_single_task(
+    tmp_path: Path, monkeypatch
+) -> None:
     queue = _configure_queue_files(tmp_path, monkeypatch)
     monkeypatch.setattr("app.system.gap_tasks.now", lambda: "2026-04-06T12:00:00Z")
     store_path = tmp_path / "tasks.json"
 
     created = ingest_system_gaps(
-        [_gap(severity="medium", task_id="TASK-ROOT", interaction_id="interaction-1")] * 2,
+        [_gap(severity="medium", task_id="TASK-ROOT", interaction_id="interaction-1")]
+        * 2,
         queue=queue,
         store_path=store_path,
     )
@@ -57,7 +64,9 @@ def test_repeated_identical_gap_creates_single_task(tmp_path: Path, monkeypatch)
     assert queue.queued_task_ids() == []
 
 
-def test_repeated_low_priority_gap_is_batched_without_spamming_queue(tmp_path: Path, monkeypatch) -> None:
+def test_repeated_low_priority_gap_is_batched_without_spamming_queue(
+    tmp_path: Path, monkeypatch
+) -> None:
     queue = _configure_queue_files(tmp_path, monkeypatch)
     monkeypatch.setattr("app.system.gap_tasks.now", lambda: "2026-04-06T12:00:00Z")
     store_path = tmp_path / "tasks.json"
@@ -88,7 +97,9 @@ def test_repeated_low_priority_gap_is_batched_without_spamming_queue(tmp_path: P
     assert queue.queued_task_ids() == []
 
 
-def test_medium_priority_low_severity_auto_validates_and_enqueues_for_execution(tmp_path: Path, monkeypatch) -> None:
+def test_medium_priority_low_severity_auto_validates_and_enqueues_for_execution(
+    tmp_path: Path, monkeypatch
+) -> None:
     queue = _configure_queue_files(tmp_path, monkeypatch)
     monkeypatch.setattr("app.system.gap_tasks.now", lambda: "2026-04-06T12:00:00Z")
     store_path = tmp_path / "tasks.json"
@@ -113,7 +124,9 @@ def test_medium_priority_low_severity_auto_validates_and_enqueues_for_execution(
     assert queue.queued_task_ids() == [created["task_id"]]
 
 
-def test_high_priority_issue_routes_to_approval_queue_and_updates_context(tmp_path: Path, monkeypatch) -> None:
+def test_high_priority_issue_routes_to_approval_queue_and_updates_context(
+    tmp_path: Path, monkeypatch
+) -> None:
     queue = _configure_queue_files(tmp_path, monkeypatch)
     monkeypatch.setattr("app.system.gap_tasks.now", lambda: "2026-04-06T12:00:00Z")
     monkeypatch.setenv("ENV_ROLE", "local_dev")
@@ -122,7 +135,9 @@ def test_high_priority_issue_routes_to_approval_queue_and_updates_context(tmp_pa
 
     high = ingest_system_gap(
         {
-            **_gap(severity="high", impact_score="high", frequency=4, task_id="TASK-HIGH"),
+            **_gap(
+                severity="high", impact_score="high", frequency=4, task_id="TASK-HIGH"
+            ),
             "dedupe_key": "repeated_failures:high_path",
         },
         queue=queue,
@@ -137,8 +152,14 @@ def test_high_priority_issue_routes_to_approval_queue_and_updates_context(tmp_pa
     assert high["payload"]["route_target"] == "approval_queue"
     assert queue.queued_task_ids() == []
 
-    system_context = get_context("system_context", environ={"ENV_ROLE": "local_dev", "DF_STORAGE_ROOT": str(tmp_path / "runtime")}, root_dir=tmp_path)
-    priority_context = dict(system_context["system_improvement_priorities"])["repeated_failures:high_path"]
+    system_context = get_context(
+        "system_context",
+        environ={"ENV_ROLE": "local_dev", "DF_STORAGE_ROOT": str(tmp_path / "runtime")},
+        root_dir=tmp_path,
+    )
+    priority_context = dict(system_context["system_improvement_priorities"])[
+        "repeated_failures:high_path"
+    ]
     assert priority_context["task_id"] == high["task_id"]
     assert priority_context["priority_level"] == "high"
     assert priority_context["route_target"] == "approval_queue"
@@ -226,8 +247,8 @@ def test_stress_mix_keeps_non_core_improvements_flowing_without_policy_violation
                 ),
                 "problem": f"Repeated failures detected for `auto-gap-{i % 4}`.",
                 "dedupe_key": f"auto-gap-{i % 4}",
-        }
-    )
+            }
+        )
     for i in range(10):
         gaps.append(
             {

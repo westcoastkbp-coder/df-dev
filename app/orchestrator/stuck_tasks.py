@@ -80,7 +80,10 @@ def detect_stuck_tasks(
     detected = []
     for task_data in sorted(
         (dict(task) for task in tasks),
-        key=lambda item: (_normalize_text(item.get("task_id")), _normalize_text(item.get("created_at"))),
+        key=lambda item: (
+            _normalize_text(item.get("task_id")),
+            _normalize_text(item.get("created_at")),
+        ),
     ):
         signal = build_task_stuck_signal(task_data, now_timestamp=now_timestamp)
         if signal is not None:
@@ -107,7 +110,10 @@ def enforce_stuck_tasks(
     enforced_signals: list[dict[str, object]] = []
     for task_data in sorted(
         (dict(task) for task in tasks),
-        key=lambda item: (_normalize_text(item.get("task_id")), _normalize_text(item.get("created_at"))),
+        key=lambda item: (
+            _normalize_text(item.get("task_id")),
+            _normalize_text(item.get("created_at")),
+        ),
     ):
         signal = build_task_stuck_signal(task_data, now_timestamp=now_timestamp)
         if signal is None:
@@ -122,7 +128,9 @@ def enforce_stuck_tasks(
         )
         task_data["result"] = dict(signal)
         escalation_decision = decide_escalation_action(task_data, signal=signal)
-        if escalation_decision.get("action") == "escalate" and isinstance(escalation_decision.get("signal"), dict):
+        if escalation_decision.get("action") == "escalate" and isinstance(
+            escalation_decision.get("signal"), dict
+        ):
             record_escalation(task_data, escalation_decision["signal"])
         persist(task_data)
         log_stuck_task(signal)

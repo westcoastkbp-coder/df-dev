@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -22,10 +22,14 @@ from runtime.network.monitor import reset_network_monitor
 from app.execution.task_schema import TASK_CONTRACT_VERSION
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 
 
 def _configure_runtime(
@@ -106,8 +110,12 @@ def _build_task(*, store_path: Path, task_id: str) -> dict[str, object]:
     )
 
 
-def _run_once(*, monkeypatch, tmp_path: Path, run_index: int) -> tuple[dict[str, object], Path]:
-    shared_determinism_log_file = tmp_path / "runtime" / "logs" / "determinism_replay.jsonl"
+def _run_once(
+    *, monkeypatch, tmp_path: Path, run_index: int
+) -> tuple[dict[str, object], Path]:
+    shared_determinism_log_file = (
+        tmp_path / "runtime" / "logs" / "determinism_replay.jsonl"
+    )
     reset_runtime_decision_history()
     reset_runtime_decision_stabilizer()
     reset_network_monitor()
@@ -155,7 +163,9 @@ def _run_once(*, monkeypatch, tmp_path: Path, run_index: int) -> tuple[dict[str,
     return snapshot, determinism_log_file
 
 
-def test_lead_estimate_decision_is_identical_across_10_replays(monkeypatch, tmp_path: Path) -> None:
+def test_lead_estimate_decision_is_identical_across_10_replays(
+    monkeypatch, tmp_path: Path
+) -> None:
     baseline_snapshot: dict[str, object] | None = None
     determinism_log_file: Path | None = None
     mismatches: list[str] = []
@@ -197,5 +207,6 @@ def test_lead_estimate_decision_is_identical_across_10_replays(monkeypatch, tmp_
         line.get("comparison_status") == "match"
         for line in log_lines
         if "comparison_status" in line
-    ), f"critical failure: deterministic replay mismatch detected: {', '.join(mismatches)}"
-
+    ), (
+        f"critical failure: deterministic replay mismatch detected: {', '.join(mismatches)}"
+    )

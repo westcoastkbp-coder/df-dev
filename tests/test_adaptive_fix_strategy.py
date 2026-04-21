@@ -49,7 +49,9 @@ def test_execution_error_uses_code_fix_strategy(monkeypatch, capsys) -> None:
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("fail", "broken"))
-    monkeypatch.setattr(codex_loop, "execute_fix_task", lambda prompt: FailedExecution())
+    monkeypatch.setattr(
+        codex_loop, "execute_fix_task", lambda prompt: FailedExecution()
+    )
 
     codex_loop.main()
     output = json.loads(capsys.readouterr().out.strip())
@@ -177,7 +179,9 @@ def test_strategy_is_stored_in_context(monkeypatch, capsys) -> None:
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("fail", "broken"))
-    monkeypatch.setattr(codex_loop, "execute_fix_task", lambda prompt: FailedExecution())
+    monkeypatch.setattr(
+        codex_loop, "execute_fix_task", lambda prompt: FailedExecution()
+    )
 
     codex_loop.main()
     capsys.readouterr()

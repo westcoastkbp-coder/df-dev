@@ -42,7 +42,11 @@ CONTEXT_FILES = {
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .isoformat(timespec="milliseconds")
+        .replace("+00:00", "Z")
+    )
 
 
 def _resolve_context_name(context_name: str) -> str:
@@ -104,15 +108,21 @@ def _write_single_context(
 ) -> Path:
     path = _context_path(context_name, context_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return path
 
 
 def load_context(context_dir: Path | str | None = None) -> dict[str, dict[str, Any]]:
     return {
-        "system_context": _load_single_context("system_context", context_dir=context_dir),
+        "system_context": _load_single_context(
+            "system_context", context_dir=context_dir
+        ),
         "owner_context": _load_single_context("owner_context", context_dir=context_dir),
-        "business_context": _load_single_context("business_context", context_dir=context_dir),
+        "business_context": _load_single_context(
+            "business_context", context_dir=context_dir
+        ),
     }
 
 
@@ -123,7 +133,11 @@ def get_active_context(context_dir: Path | str | None = None) -> dict[str, Any]:
     if active_mode not in ALLOWED_MODES:
         active_mode = "dev"
 
-    active_context = system_context if active_mode == "dev" else context_payload[f"{active_mode}_context"]
+    active_context = (
+        system_context
+        if active_mode == "dev"
+        else context_payload[f"{active_mode}_context"]
+    )
     return {
         "active_mode": active_mode,
         "system_context": system_context,

@@ -110,7 +110,9 @@ class CanonicalMemoryStore:
         except sqlite3.IntegrityError as exc:
             raise CanonicalMemoryStoreError("memory object already exists") from exc
         except sqlite3.Error as exc:
-            raise CanonicalMemoryStoreError(str(exc) or "canonical memory write failed") from exc
+            raise CanonicalMemoryStoreError(
+                str(exc) or "canonical memory write failed"
+            ) from exc
         return memory_object
 
     def seed_memory_object(self, memory_object: MemoryObject) -> MemoryObject:
@@ -120,7 +122,9 @@ class CanonicalMemoryStore:
         except sqlite3.IntegrityError as exc:
             raise CanonicalMemoryStoreError("memory object already exists") from exc
         except sqlite3.Error as exc:
-            raise CanonicalMemoryStoreError(str(exc) or "canonical memory seed failed") from exc
+            raise CanonicalMemoryStoreError(
+                str(exc) or "canonical memory seed failed"
+            ) from exc
         return memory_object
 
     def update_memory_object(self, memory_object: MemoryObject) -> MemoryObject:
@@ -128,7 +132,9 @@ class CanonicalMemoryStore:
             with self._connect() as connection:
                 cursor = self._update_memory_object(connection, memory_object)
         except sqlite3.Error as exc:
-            raise CanonicalMemoryStoreError(str(exc) or "canonical memory update failed") from exc
+            raise CanonicalMemoryStoreError(
+                str(exc) or "canonical memory update failed"
+            ) from exc
         if cursor.rowcount == 0:
             raise CanonicalMemoryStoreError("memory object does not exist")
         return memory_object
@@ -211,7 +217,9 @@ class CanonicalMemoryStore:
                     (normalized_memory_id,),
                 ).fetchone()
         except sqlite3.Error as exc:
-            raise CanonicalMemoryStoreError(str(exc) or "canonical memory read failed") from exc
+            raise CanonicalMemoryStoreError(
+                str(exc) or "canonical memory read failed"
+            ) from exc
         if row is None:
             return None
         return self._memory_object_from_row(row)
@@ -318,7 +326,9 @@ class CanonicalMemoryStore:
             with self._connect() as connection:
                 rows = connection.execute("\n".join(sql), tuple(parameters)).fetchall()
         except sqlite3.Error as exc:
-            raise CanonicalMemoryStoreError(str(exc) or "canonical memory search failed") from exc
+            raise CanonicalMemoryStoreError(
+                str(exc) or "canonical memory search failed"
+            ) from exc
         return [self._memory_object_from_row(row) for row in rows]
 
     def list_memory_objects(
@@ -444,7 +454,9 @@ class CanonicalMemoryStore:
             with self._connect() as connection:
                 rows = connection.execute("\n".join(sql), tuple(parameters)).fetchall()
         except sqlite3.Error as exc:
-            raise CanonicalMemoryStoreError(str(exc) or "canonical memory conflict scan failed") from exc
+            raise CanonicalMemoryStoreError(
+                str(exc) or "canonical memory conflict scan failed"
+            ) from exc
         conflicts: list[dict[str, object]] = []
         for row in rows:
             conflict_key = str(row["conflict_key"])
@@ -516,7 +528,9 @@ class CanonicalMemoryStore:
         self._ensure_column(connection, "evidence_ref", "TEXT NOT NULL DEFAULT ''")
         self._ensure_column(connection, "version", "INTEGER NOT NULL DEFAULT 1")
         self._ensure_column(connection, "confidence", "REAL NOT NULL DEFAULT 1.0")
-        self._ensure_column(connection, "audit_metadata_json", "TEXT NOT NULL DEFAULT '{}'")
+        self._ensure_column(
+            connection, "audit_metadata_json", "TEXT NOT NULL DEFAULT '{}'"
+        )
         self._ensure_column(connection, "superseded_by_memory_id", "TEXT")
         self._ensure_column(connection, "previous_version_id", "TEXT")
         self._ensure_column(connection, "conflict_key", "TEXT")
@@ -696,7 +710,9 @@ class CanonicalMemoryStore:
                     "owner_ref": row["owner_ref"],
                     "subject_ref": row["subject_ref"],
                     "content_summary": str(row["content_summary"]),
-                    "structured_payload": json.loads(str(row["structured_payload_json"])),
+                    "structured_payload": json.loads(
+                        str(row["structured_payload_json"])
+                    ),
                     "status": str(row["status"]),
                     "created_at": str(row["created_at"]),
                     "updated_at": str(row["updated_at"]),
@@ -714,5 +730,12 @@ class CanonicalMemoryStore:
                     "conflict_key": row["conflict_key"],
                 }
             )
-        except (CanonicalMemoryError, ValueError, TypeError, json.JSONDecodeError) as exc:
-            raise CanonicalMemoryStoreError("malformed canonical memory record") from exc
+        except (
+            CanonicalMemoryError,
+            ValueError,
+            TypeError,
+            json.JSONDecodeError,
+        ) as exc:
+            raise CanonicalMemoryStoreError(
+                "malformed canonical memory record"
+            ) from exc

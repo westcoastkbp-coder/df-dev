@@ -68,15 +68,23 @@ def _base_manifest() -> dict[str, object]:
 
 def _build_source_root(tmp_path: Path) -> tuple[Path, Path]:
     _write_file(tmp_path / "app" / "__init__.py", "")
-    _write_file(tmp_path / "app" / "server.py", "from app.voice.app import run_voice_app\n")
+    _write_file(
+        tmp_path / "app" / "server.py", "from app.voice.app import run_voice_app\n"
+    )
     _write_file(tmp_path / "app" / "voice" / "__init__.py", "")
-    _write_file(tmp_path / "app" / "voice" / "app.py", "from app.product.runner import run_product\n")
+    _write_file(
+        tmp_path / "app" / "voice" / "app.py",
+        "from app.product.runner import run_product\n",
+    )
     _write_file(tmp_path / "app" / "product" / "__init__.py", "")
-    _write_file(tmp_path / "app" / "product" / "runner.py", "def run_product():\n    return 'ok'\n")
-    _write_file(tmp_path / "runtime" / "state" / "stale.json", "{\"keep\": false}\n")
+    _write_file(
+        tmp_path / "app" / "product" / "runner.py",
+        "def run_product():\n    return 'ok'\n",
+    )
+    _write_file(tmp_path / "runtime" / "state" / "stale.json", '{"keep": false}\n')
     _write_file(tmp_path / "runtime" / "logs" / "app.log", "stale log\n")
     _write_file(tmp_path / "runtime" / "out" / "temp.txt", "ignore me\n")
-    _write_file(tmp_path / "data" / "seed.json", "{\"ok\": true}\n")
+    _write_file(tmp_path / "data" / "seed.json", '{"ok": true}\n')
     _write_file(tmp_path / "scripts" / "dev_only.py", "print('dev')\n")
     _write_file(tmp_path / "tests" / "test_only.py", "assert True\n")
     _write_file(tmp_path / "devlog" / "note.md", "dev note\n")
@@ -119,7 +127,9 @@ def test_valid_build_generation_passes(tmp_path: Path) -> None:
 
 def test_blocked_module_inclusion_fails(tmp_path: Path) -> None:
     root_dir, manifest_path = _build_source_root(tmp_path / "src")
-    _write_file(root_dir / "app" / "voice" / "app.py", "import app.orchestrator.orchestrator\n")
+    _write_file(
+        root_dir / "app" / "voice" / "app.py", "import app.orchestrator.orchestrator\n"
+    )
 
     report = generate_product_box_build(
         manifest_path=manifest_path,
@@ -142,7 +152,9 @@ def test_missing_required_module_fails(tmp_path: Path) -> None:
     )
 
     assert report["build_status"] == "FAIL"
-    assert any("app.product.runner" in item for item in report["missing_required_items"])
+    assert any(
+        "app.product.runner" in item for item in report["missing_required_items"]
+    )
 
 
 def test_forbidden_folder_and_artifact_are_excluded(tmp_path: Path) -> None:
@@ -177,7 +189,8 @@ def test_writable_runtime_path_set_matches_manifest(tmp_path: Path) -> None:
         path.relative_to(output_dir).as_posix()
         for path in output_dir.rglob("*")
         if path.is_dir()
-        and path.relative_to(output_dir).as_posix() in {"data", "runtime/logs", "runtime/state"}
+        and path.relative_to(output_dir).as_posix()
+        in {"data", "runtime/logs", "runtime/state"}
     }
     assert report["build_status"] == "PASS"
     assert staged_dirs == {"data", "runtime/logs", "runtime/state"}

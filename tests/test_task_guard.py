@@ -87,11 +87,15 @@ def test_should_execute_task_skips_existing_final_artifact(tmp_path) -> None:
     }
 
 
-def test_should_execute_task_does_not_consult_git_commit_markers(monkeypatch, tmp_path) -> None:
+def test_should_execute_task_does_not_consult_git_commit_markers(
+    monkeypatch, tmp_path
+) -> None:
     monkeypatch.setattr(
         task_guard_module,
         "has_execution_commit_marker",
-        lambda task_id, repo_root=None: (_ for _ in ()).throw(AssertionError("git should not gate runtime")),
+        lambda task_id, repo_root=None: (_ for _ in ()).throw(
+            AssertionError("git should not gate runtime")
+        ),
     )
     monkeypatch.setattr(
         task_guard_module,
@@ -110,7 +114,9 @@ def test_should_execute_task_does_not_consult_git_commit_markers(monkeypatch, tm
     }
 
 
-def test_has_execution_commit_marker_reads_existing_commit(monkeypatch, tmp_path) -> None:
+def test_has_execution_commit_marker_reads_existing_commit(
+    monkeypatch, tmp_path
+) -> None:
     def fake_run(
         args: list[str],
         cwd: Path,

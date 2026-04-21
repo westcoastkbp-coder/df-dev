@@ -5,10 +5,14 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import control.codex_loop as codex_loop
-from control.dev_session import build_codex_execution_prompt as real_build_codex_execution_prompt
+from control.dev_session import (
+    build_codex_execution_prompt as real_build_codex_execution_prompt,
+)
 
 
-def test_execute_fix_task_injects_dev_session_context(monkeypatch, tmp_path: Path) -> None:
+def test_execute_fix_task_injects_dev_session_context(
+    monkeypatch, tmp_path: Path
+) -> None:
     (tmp_path / "tasks" / "github").mkdir(parents=True, exist_ok=True)
     (tmp_path / "tasks" / "github" / "issue-9.json").write_text(
         json.dumps(

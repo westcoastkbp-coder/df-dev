@@ -46,7 +46,9 @@ def _normalize_status(value: object) -> str:
 def _normalize_trust_class(value: object) -> str:
     normalized = _normalize_text(value).lower()
     if normalized not in TRUST_CLASSES:
-        raise ValueError("trust_class must be one of: " + ", ".join(sorted(TRUST_CLASSES)))
+        raise ValueError(
+            "trust_class must be one of: " + ", ".join(sorted(TRUST_CLASSES))
+        )
     return normalized
 
 
@@ -70,11 +72,21 @@ class OwnerApproval:
             "approval_id",
             _stable_identifier(self.approval_id, field_name="approval_id"),
         )
-        object.__setattr__(self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id"))
-        object.__setattr__(self, "action_id", _stable_identifier(self.action_id, field_name="action_id"))
-        object.__setattr__(self, "trust_class", _normalize_trust_class(self.trust_class))
+        object.__setattr__(
+            self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id")
+        )
+        object.__setattr__(
+            self,
+            "action_id",
+            _stable_identifier(self.action_id, field_name="action_id"),
+        )
+        object.__setattr__(
+            self, "trust_class", _normalize_trust_class(self.trust_class)
+        )
         object.__setattr__(self, "status", _normalize_status(self.status))
-        object.__setattr__(self, "created_at", _normalize_text(self.created_at) or _utc_timestamp())
+        object.__setattr__(
+            self, "created_at", _normalize_text(self.created_at) or _utc_timestamp()
+        )
         resolved_at = _normalize_text(self.resolved_at)
         object.__setattr__(self, "resolved_at", resolved_at or None)
         if self.status == "pending" and self.resolved_at is not None:
@@ -135,7 +147,9 @@ def resolve_owner_approval(
 
 class OwnerApprovalStore:
     def __init__(self, approvals: list[OwnerApproval] | None = None) -> None:
-        self._approvals = {approval.approval_id: approval for approval in approvals or []}
+        self._approvals = {
+            approval.approval_id: approval for approval in approvals or []
+        }
 
     def add(self, approval: OwnerApproval) -> OwnerApproval:
         self._approvals[approval.approval_id] = approval
@@ -161,7 +175,15 @@ class OwnerApprovalStore:
         normalized_status = _normalize_text(status).lower()
         approvals = list(self._approvals.values())
         if normalized_owner_id:
-            approvals = [approval for approval in approvals if approval.owner_id == normalized_owner_id]
+            approvals = [
+                approval
+                for approval in approvals
+                if approval.owner_id == normalized_owner_id
+            ]
         if normalized_status:
-            approvals = [approval for approval in approvals if approval.status == normalized_status]
+            approvals = [
+                approval
+                for approval in approvals
+                if approval.status == normalized_status
+            ]
         return approvals

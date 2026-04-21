@@ -98,7 +98,13 @@ def test_resolve_conflict_updates_pending_artifact(
     resolved = resolve_conflict("conflict-crew-west", "owner_override", "ownerbox")
     registry_entry = memory_registry.get_artifact_by_id("conflict-crew-west")
 
-    assert created_path == tmp_path / "ownerbox" / "artifacts" / "conflict_escalation_conflict-crew-west.json"
+    assert (
+        created_path
+        == tmp_path
+        / "ownerbox"
+        / "artifacts"
+        / "conflict_escalation_conflict-crew-west.json"
+    )
     assert resolved["status"] == "resolved"
     assert resolved["state"] == "resolved"
     assert resolved["resolution"]["resolved_by"] == "ownerbox"
@@ -251,12 +257,17 @@ def test_run_codex_task_allows_execution_after_conflict_resolution(
     first_artifact = json.loads(first_artifact_path.read_text(encoding="utf-8"))
 
     conflict_entry = memory_registry.get_artifact_by_logical_key(
-        memory_registry.compute_artifact_key("ownerbox", "conflict_escalation", "crew-west")
+        memory_registry.compute_artifact_key(
+            "ownerbox", "conflict_escalation", "crew-west"
+        )
     )
     assert conflict_entry is not None
     assert conflict_entry["status"] == "active"
     assert conflict_entry["state"] == "pending_resolution"
-    assert "[CONFLICT] blocked resource=crew-west domain=dev other_domain=ownerbox" in first_output
+    assert (
+        "[CONFLICT] blocked resource=crew-west domain=dev other_domain=ownerbox"
+        in first_output
+    )
     assert first_artifact["result_type"] == "cross_domain_conflict_blocked"
     assert first_task["failure_reason"] == "cross_domain_conflict_detected"
 
@@ -291,4 +302,7 @@ def test_run_codex_task_allows_execution_after_conflict_resolution(
         "action": "continue",
     }
     assert second_artifact_path == tmp_path / "artifacts" / "task-61.txt"
-    assert second_artifact_path.read_text(encoding="utf-8") == "Implement the conflict resolution task"
+    assert (
+        second_artifact_path.read_text(encoding="utf-8")
+        == "Implement the conflict resolution task"
+    )

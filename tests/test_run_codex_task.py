@@ -15,7 +15,11 @@ from control.context_builder import (
 )
 from control.task_decomposer import write_subtask_record as write_subtask_record_helper
 from control.tool_registry import GOOGLE_DOCS_CREATE_DOCUMENT_TOOL
-from scripts.run_codex_task import commit_and_push_artifact, load_codex_task, run_codex_task
+from scripts.run_codex_task import (
+    commit_and_push_artifact,
+    load_codex_task,
+    run_codex_task,
+)
 from scripts.run_codex_task import _build_subtask_task
 
 
@@ -95,11 +99,15 @@ def test_load_codex_task_extracts_required_fields(tmp_path) -> None:
         "instruction": "Implement the task",
         "constraints": "Do not break existing code. Modify only necessary parts.",
         "success_criteria": "Code runs without errors and matches task description",
-        "context_packet_path": str(tmp_path / "tasks" / "context" / "task-9-context.json"),
+        "context_packet_path": str(
+            tmp_path / "tasks" / "context" / "task-9-context.json"
+        ),
     }
 
 
-def test_load_codex_task_creates_context_when_optional_files_are_missing(tmp_path) -> None:
+def test_load_codex_task_creates_context_when_optional_files_are_missing(
+    tmp_path,
+) -> None:
     task_path = tmp_path / "task-7.json"
     task_path.write_text(
         (
@@ -173,7 +181,11 @@ def test_load_codex_task_preserves_memory_context(tmp_path) -> None:
         repo_root=tmp_path,
     )
 
-    assert task["memory_context"] == {"domain": "dev", "type": "task", "tags": ["finance"]}
+    assert task["memory_context"] == {
+        "domain": "dev",
+        "type": "task",
+        "tags": ["finance"],
+    }
 
 
 def test_load_codex_task_defaults_required_fields_for_tool_call(tmp_path) -> None:
@@ -334,7 +346,9 @@ def test_run_codex_task_blocks_when_memory_policy_disallows_execution(
         run_codex_task_module,
         "_contextual_tool_call",
         lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("normal execution should not continue after a blocked memory policy")
+            AssertionError(
+                "normal execution should not continue after a blocked memory policy"
+            )
         ),
     )
 
@@ -476,7 +490,9 @@ def test_run_codex_task_blocks_when_cross_domain_conflict_is_detected(
         run_codex_task_module,
         "_contextual_tool_call",
         lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("normal execution should not continue after a blocked conflict gate")
+            AssertionError(
+                "normal execution should not continue after a blocked conflict gate"
+            )
         ),
     )
 
@@ -507,7 +523,9 @@ def test_run_codex_task_blocks_when_cross_domain_conflict_is_detected(
     assert artifact["instruction"] == "Create the cross-domain document"
 
 
-def test_run_codex_task_updates_personal_context_and_tracks_commit_paths(tmp_path) -> None:
+def test_run_codex_task_updates_personal_context_and_tracks_commit_paths(
+    tmp_path,
+) -> None:
     task_path = tmp_path / "task-10.json"
     task_path.write_text(
         (
@@ -685,7 +703,10 @@ def test_run_codex_task_tool_call_creates_google_doc_artifact_with_tool_trace(
         "url": "https://docs.google.com/document/d/doc-tool-456",
     }
     assert artifact_path == tmp_path / "artifacts" / "doc-23.json"
-    assert artifact["content_summary"] == "This document was created through Tool Layer v1."
+    assert (
+        artifact["content_summary"]
+        == "This document was created through Tool Layer v1."
+    )
     assert artifact["doc_id"] == "doc-tool-456"
     assert artifact["tool_input_summary"] == {
         "content_chars": 48,
@@ -700,7 +721,9 @@ def test_run_codex_task_tool_call_creates_google_doc_artifact_with_tool_trace(
     assert artifact["url"] == "https://docs.google.com/document/d/doc-tool-456"
 
 
-def test_run_codex_task_creates_drive_to_google_doc_artifact(tmp_path, monkeypatch) -> None:
+def test_run_codex_task_creates_drive_to_google_doc_artifact(
+    tmp_path, monkeypatch
+) -> None:
     task_path = tmp_path / "task-81.json"
     task_path.write_text(
         (
@@ -775,7 +798,9 @@ def test_run_codex_task_creates_drive_to_google_doc_artifact(tmp_path, monkeypat
     assert artifact["loaded_source_file_ids"] == ["drive-file-001"]
     assert artifact["output_doc_id"] == "doc-drive-123"
     assert artifact["output_doc_title"] == "Client Summary"
-    assert artifact["output_doc_url"] == "https://docs.google.com/document/d/doc-drive-123"
+    assert (
+        artifact["output_doc_url"] == "https://docs.google.com/document/d/doc-drive-123"
+    )
     assert artifact["source_file_ids"] == ["drive-file-001"]
     assert artifact["transform_mode"] == "plain_summary"
     assert isinstance(artifact["execution_timeline"], dict)
@@ -803,10 +828,14 @@ def test_run_codex_task_drive_to_google_doc_missing_external_files_writes_reason
         ),
         encoding="utf-8",
     )
-    monkeypatch.setattr("control.context_builder.read_google_drive_file", lambda payload: None)
+    monkeypatch.setattr(
+        "control.context_builder.read_google_drive_file", lambda payload: None
+    )
     monkeypatch.setattr(
         "integrations.google_docs_tool.create_google_doc",
-        lambda payload: (_ for _ in ()).throw(AssertionError("should not create a doc")),
+        lambda payload: (_ for _ in ()).throw(
+            AssertionError("should not create a doc")
+        ),
     )
 
     _, artifact_path = run_codex_task(
@@ -824,7 +853,9 @@ def test_run_codex_task_drive_to_google_doc_missing_external_files_writes_reason
     assert artifact["output_doc_id"] == ""
     assert artifact["output_doc_title"] == "Client Summary"
     assert artifact["output_doc_url"] == ""
-    assert artifact["reason"] == "no external files were loaded from Google Drive context"
+    assert (
+        artifact["reason"] == "no external files were loaded from Google Drive context"
+    )
     assert artifact["source_file_ids"] == ["drive-file-missing"]
     assert artifact["transform_mode"] == "plain_summary"
     assert isinstance(artifact["execution_timeline"], dict)
@@ -915,14 +946,23 @@ def test_commit_and_push_artifact_runs_expected_git_commands(monkeypatch) -> Non
     assert commit_hash == "abc123def456"
     assert commands == [
         ["git", "add", "--", "artifacts/task-9.txt"],
-        ["git", "commit", "-m", "DF task 9: execution result", "--", "artifacts/task-9.txt"],
+        [
+            "git",
+            "commit",
+            "-m",
+            "DF task 9: execution result",
+            "--",
+            "artifacts/task-9.txt",
+        ],
         ["git", "rev-parse", "--abbrev-ref", "HEAD"],
         ["git", "rev-parse", "HEAD"],
         ["git", "push"],
     ]
 
 
-def test_main_updates_issue_after_successful_execution(monkeypatch, capsys, tmp_path) -> None:
+def test_main_updates_issue_after_successful_execution(
+    monkeypatch, capsys, tmp_path
+) -> None:
     captured_metrics: dict[str, object] = {}
     task_path = tmp_path / "task-9.json"
     task_path.write_text(
@@ -940,7 +980,9 @@ def test_main_updates_issue_after_successful_execution(monkeypatch, capsys, tmp_
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -987,12 +1029,17 @@ def test_main_updates_issue_after_successful_execution(monkeypatch, capsys, tmp_
     monkeypatch.setattr(
         run_codex_task_module,
         "update_issue_execution_status",
-        lambda issue_number, commit_hash, artifact_path: (SimpleNamespace(number=issue_number), 321),
+        lambda issue_number, commit_hash, artifact_path: (
+            SimpleNamespace(number=issue_number),
+            321,
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
         "mark_issue_validation_failed",
-        lambda issue_number, reason: (_ for _ in ()).throw(AssertionError("should not fail")),
+        lambda issue_number, reason: (_ for _ in ()).throw(
+            AssertionError("should not fail")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1055,7 +1102,9 @@ def test_main_logs_git_sync_failure_without_blocking_completion(
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(run_codex_task_module, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(
@@ -1097,18 +1146,25 @@ def test_main_logs_git_sync_failure_without_blocking_completion(
         run_codex_task_module,
         "commit_and_push_artifact",
         lambda task_id, artifact_path, **kwargs: (_ for _ in ()).throw(
-            RuntimeError("pathspec 'artifacts/doc-23.json' is ignored by one of your .gitignore files")
+            RuntimeError(
+                "pathspec 'artifacts/doc-23.json' is ignored by one of your .gitignore files"
+            )
         ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
         "update_issue_execution_status",
-        lambda issue_number, commit_hash, artifact_path: (SimpleNamespace(number=issue_number), 423),
+        lambda issue_number, commit_hash, artifact_path: (
+            SimpleNamespace(number=issue_number),
+            423,
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
         "mark_issue_validation_failed",
-        lambda issue_number, reason: (_ for _ in ()).throw(AssertionError("should not fail")),
+        lambda issue_number, reason: (_ for _ in ()).throw(
+            AssertionError("should not fail")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1138,7 +1194,9 @@ def test_main_logs_git_sync_failure_without_blocking_completion(
     assert captured_metrics["artifact_path"] == artifact_path
 
 
-def test_main_marks_issue_failed_when_validation_fails(monkeypatch, capsys, tmp_path) -> None:
+def test_main_marks_issue_failed_when_validation_fails(
+    monkeypatch, capsys, tmp_path
+) -> None:
     captured_metrics: dict[str, object] = {}
     task_path = tmp_path / "task-9.json"
     task_path.write_text(
@@ -1156,7 +1214,9 @@ def test_main_marks_issue_failed_when_validation_fails(monkeypatch, capsys, tmp_
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1231,14 +1291,19 @@ def test_main_marks_issue_failed_when_validation_fails(monkeypatch, capsys, tmp_
     assert "CONTEXT_PACKET:" in output
     assert "SUBTASKS_FILE:" in output
     assert "VALIDATION_VALID: False" in output
-    assert "VALIDATION_REASON: artifact does not contain task instruction text" in output
+    assert (
+        "VALIDATION_REASON: artifact does not contain task instruction text" in output
+    )
     assert "issue updated" in output
     assert "comment id: 654" in output
     assert "METRICS_WRITTEN:" in output
     assert captured_metrics["status"] == "FAILED"
     assert captured_metrics["instruction_text"] == "Implement the task"
     assert captured_metrics["validation_passed"] is False
-    assert captured_metrics["validation_reason"] == "artifact does not contain task instruction text"
+    assert (
+        captured_metrics["validation_reason"]
+        == "artifact does not contain task instruction text"
+    )
     assert captured_metrics["commit_hash"] is None
     assert captured_metrics["artifact_path"] == tmp_path / "artifacts" / "task-9-1.txt"
     assert captured_metrics["subtask_id"] == "9-1"
@@ -1270,7 +1335,9 @@ def test_main_google_doc_task_marks_issue_failed_when_writer_fails(
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(run_codex_task_module, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(
@@ -1384,16 +1451,20 @@ def test_main_drive_to_google_doc_fails_safely_when_external_files_are_missing(
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(run_codex_task_module, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(
         run_codex_task_module,
         "build_and_write_context_packet",
-        lambda task, output_dir=None, repo_root=None: build_and_write_context_packet_helper(
-            task,
-            output_dir=tmp_path / "tasks" / "context",
-            repo_root=tmp_path,
+        lambda task, output_dir=None, repo_root=None: (
+            build_and_write_context_packet_helper(
+                task,
+                output_dir=tmp_path / "tasks" / "context",
+                repo_root=tmp_path,
+            )
         ),
     )
     monkeypatch.setattr(
@@ -1404,7 +1475,9 @@ def test_main_drive_to_google_doc_fails_safely_when_external_files_are_missing(
             output_dir=tmp_path / "tasks" / "subtasks",
         ),
     )
-    monkeypatch.setattr("control.context_builder.read_google_drive_file", lambda payload: None)
+    monkeypatch.setattr(
+        "control.context_builder.read_google_drive_file", lambda payload: None
+    )
     monkeypatch.setattr(
         run_codex_task_module,
         "should_execute_task",
@@ -1415,7 +1488,9 @@ def test_main_drive_to_google_doc_fails_safely_when_external_files_are_missing(
     )
     monkeypatch.setattr(
         "integrations.google_docs_tool.create_google_doc",
-        lambda payload: (_ for _ in ()).throw(AssertionError("should not create a doc")),
+        lambda payload: (_ for _ in ()).throw(
+            AssertionError("should not create a doc")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1457,14 +1532,19 @@ def test_main_drive_to_google_doc_fails_safely_when_external_files_are_missing(
     assert artifact["output_doc_id"] == ""
     assert artifact["output_doc_title"] == "Client Summary"
     assert artifact["output_doc_url"] == ""
-    assert artifact["reason"] == "no external files were loaded from Google Drive context"
+    assert (
+        artifact["reason"] == "no external files were loaded from Google Drive context"
+    )
     assert artifact["source_file_ids"] == ["drive-file-missing"]
     assert artifact["transform_mode"] == "plain_summary"
     assert isinstance(artifact["execution_timeline"], dict)
     assert isinstance(artifact["step_metrics"], list)
     assert isinstance(artifact["retry_info"], dict)
     assert "VALIDATION_VALID: False" in output
-    assert "VALIDATION_REASON: no external files were loaded from Google Drive context" in output
+    assert (
+        "VALIDATION_REASON: no external files were loaded from Google Drive context"
+        in output
+    )
     assert "issue updated" in output
     assert "comment id: 918" in output
     assert captured_metrics["status"] == "FAILED"
@@ -1478,7 +1558,9 @@ def test_main_drive_to_google_doc_fails_safely_when_external_files_are_missing(
     assert captured_metrics["parent_task_id"] == 81
 
 
-def test_main_skips_execution_when_guard_blocks_reprocessing(monkeypatch, capsys, tmp_path) -> None:
+def test_main_skips_execution_when_guard_blocks_reprocessing(
+    monkeypatch, capsys, tmp_path
+) -> None:
     captured_metrics: dict[str, object] = {}
     task_path = tmp_path / "task-9.json"
     task_path.write_text(
@@ -1496,7 +1578,9 @@ def test_main_skips_execution_when_guard_blocks_reprocessing(monkeypatch, capsys
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1528,14 +1612,16 @@ def test_main_skips_execution_when_guard_blocks_reprocessing(monkeypatch, capsys
     monkeypatch.setattr(
         run_codex_task_module,
         "run_codex_task",
-        lambda task_path, artifact_dir=None: (_ for _ in ()).throw(AssertionError("should not run")),
+        lambda task_path, artifact_dir=None: (_ for _ in ()).throw(
+            AssertionError("should not run")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
         "validate_task_result",
-        lambda artifact_path, task_instruction, required_paths=None: (_ for _ in ()).throw(
-            AssertionError("should not validate")
-        ),
+        lambda artifact_path, task_instruction, required_paths=None: (
+            _ for _ in ()
+        ).throw(AssertionError("should not validate")),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1605,7 +1691,9 @@ def test_main_skips_execution_when_final_artifact_exists_without_force_execution
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1634,10 +1722,15 @@ def test_main_skips_execution_when_final_artifact_exists_without_force_execution
 
     output = capsys.readouterr().out
     assert exit_code == 0
-    assert f"execution skipped: final artifact already exists at {artifact_path}" in output
+    assert (
+        f"execution skipped: final artifact already exists at {artifact_path}" in output
+    )
     assert "FORCE_EXECUTION_USED:" not in output
     assert captured_metrics["status"] == "SKIPPED"
-    assert captured_metrics["validation_reason"] == f"final artifact already exists at {artifact_path}"
+    assert (
+        captured_metrics["validation_reason"]
+        == f"final artifact already exists at {artifact_path}"
+    )
     assert captured_metrics["artifact_path"] is None
     assert captured_metrics["force_execution_used"] is False
 
@@ -1666,7 +1759,9 @@ def test_main_force_execution_overrides_existing_final_artifact(
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1702,7 +1797,10 @@ def test_main_force_execution_overrides_existing_final_artifact(
     monkeypatch.setattr(
         run_codex_task_module,
         "update_issue_execution_status",
-        lambda issue_number, commit_hash, artifact_path: (SimpleNamespace(number=issue_number), 321),
+        lambda issue_number, commit_hash, artifact_path: (
+            SimpleNamespace(number=issue_number),
+            321,
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1763,7 +1861,9 @@ def test_main_force_execution_without_existing_artifact_runs_normally(
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1799,7 +1899,10 @@ def test_main_force_execution_without_existing_artifact_runs_normally(
     monkeypatch.setattr(
         run_codex_task_module,
         "update_issue_execution_status",
-        lambda issue_number, commit_hash, artifact_path: (SimpleNamespace(number=issue_number), 654),
+        lambda issue_number, commit_hash, artifact_path: (
+            SimpleNamespace(number=issue_number),
+            654,
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1861,7 +1964,9 @@ def test_main_force_execution_overrides_done_issue_label(
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1907,7 +2012,10 @@ def test_main_force_execution_overrides_done_issue_label(
     monkeypatch.setattr(
         run_codex_task_module,
         "update_issue_execution_status",
-        lambda issue_number, commit_hash, artifact_path: (SimpleNamespace(number=issue_number), 654),
+        lambda issue_number, commit_hash, artifact_path: (
+            SimpleNamespace(number=issue_number),
+            654,
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -1944,7 +2052,9 @@ def test_main_force_execution_overrides_done_issue_label(
     assert "prior_artifact_path" not in progress_record
 
 
-def test_main_executes_multiple_subtasks_sequentially(monkeypatch, capsys, tmp_path) -> None:
+def test_main_executes_multiple_subtasks_sequentially(
+    monkeypatch, capsys, tmp_path
+) -> None:
     metrics_calls: list[dict[str, object]] = []
     issue_updates: list[dict[str, object]] = []
     task_path = tmp_path / "task-9.json"
@@ -1963,7 +2073,9 @@ def test_main_executes_multiple_subtasks_sequentially(monkeypatch, capsys, tmp_p
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -2036,7 +2148,9 @@ def test_main_executes_multiple_subtasks_sequentially(monkeypatch, capsys, tmp_p
         ),
     )
 
-    def fake_update_issue_execution_status(issue_number: int, commit_hash: str, artifact_path: Path):
+    def fake_update_issue_execution_status(
+        issue_number: int, commit_hash: str, artifact_path: Path
+    ):
         issue_updates.append(
             {
                 "issue_number": issue_number,
@@ -2054,7 +2168,9 @@ def test_main_executes_multiple_subtasks_sequentially(monkeypatch, capsys, tmp_p
     monkeypatch.setattr(
         run_codex_task_module,
         "mark_issue_validation_failed",
-        lambda issue_number, reason: (_ for _ in ()).throw(AssertionError("should not fail")),
+        lambda issue_number, reason: (_ for _ in ()).throw(
+            AssertionError("should not fail")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -2088,7 +2204,11 @@ def test_main_executes_multiple_subtasks_sequentially(monkeypatch, capsys, tmp_p
     assert [call["subtask_id"] for call in metrics_calls] == ["9-1", "9-2", "9-3"]
     assert all(call["status"] == "DONE" for call in metrics_calls)
     assert all(call["commit_hash"] is None for call in metrics_calls)
-    assert [subtask["status"] for subtask in record["subtasks"]] == ["DONE", "DONE", "DONE"]
+    assert [subtask["status"] for subtask in record["subtasks"]] == [
+        "DONE",
+        "DONE",
+        "DONE",
+    ]
 
 
 def test_main_personal_context_task_persists_updated_json_without_git_sync(
@@ -2117,7 +2237,9 @@ def test_main_personal_context_task_persists_updated_json_without_git_sync(
     monkeypatch.setattr(
         run_codex_task_module,
         "parse_args",
-        lambda: SimpleNamespace(task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")),
+        lambda: SimpleNamespace(
+            task_path=str(task_path), artifact_dir=str(tmp_path / "artifacts")
+        ),
     )
     monkeypatch.setattr(run_codex_task_module, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(
@@ -2164,7 +2286,9 @@ def test_main_personal_context_task_persists_updated_json_without_git_sync(
         ),
     )
 
-    def fake_update_issue_execution_status(issue_number: int, commit_hash: str, artifact_path: Path):
+    def fake_update_issue_execution_status(
+        issue_number: int, commit_hash: str, artifact_path: Path
+    ):
         issue_updates.append(
             {
                 "issue_number": issue_number,
@@ -2182,7 +2306,9 @@ def test_main_personal_context_task_persists_updated_json_without_git_sync(
     monkeypatch.setattr(
         run_codex_task_module,
         "mark_issue_validation_failed",
-        lambda issue_number, reason: (_ for _ in ()).throw(AssertionError("should not fail")),
+        lambda issue_number, reason: (_ for _ in ()).throw(
+            AssertionError("should not fail")
+        ),
     )
     monkeypatch.setattr(
         run_codex_task_module,
@@ -2205,7 +2331,9 @@ def test_main_personal_context_task_persists_updated_json_without_git_sync(
     assert "issue updated" in output
     assert "comment id: 881" in output
     assert written_context["owner"] == {"name": "Avery", "notes": ""}
-    assert written_context["dmv"] == [{"id": "registration", "title": "Renew registration"}]
+    assert written_context["dmv"] == [
+        {"id": "registration", "title": "Renew registration"}
+    ]
     assert issue_updates == [
         {
             "issue_number": 61,

@@ -3,7 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from app.ownerbox.domain import build_ownerbox_trace_metadata, normalize_ownerbox_domain_binding
+from app.ownerbox.domain import (
+    build_ownerbox_trace_metadata,
+    normalize_ownerbox_domain_binding,
+)
 
 
 def _utc_timestamp() -> str:
@@ -66,7 +69,9 @@ def create_execution_trace(
     task = _mapping(task_packet)
     stage_payload = _mapping(stages)
     final_decision = _mapping(stage_payload.get("final_decision"))
-    execution_status = _normalize_text(stage_payload.get("execution_status")) or "blocked"
+    execution_status = (
+        _normalize_text(stage_payload.get("execution_status")) or "blocked"
+    )
     domain_binding = normalize_ownerbox_domain_binding(
         task.get("domain_binding")
         or _mapping(task.get("payload")).get("domain_binding")

@@ -67,11 +67,19 @@ def _base_manifest() -> dict[str, object]:
 
 def _build_clean_package_root(tmp_path: Path) -> tuple[Path, Path]:
     _write_file(tmp_path / "app" / "__init__.py", "")
-    _write_file(tmp_path / "app" / "server.py", "from app.voice.app import run_voice_app\n")
+    _write_file(
+        tmp_path / "app" / "server.py", "from app.voice.app import run_voice_app\n"
+    )
     _write_file(tmp_path / "app" / "voice" / "__init__.py", "")
-    _write_file(tmp_path / "app" / "voice" / "app.py", "from app.product.runner import run_product\n")
+    _write_file(
+        tmp_path / "app" / "voice" / "app.py",
+        "from app.product.runner import run_product\n",
+    )
     _write_file(tmp_path / "app" / "product" / "__init__.py", "")
-    _write_file(tmp_path / "app" / "product" / "runner.py", "def run_product():\n    return 'ok'\n")
+    _write_file(
+        tmp_path / "app" / "product" / "runner.py",
+        "def run_product():\n    return 'ok'\n",
+    )
     _write_file(tmp_path / "runtime" / "state" / ".gitkeep", "")
     _write_file(tmp_path / "runtime" / "logs" / ".gitkeep", "")
     _write_file(tmp_path / "runtime" / "out" / ".gitkeep", "")
@@ -114,7 +122,9 @@ def test_forbidden_folder_fails(tmp_path: Path) -> None:
     report = validate_product_packaging(manifest_path=manifest_path, root_dir=root_dir)
 
     assert report["packaging_status"] == "FAIL"
-    assert any("forbidden folder present: scripts/" == item for item in report["violations"])
+    assert any(
+        "forbidden folder present: scripts/" == item for item in report["violations"]
+    )
     assert "scripts" in report["blocked_references_detected"]
 
 
@@ -126,4 +136,6 @@ def test_invalid_writable_path_fails(tmp_path: Path) -> None:
     report = validate_product_packaging(manifest=manifest, root_dir=root_dir)
 
     assert report["packaging_status"] == "FAIL"
-    assert any("invalid writable path(s): runtime/out" == item for item in report["violations"])
+    assert any(
+        "invalid writable path(s): runtime/out" == item for item in report["violations"]
+    )

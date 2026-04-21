@@ -29,7 +29,10 @@ from app.execution.idempotency_store import (
 from app.execution.paths import OUTPUT_DIR, ROOT_DIR
 from app.memory.memory_object import make_trace_object
 from app.memory.memory_registry import compute_artifact_key, register_artifact
-from app.ownerbox.domain import build_ownerbox_trace_metadata, normalize_ownerbox_domain_binding
+from app.ownerbox.domain import (
+    build_ownerbox_trace_metadata,
+    normalize_ownerbox_domain_binding,
+)
 from app.orchestrator.task_memory import store_task_result
 from runtime.system_log import log_event
 
@@ -113,7 +116,9 @@ def _dispatcher_latency_ms(started_at_monotonic: float) -> int:
     return max(0, int(round((time.monotonic() - started_at_monotonic) * 1000)))
 
 
-def _executor_supports_kwarg(executor: Callable[..., dict[str, object]], name: str) -> bool:
+def _executor_supports_kwarg(
+    executor: Callable[..., dict[str, object]], name: str
+) -> bool:
     try:
         signature = inspect.signature(executor)
     except (TypeError, ValueError):
@@ -138,7 +143,9 @@ def _normalize_error_code(value: object) -> str | None:
 
 
 def _result_attempt_count(result: Mapping[str, object]) -> int:
-    metadata = _normalize_mapping(_normalize_mapping(result.get("payload")).get("metadata"))
+    metadata = _normalize_mapping(
+        _normalize_mapping(result.get("payload")).get("metadata")
+    )
     candidate = metadata.get("attempt_count")
     try:
         normalized = int(candidate)
@@ -214,11 +221,14 @@ def _cached_dispatch_result(
     normalized_dispatch_context: Mapping[str, object],
     resolved_memory_domain: str,
 ) -> dict[str, object]:
-    adapter_used = _normalize_text(
-        _normalize_mapping(
-            _normalize_mapping(cached_result.get("payload")).get("metadata")
-        ).get("adapter_used")
-    ) or BLOCKED_ADAPTER_NAME
+    adapter_used = (
+        _normalize_text(
+            _normalize_mapping(
+                _normalize_mapping(cached_result.get("payload")).get("metadata")
+            ).get("adapter_used")
+        )
+        or BLOCKED_ADAPTER_NAME
+    )
     result = _attach_execution_metadata(
         _with_metadata(
             cached_result,
@@ -277,9 +287,9 @@ def _cached_dispatch_result(
         adapter_used=adapter_used,
         operation=operation,
         dispatcher_start_time=_normalize_text(
-            _normalize_mapping(_normalize_mapping(result.get("payload")).get("metadata")).get(
-                "dispatcher_start_time"
-            )
+            _normalize_mapping(
+                _normalize_mapping(result.get("payload")).get("metadata")
+            ).get("dispatcher_start_time")
         )
         or dispatcher_start_time,
         dispatcher_end_time=_utc_timestamp(),
@@ -310,7 +320,9 @@ def _dispatch_timeout_seconds(
     parameters: Mapping[str, object],
     dispatch_context: Mapping[str, object],
 ) -> float:
-    dispatch_timeout = _normalize_timeout_value(dispatch_context.get("step_timeout_seconds"))
+    dispatch_timeout = _normalize_timeout_value(
+        dispatch_context.get("step_timeout_seconds")
+    )
     if dispatch_timeout is not None:
         return dispatch_timeout
     parameter_timeout = _normalize_timeout_value(parameters.get("timeout_seconds"))
@@ -382,7 +394,9 @@ def _build_dispatch_metadata(
         metadata["memory_evidence_registered"] = memory_evidence_registered
     try:
         attempt_count = int(
-            metadata.get("attempt_count", 0 if adapter_used == BLOCKED_ADAPTER_NAME else 1)
+            metadata.get(
+                "attempt_count", 0 if adapter_used == BLOCKED_ADAPTER_NAME else 1
+            )
         )
     except (TypeError, ValueError):
         attempt_count = 0 if adapter_used == BLOCKED_ADAPTER_NAME else 1
@@ -574,7 +588,8 @@ def _trace_payload(
     trace_payload = {
         "type": TRACE_ARTIFACT_TYPE,
         "action_id": _normalize_text(action_contract.get("action_id")),
-        "idempotency_key": _normalize_text(action_contract.get("idempotency_key")) or None,
+        "idempotency_key": _normalize_text(action_contract.get("idempotency_key"))
+        or None,
         "action_type": _normalize_text(action_contract.get("action_type")),
         "adapter_used": adapter_used,
         "backend_used": _normalize_text(
@@ -583,8 +598,13 @@ def _trace_payload(
         or None,
         "memory_domain": memory_domain,
         "execution_mode": _normalize_text(action_contract.get("execution_mode")),
-        "operation": _normalize_text(metadata.get("operation") or parameters.get("operation")) or None,
-        "owner_id": _normalize_text(metadata.get("owner_id") or normalized_domain_binding.get("owner_id"))
+        "operation": _normalize_text(
+            metadata.get("operation") or parameters.get("operation")
+        )
+        or None,
+        "owner_id": _normalize_text(
+            metadata.get("owner_id") or normalized_domain_binding.get("owner_id")
+        )
         or None,
         "trust_class": _normalize_text(
             metadata.get("trust_class") or normalized_domain_binding.get("trust_class")
@@ -594,7 +614,9 @@ def _trace_payload(
         "scenario_type": _normalize_text(metadata.get("scenario_type")) or None,
         "workflow_id": _normalize_text(metadata.get("workflow_id")) or None,
         "step_id": _normalize_text(metadata.get("step_id")) or None,
-        "printer_name": _normalize_text(metadata.get("printer_name") or parameters.get("printer_name"))
+        "printer_name": _normalize_text(
+            metadata.get("printer_name") or parameters.get("printer_name")
+        )
         or None,
         "started_at": _normalize_text(metadata.get("dispatcher_start_time")) or None,
         "completed_at": _normalize_text(metadata.get("dispatcher_end_time")) or None,
@@ -736,7 +758,9 @@ def dispatch_action(
     fallback_action_id = _fallback_action_id(action_contract)
     adapter_used = BLOCKED_ADAPTER_NAME
     operation = _normalize_text(
-        _normalize_mapping(_normalize_mapping(action_contract).get("parameters")).get("operation")
+        _normalize_mapping(_normalize_mapping(action_contract).get("parameters")).get(
+            "operation"
+        )
     )
     normalized_domain_binding = normalize_ownerbox_domain_binding(domain_binding)
     normalized_dispatch_context = _normalize_mapping(dispatch_context)
@@ -744,7 +768,8 @@ def dispatch_action(
     resolved_idempotency_store = idempotency_store or IdempotencyStore()
     if normalized_domain_binding and resolved_memory_domain == DEFAULT_MEMORY_DOMAIN:
         resolved_memory_domain = (
-            _normalize_text(normalized_domain_binding.get("domain_type")) or DEFAULT_MEMORY_DOMAIN
+            _normalize_text(normalized_domain_binding.get("domain_type"))
+            or DEFAULT_MEMORY_DOMAIN
         )
 
     try:
@@ -766,20 +791,28 @@ def dispatch_action(
         )
         trace_path = _trace_artifact_path(fallback_action_id)
         trace_payload = _trace_payload(
-            action_contract={"action_id": fallback_action_id, "action_type": "UNKNOWN_ACTION", "execution_mode": ""},
+            action_contract={
+                "action_id": fallback_action_id,
+                "action_type": "UNKNOWN_ACTION",
+                "execution_mode": "",
+            },
             action_result=result,
             adapter_used=adapter_used,
             trace_artifact_path=trace_path,
             domain_binding=normalized_domain_binding,
             memory_domain=resolved_memory_domain,
         )
-        log_event("trace", trace_payload, task_id=fallback_action_id, status=result["status"])
+        log_event(
+            "trace", trace_payload, task_id=fallback_action_id, status=result["status"]
+        )
         return result
 
     action_id = _normalize_text(validated_action.get("action_id"))
     action_type = _normalize_text(validated_action.get("action_type"))
     idempotency_key = _normalize_text(validated_action.get("idempotency_key"))
-    operation = _normalize_text(_normalize_mapping(validated_action.get("parameters")).get("operation"))
+    operation = _normalize_text(
+        _normalize_mapping(validated_action.get("parameters")).get("operation")
+    )
     trace_path = _trace_artifact_path(action_id)
     cached_outcome = _ACTION_OUTCOME_CACHE.get(_cache_key(action_id, idempotency_key))
     if cached_outcome is not None:
@@ -823,13 +856,17 @@ def dispatch_action(
             domain_binding=normalized_domain_binding,
             memory_domain=resolved_memory_domain,
         )
-        log_event("trace", trace_payload, task_id=action_id, status=store_failure["status"])
+        log_event(
+            "trace", trace_payload, task_id=action_id, status=store_failure["status"]
+        )
         return store_failure
     if persisted_record is not None:
-        _ACTION_OUTCOME_CACHE[_cache_key(action_id, idempotency_key)] = _CachedActionOutcome(
-            action_id=persisted_record.action_id,
-            idempotency_key=persisted_record.idempotency_key,
-            result=dict(persisted_record.result),
+        _ACTION_OUTCOME_CACHE[_cache_key(action_id, idempotency_key)] = (
+            _CachedActionOutcome(
+                action_id=persisted_record.action_id,
+                idempotency_key=persisted_record.idempotency_key,
+                result=dict(persisted_record.result),
+            )
         )
         return _cached_dispatch_result(
             cached_result=persisted_record.result,
@@ -903,7 +940,9 @@ def dispatch_action(
             )
         else:
             executor_kwargs: dict[str, object] = {}
-            if action_type == OPENAI_ACTION_TYPE and _executor_supports_kwarg(executor, "config"):
+            if action_type == OPENAI_ACTION_TYPE and _executor_supports_kwarg(
+                executor, "config"
+            ):
                 executor_kwargs["config"] = {
                     "timeout_seconds": max(1, int(round(dispatch_timeout_seconds)))
                 }
@@ -925,7 +964,9 @@ def dispatch_action(
                     dispatcher_start_time=dispatcher_start_time,
                     dispatcher_end_time=dispatcher_end_time,
                     dispatcher_latency_ms=_dispatcher_latency_ms(started_at_monotonic),
-                    payload={"diagnostic": {"timeout_seconds": dispatch_timeout_seconds}},
+                    payload={
+                        "diagnostic": {"timeout_seconds": dispatch_timeout_seconds}
+                    },
                     domain_binding=normalized_domain_binding,
                     dispatch_context=dispatch_context_with_timeout,
                 )
@@ -1047,19 +1088,21 @@ def dispatch_action(
         adapter_used=adapter_used,
         operation=operation,
         dispatcher_start_time=_normalize_text(
-            _normalize_mapping(_normalize_mapping(result.get("payload")).get("metadata")).get(
-                "dispatcher_start_time"
-            )
+            _normalize_mapping(
+                _normalize_mapping(result.get("payload")).get("metadata")
+            ).get("dispatcher_start_time")
         )
         or dispatcher_start_time,
         dispatcher_end_time=_normalize_text(
-            _normalize_mapping(_normalize_mapping(result.get("payload")).get("metadata")).get(
-                "dispatcher_end_time"
-            )
+            _normalize_mapping(
+                _normalize_mapping(result.get("payload")).get("metadata")
+            ).get("dispatcher_end_time")
         )
         or _utc_timestamp(),
         dispatcher_latency_ms=int(
-            _normalize_mapping(_normalize_mapping(result.get("payload")).get("metadata")).get(
+            _normalize_mapping(
+                _normalize_mapping(result.get("payload")).get("metadata")
+            ).get(
                 "dispatcher_latency_ms",
                 _dispatcher_latency_ms(started_at_monotonic),
             )
@@ -1071,9 +1114,11 @@ def dispatch_action(
         dispatch_context=dispatch_context_with_timeout,
     )
     if _should_hot_cache_result(final_result):
-        _ACTION_OUTCOME_CACHE[_cache_key(action_id, idempotency_key)] = _CachedActionOutcome(
-            action_id=action_id,
-            idempotency_key=idempotency_key,
-            result=dict(final_result),
+        _ACTION_OUTCOME_CACHE[_cache_key(action_id, idempotency_key)] = (
+            _CachedActionOutcome(
+                action_id=action_id,
+                idempotency_key=idempotency_key,
+                result=dict(final_result),
+            )
         )
     return final_result

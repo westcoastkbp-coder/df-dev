@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import sqlite3
@@ -18,10 +18,14 @@ from app.orchestrator import mock_executor as mock_executor_module
 from app.orchestrator import task_factory as task_factory_module
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 
 
 def _read_jsonl(path: Path) -> list[dict[str, object]]:
@@ -34,7 +38,9 @@ def _read_jsonl(path: Path) -> list[dict[str, object]]:
     ]
 
 
-def test_real_lead_intake_creates_file_memory_and_logs(monkeypatch, tmp_path: Path) -> None:
+def test_real_lead_intake_creates_file_memory_and_logs(
+    monkeypatch, tmp_path: Path
+) -> None:
     output_dir = tmp_path / "runtime" / "out"
     logs_dir = tmp_path / "runtime" / "logs"
     queue_file = tmp_path / "runtime" / "state" / "task_queue.json"
@@ -54,15 +60,27 @@ def test_real_lead_intake_creates_file_memory_and_logs(monkeypatch, tmp_path: Pa
     monkeypatch.setattr(task_factory_module, "TASK_SYSTEM_FILE", task_store_file)
     monkeypatch.setattr(task_memory_module, "ROOT_DIR", tmp_path)
     monkeypatch.setattr(task_state_store_module, "ROOT_DIR", tmp_path)
-    monkeypatch.setattr(task_state_store_module, "TASK_STATE_DB_FILE", Path("runtime/state/task_state.sqlite3"))
+    monkeypatch.setattr(
+        task_state_store_module,
+        "TASK_STATE_DB_FILE",
+        Path("runtime/state/task_state.sqlite3"),
+    )
     monkeypatch.setattr(task_queue_module, "TASK_QUEUE_FILE", queue_file)
     monkeypatch.setattr(task_queue_module, "TASK_LOG_FILE", task_log_file)
     monkeypatch.setattr(system_log_module, "SYSTEM_LOG_FILE", system_log_file)
     monkeypatch.setattr(policy_gate_module, "POLICY_LOG_FILE", policy_log_file)
     monkeypatch.setattr(task_worker_module, "collect_runtime_metrics", lambda: {})
     monkeypatch.setattr(task_worker_module, "get_network_snapshot", lambda: {})
-    monkeypatch.setattr(execution_runner_module, "store_task_result", task_memory_module.store_task_result)
-    monkeypatch.setattr(mock_executor_module, "dispatch_action_trigger", runner_module.dispatch_action_trigger)
+    monkeypatch.setattr(
+        execution_runner_module,
+        "store_task_result",
+        task_memory_module.store_task_result,
+    )
+    monkeypatch.setattr(
+        mock_executor_module,
+        "dispatch_action_trigger",
+        runner_module.dispatch_action_trigger,
+    )
     monkeypatch.setattr(
         task_memory_module,
         "TASK_MEMORY_FILE",
@@ -113,13 +131,19 @@ def test_real_lead_intake_creates_file_memory_and_logs(monkeypatch, tmp_path: Pa
     lead_file = output_dir / "leads" / "lead_001.txt"
     assert lead_file.exists()
     lead_content = lead_file.read_text(encoding="utf-8")
-    assert "request: Client wants ADU project, lot 5000 sqft, asking for price" in lead_content
+    assert (
+        "request: Client wants ADU project, lot 5000 sqft, asking for price"
+        in lead_content
+    )
     assert "type: ADU" in lead_content
     assert "lot_size: 5000 sqft" in lead_content
     assert "timestamp:" in lead_content
 
     task_log = _read_jsonl(task_log_file)
-    assert [entry["event_type"] for entry in task_log[:2]] == ["queue_enqueue", "queue_dequeue"]
+    assert [entry["event_type"] for entry in task_log[:2]] == [
+        "queue_enqueue",
+        "queue_dequeue",
+    ]
 
     policy_log = _read_jsonl(policy_log_file)
     assert any(
@@ -142,7 +166,8 @@ def test_real_lead_intake_creates_file_memory_and_logs(monkeypatch, tmp_path: Pa
         for entry in system_log
     )
     assert any(
-        "updated task_memory for DF-LEAD-INTAKE-V1" in entry["details"].get("message", "")
+        "updated task_memory for DF-LEAD-INTAKE-V1"
+        in entry["details"].get("message", "")
         for entry in system_log
     )
 
@@ -157,4 +182,3 @@ def test_real_lead_intake_creates_file_memory_and_logs(monkeypatch, tmp_path: Pa
     assert rows
     assert "DF-LEAD-INTAKE-V1" in rows[0][0]
     assert "lead_intake" in rows[0][0]
-

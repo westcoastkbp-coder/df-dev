@@ -37,7 +37,9 @@ def test_create_task_persists_contract_version(monkeypatch, tmp_path: Path) -> N
     assert created["history"][0]["event"] == "created"
 
 
-def test_save_task_rejects_unsupported_top_level_field(monkeypatch, tmp_path: Path) -> None:
+def test_save_task_rejects_unsupported_top_level_field(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     created = task_factory.create_task(
         {
@@ -50,11 +52,15 @@ def test_save_task_rejects_unsupported_top_level_field(monkeypatch, tmp_path: Pa
     )
     created["unexpected_field"] = "drift"
 
-    with pytest.raises(ValueError, match="task contains unsupported fields: unexpected_field"):
+    with pytest.raises(
+        ValueError, match="task contains unsupported fields: unexpected_field"
+    ):
         task_factory.save_task(created, store_path)
 
 
-def test_save_task_rejects_previously_silently_dropped_fields(monkeypatch, tmp_path: Path) -> None:
+def test_save_task_rejects_previously_silently_dropped_fields(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     created = task_factory.create_task(
         {
@@ -71,10 +77,14 @@ def test_save_task_rejects_previously_silently_dropped_fields(monkeypatch, tmp_p
         task_factory.save_task(created, store_path)
 
 
-def test_task_state_store_write_rejects_contract_bypass(monkeypatch, tmp_path: Path) -> None:
+def test_task_state_store_write_rejects_contract_bypass(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
 
-    with pytest.raises(ValueError, match="task contains unsupported fields: unexpected_field"):
+    with pytest.raises(
+        ValueError, match="task contains unsupported fields: unexpected_field"
+    ):
         task_state_store.write_task(
             {
                 "task_contract_version": TASK_CONTRACT_VERSION,
@@ -124,11 +134,15 @@ def test_load_tasks_rejects_stored_contract_drift(monkeypatch, tmp_path: Path) -
     task_state_store.run_in_transaction(inject_drift, store_path=store_path)
     task_factory.clear_task_runtime_store()
 
-    with pytest.raises(ValueError, match="task contains unsupported fields: unexpected_field"):
+    with pytest.raises(
+        ValueError, match="task contains unsupported fields: unexpected_field"
+    ):
         task_factory.load_tasks(store_path)
 
 
-def test_create_task_rejects_invalid_initial_status(monkeypatch, tmp_path: Path) -> None:
+def test_create_task_rejects_invalid_initial_status(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
 
     with pytest.raises(
@@ -146,7 +160,9 @@ def test_create_task_rejects_invalid_initial_status(monkeypatch, tmp_path: Path)
         )
 
 
-def test_create_task_accepts_awaiting_approval_contract(monkeypatch, tmp_path: Path) -> None:
+def test_create_task_accepts_awaiting_approval_contract(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
 
     created = task_factory.create_task(
@@ -165,7 +181,9 @@ def test_create_task_accepts_awaiting_approval_contract(monkeypatch, tmp_path: P
     assert created["approval_status"] == "pending"
 
 
-def test_apply_task_approval_transitions_task_to_validated(monkeypatch, tmp_path: Path) -> None:
+def test_apply_task_approval_transitions_task_to_validated(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     created = task_factory.create_task(
         {

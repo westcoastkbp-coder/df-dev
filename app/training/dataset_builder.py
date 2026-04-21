@@ -41,7 +41,9 @@ def _safe_component(value: object, *, field_name: str) -> str:
         raise DatasetBuilderError(f"{field_name} must not be empty.")
     safe_value = _SAFE_COMPONENT_PATTERN.sub("_", normalized).strip("._")
     if not safe_value:
-        raise DatasetBuilderError(f"{field_name} must resolve to a safe path component.")
+        raise DatasetBuilderError(
+            f"{field_name} must resolve to a safe path component."
+        )
     return safe_value
 
 
@@ -68,16 +70,28 @@ def _shared_root(shared_root: Path | str | None = None) -> Path:
     return Path(shared_root)
 
 
-def training_input_dir(dataset_type: object, *, shared_root: Path | str | None = None) -> Path:
-    return _shared_root(shared_root) / "training" / _normalize_dataset_type(dataset_type)
+def training_input_dir(
+    dataset_type: object, *, shared_root: Path | str | None = None
+) -> Path:
+    return (
+        _shared_root(shared_root) / "training" / _normalize_dataset_type(dataset_type)
+    )
 
 
-def dataset_output_dir(dataset_type: object, *, shared_root: Path | str | None = None) -> Path:
-    return _shared_root(shared_root) / "datasets" / _normalize_dataset_type(dataset_type)
+def dataset_output_dir(
+    dataset_type: object, *, shared_root: Path | str | None = None
+) -> Path:
+    return (
+        _shared_root(shared_root) / "datasets" / _normalize_dataset_type(dataset_type)
+    )
 
 
 def dataset_relative_path(dataset_type: object, dataset_id: object) -> Path:
-    return Path("datasets") / _normalize_dataset_type(dataset_type) / f"{_safe_component(dataset_id, field_name='dataset_id')}.json"
+    return (
+        Path("datasets")
+        / _normalize_dataset_type(dataset_type)
+        / f"{_safe_component(dataset_id, field_name='dataset_id')}.json"
+    )
 
 
 def dataset_contract_path(dataset_type: object, dataset_id: object) -> str:
@@ -94,8 +108,12 @@ def _dataset_id(dataset_type: str) -> str:
 def _record_domain(record: dict[str, Any]) -> str:
     for candidate in (
         record.get("domain"),
-        record.get("memory_context", {}).get("domain") if isinstance(record.get("memory_context"), dict) else None,
-        record.get("payload", {}).get("domain") if isinstance(record.get("payload"), dict) else None,
+        record.get("memory_context", {}).get("domain")
+        if isinstance(record.get("memory_context"), dict)
+        else None,
+        record.get("payload", {}).get("domain")
+        if isinstance(record.get("payload"), dict)
+        else None,
     ):
         normalized = _normalize_text(candidate)
         if normalized:
@@ -107,9 +125,15 @@ def _record_task_type(record: dict[str, Any]) -> str:
     for candidate in (
         record.get("task_type"),
         record.get("type"),
-        record.get("memory_context", {}).get("type") if isinstance(record.get("memory_context"), dict) else None,
-        record.get("payload", {}).get("task_type") if isinstance(record.get("payload"), dict) else None,
-        record.get("payload", {}).get("type") if isinstance(record.get("payload"), dict) else None,
+        record.get("memory_context", {}).get("type")
+        if isinstance(record.get("memory_context"), dict)
+        else None,
+        record.get("payload", {}).get("task_type")
+        if isinstance(record.get("payload"), dict)
+        else None,
+        record.get("payload", {}).get("type")
+        if isinstance(record.get("payload"), dict)
+        else None,
     ):
         normalized = _normalize_text(candidate)
         if normalized:
@@ -128,7 +152,9 @@ def _record_id(record: dict[str, Any], *, source_file: Path, line_number: int) -
         normalized = _normalize_text(candidate)
         if normalized:
             return _safe_component(normalized, field_name="record_id")
-    return f"{_safe_component(source_file.stem, field_name='source_file')}-{line_number}"
+    return (
+        f"{_safe_component(source_file.stem, field_name='source_file')}-{line_number}"
+    )
 
 
 def normalize_training_record(
@@ -147,7 +173,9 @@ def normalize_training_record(
         return None
 
     normalized: dict[str, Any] = {
-        "record_id": _record_id(record, source_file=source_file, line_number=line_number),
+        "record_id": _record_id(
+            record, source_file=source_file, line_number=line_number
+        ),
         "domain": domain,
         "task_type": task_type,
         "source_file": source_file.name,
@@ -155,13 +183,13 @@ def normalize_training_record(
         "payload": record,
     }
     collected_at = _normalize_text(
-        record.get("created_at")
-        or record.get("timestamp")
-        or record.get("updated_at")
+        record.get("created_at") or record.get("timestamp") or record.get("updated_at")
     )
     if collected_at:
         normalized["collected_at"] = collected_at
-    source_task_id = _normalize_text(record.get("source_task_id") or record.get("task_id"))
+    source_task_id = _normalize_text(
+        record.get("source_task_id") or record.get("task_id")
+    )
     if source_task_id:
         normalized["source_task_id"] = source_task_id
     return normalized
@@ -176,7 +204,9 @@ def _iter_training_records(source_dir: Path) -> list[dict[str, Any]]:
         try:
             lines = path.read_text(encoding="utf-8").splitlines()
         except OSError as exc:
-            raise DatasetBuilderError(f"training input is not readable: {path}") from exc
+            raise DatasetBuilderError(
+                f"training input is not readable: {path}"
+            ) from exc
         for line_number, raw_line in enumerate(lines, start=1):
             line = raw_line.strip()
             if not line:
@@ -205,10 +235,14 @@ def _dataset_stats(records: list[dict[str, Any]]) -> dict[str, Any]:
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
-def build_dataset(dataset_type: object, *, shared_root: Path | str | None = None) -> dict[str, Any]:
+def build_dataset(
+    dataset_type: object, *, shared_root: Path | str | None = None
+) -> dict[str, Any]:
     normalized_type = _normalize_dataset_type(dataset_type)
     source_dir = training_input_dir(normalized_type, shared_root=shared_root)
     records = _iter_training_records(source_dir)
@@ -221,7 +255,10 @@ def build_dataset(dataset_type: object, *, shared_root: Path | str | None = None
         "records": records,
         "stats": _dataset_stats(records),
     }
-    target_path = dataset_output_dir(normalized_type, shared_root=shared_root) / f"{dataset_id}.json"
+    target_path = (
+        dataset_output_dir(normalized_type, shared_root=shared_root)
+        / f"{dataset_id}.json"
+    )
     _write_json(target_path, dataset)
     print(f"[DATASET] built id={dataset_id} records={len(records)}")
     return dataset
@@ -239,18 +276,24 @@ def _load_dataset(path: Path) -> dict[str, Any]:
     return payload
 
 
-def _find_dataset_path(dataset_id: object, *, shared_root: Path | str | None = None) -> Path:
+def _find_dataset_path(
+    dataset_id: object, *, shared_root: Path | str | None = None
+) -> Path:
     normalized_id = _safe_component(dataset_id, field_name="dataset_id")
     root = _shared_root(shared_root) / "datasets"
     matches = sorted(root.glob(f"*/{normalized_id}.json"))
     if not matches:
         raise DatasetBuilderError(f"dataset not found for dataset_id='{normalized_id}'")
     if len(matches) > 1:
-        raise DatasetBuilderError(f"dataset lookup is ambiguous for dataset_id='{normalized_id}'")
+        raise DatasetBuilderError(
+            f"dataset lookup is ambiguous for dataset_id='{normalized_id}'"
+        )
     return matches[0]
 
 
-def get_dataset(dataset_id: object, *, shared_root: Path | str | None = None) -> dict[str, Any]:
+def get_dataset(
+    dataset_id: object, *, shared_root: Path | str | None = None
+) -> dict[str, Any]:
     return _load_dataset(_find_dataset_path(dataset_id, shared_root=shared_root))
 
 
@@ -265,7 +308,9 @@ def create_training_job(
 ) -> dict[str, Any]:
     dataset_path = _find_dataset_path(dataset_id, shared_root=shared_root)
     dataset = _load_dataset(dataset_path)
-    normalized_dataset_id = _safe_component(dataset.get("dataset_id"), field_name="dataset_id")
+    normalized_dataset_id = _safe_component(
+        dataset.get("dataset_id"), field_name="dataset_id"
+    )
     normalized_model_type = _safe_component(model_type, field_name="model_type")
     dataset_type = _normalize_dataset_type(dataset.get("dataset_type"))
     job = create_compute_job(
@@ -280,8 +325,12 @@ def create_training_job(
             "params": {
                 "model_type": normalized_model_type,
                 "dataset_type": dataset_type,
-                "dataset_version": int(dataset.get("version", DATASET_VERSION) or DATASET_VERSION),
-                "dataset_contract_path": dataset_contract_path(dataset_type, normalized_dataset_id),
+                "dataset_version": int(
+                    dataset.get("version", DATASET_VERSION) or DATASET_VERSION
+                ),
+                "dataset_contract_path": dataset_contract_path(
+                    dataset_type, normalized_dataset_id
+                ),
                 "dataset_local_path": str(dataset_path),
             },
         },

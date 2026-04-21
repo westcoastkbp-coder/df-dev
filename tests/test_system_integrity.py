@@ -74,7 +74,9 @@ def _read_output(capsys) -> dict[str, object]:
     return json.loads(capsys.readouterr().out.strip())
 
 
-def test_system_integrity_verified_flow_is_consistent(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_system_integrity_verified_flow_is_consistent(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     _configure_storage(monkeypatch, tmp_path)
     memory.save_context(_base_context())
 
@@ -85,9 +87,15 @@ def test_system_integrity_verified_flow_is_consistent(monkeypatch, tmp_path: Pat
         return "fail", "broken"
 
     monkeypatch.setattr(codex_loop, "run_test", fail_initial_test)
-    monkeypatch.setattr(codex_loop, "execute_fix_task", lambda prompt: _SuccessfulExecution())
-    monkeypatch.setattr(codex_loop, "run_in_dev_env", lambda *args, **kwargs: _SuccessfulValidation())
-    monkeypatch.setattr(codex_loop, "run_external_review", lambda *args, **kwargs: _approved_review())
+    monkeypatch.setattr(
+        codex_loop, "execute_fix_task", lambda prompt: _SuccessfulExecution()
+    )
+    monkeypatch.setattr(
+        codex_loop, "run_in_dev_env", lambda *args, **kwargs: _SuccessfulValidation()
+    )
+    monkeypatch.setattr(
+        codex_loop, "run_external_review", lambda *args, **kwargs: _approved_review()
+    )
     monkeypatch.setattr(codex_loop, "get_git_commit", lambda: "abc123")
     monkeypatch.setattr(codex_loop, "get_git_branch", lambda: "codex/system-integrity")
 
@@ -125,12 +133,16 @@ def test_system_integrity_verified_flow_is_consistent(monkeypatch, tmp_path: Pat
     assert audit_rows[-1]["strategy_feedback"] == context["strategy_feedback"]
 
 
-def test_system_integrity_blocked_review_preserves_guardrails(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_system_integrity_blocked_review_preserves_guardrails(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     _configure_storage(monkeypatch, tmp_path)
     memory.save_context(_base_context())
 
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("pass", "ok"))
-    monkeypatch.setattr(codex_loop, "run_external_review", lambda *args, **kwargs: _blocked_review())
+    monkeypatch.setattr(
+        codex_loop, "run_external_review", lambda *args, **kwargs: _blocked_review()
+    )
     monkeypatch.setattr(codex_loop, "get_git_commit", lambda: "def456")
     monkeypatch.setattr(codex_loop, "get_git_branch", lambda: "codex/system-integrity")
 
@@ -150,7 +162,10 @@ def test_system_integrity_blocked_review_preserves_guardrails(monkeypatch, tmp_p
     assert context["last_codex_loop"]["local_test"] == "pass"
     assert context["last_codex_loop"]["review"]["decision"] == "BLOCKED"
     assert context["last_strategy"] == "logic_review"
-    assert context["strategy_feedback"] == {"strategy": "logic_review", "result": "failure"}
+    assert context["strategy_feedback"] == {
+        "strategy": "logic_review",
+        "result": "failure",
+    }
     assert trace["type"] == "review_gate"
     assert trace["review"] == "BLOCKED"
     assert trace["gemini_verdict"] == "NOT_VERIFIED"
@@ -160,7 +175,9 @@ def test_system_integrity_blocked_review_preserves_guardrails(monkeypatch, tmp_p
     assert all(row["status"] != "ESCALATED" for row in audit_rows)
 
 
-def test_system_integrity_repeated_failures_escalate_and_stop(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_system_integrity_repeated_failures_escalate_and_stop(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     _configure_storage(monkeypatch, tmp_path)
     memory.save_context(_base_context())
 
@@ -205,20 +222,30 @@ def test_system_integrity_repeated_failures_escalate_and_stop(monkeypatch, tmp_p
     assert run_test_calls == 2
     assert execute_fix_calls == 2
     assert context["status"] == "NOT_WORKING"
-    assert context["next_required"] == "manual intervention required for execution_replay"
+    assert (
+        context["next_required"] == "manual intervention required for execution_replay"
+    )
     assert context["decision_trace"] == {
         "source": "memory_analysis",
         "trigger": "repeated_failures",
         "confidence": "high",
     }
-    assert [row["status"] for row in audit_rows] == ["FAIL", "FAIL", "FAIL", "FAIL", "ESCALATED"]
+    assert [row["status"] for row in audit_rows] == [
+        "FAIL",
+        "FAIL",
+        "FAIL",
+        "FAIL",
+        "ESCALATED",
+    ]
     assert audit_rows[-1]["decision_trace"] == {
         "type": "escalation",
         "reason": "repeated_failures",
     }
 
 
-def test_system_integrity_recovers_from_corrupted_memory_and_executes(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_system_integrity_recovers_from_corrupted_memory_and_executes(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     context_path, _ = _configure_storage(monkeypatch, tmp_path)
     context_path.write_text("{broken json", encoding="utf-8")
 
@@ -229,7 +256,9 @@ def test_system_integrity_recovers_from_corrupted_memory_and_executes(monkeypatc
     memory.save_context(recovered)
 
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("pass", "ok"))
-    monkeypatch.setattr(codex_loop, "run_external_review", lambda *args, **kwargs: _approved_review())
+    monkeypatch.setattr(
+        codex_loop, "run_external_review", lambda *args, **kwargs: _approved_review()
+    )
     monkeypatch.setattr(codex_loop, "get_git_commit", lambda: "ghi789")
     monkeypatch.setattr(codex_loop, "get_git_branch", lambda: "codex/system-recovery")
 

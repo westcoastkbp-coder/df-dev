@@ -5,7 +5,9 @@ import json
 from scripts import run_task as run_task_module
 
 
-def test_run_task_requeues_failed_task_before_max_retries(monkeypatch, tmp_path) -> None:
+def test_run_task_requeues_failed_task_before_max_retries(
+    monkeypatch, tmp_path
+) -> None:
     task_path = tmp_path / "task.json"
     queue_path = tmp_path / "task_queue.json"
     event_log_path = tmp_path / "event_log.jsonl"
@@ -56,7 +58,9 @@ def test_run_task_requeues_failed_task_before_max_retries(monkeypatch, tmp_path)
     assert queue == [{"task_id": "task_write_file"}]
 
 
-def test_run_task_marks_failure_terminal_after_max_retries(monkeypatch, tmp_path) -> None:
+def test_run_task_marks_failure_terminal_after_max_retries(
+    monkeypatch, tmp_path
+) -> None:
     task_path = tmp_path / "task.json"
     queue_path = tmp_path / "task_queue.json"
     task_path.write_text(

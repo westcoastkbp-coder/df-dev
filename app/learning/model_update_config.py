@@ -58,9 +58,13 @@ def load_model_update_config() -> dict[str, Any]:
     if not isinstance(payload, dict):
         return config
 
-    config["active_model"] = _normalize_text(payload.get("active_model")) or config["active_model"]
+    config["active_model"] = (
+        _normalize_text(payload.get("active_model")) or config["active_model"]
+    )
     config["candidate_model"] = _normalize_text(payload.get("candidate_model"))
-    config["evaluation_mode"] = bool(payload.get("evaluation_mode", config["evaluation_mode"]))
+    config["evaluation_mode"] = bool(
+        payload.get("evaluation_mode", config["evaluation_mode"])
+    )
     config["evaluation_sample_rate"] = _bounded_float(
         payload.get("evaluation_sample_rate", config["evaluation_sample_rate"]),
         float(config["evaluation_sample_rate"]),
@@ -99,9 +103,16 @@ def load_model_update_config() -> dict[str, Any]:
             continue
         if not isinstance(raw_settings, dict):
             continue
-        dataset_settings = dict(config.get(normalized_type) or {"min_new_records": 50, "last_dataset_size": 0})
-        dataset_settings["min_new_records"] = _non_negative_int(raw_settings.get("min_new_records", 50), 50)
-        dataset_settings["last_dataset_size"] = _non_negative_int(raw_settings.get("last_dataset_size", 0), 0)
+        dataset_settings = dict(
+            config.get(normalized_type)
+            or {"min_new_records": 50, "last_dataset_size": 0}
+        )
+        dataset_settings["min_new_records"] = _non_negative_int(
+            raw_settings.get("min_new_records", 50), 50
+        )
+        dataset_settings["last_dataset_size"] = _non_negative_int(
+            raw_settings.get("last_dataset_size", 0), 0
+        )
         config[normalized_type] = dataset_settings
 
     return config
@@ -110,7 +121,9 @@ def load_model_update_config() -> dict[str, Any]:
 def write_model_update_config(config: dict[str, Any]) -> None:
     MODEL_UPDATE_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(config, indent=2, sort_keys=True) + "\n"
-    temp_path = MODEL_UPDATE_CONFIG_FILE.with_name(f".{MODEL_UPDATE_CONFIG_FILE.name}.{uuid4().hex}.tmp")
+    temp_path = MODEL_UPDATE_CONFIG_FILE.with_name(
+        f".{MODEL_UPDATE_CONFIG_FILE.name}.{uuid4().hex}.tmp"
+    )
     try:
         temp_path.write_text(payload, encoding="utf-8")
         os.replace(temp_path, MODEL_UPDATE_CONFIG_FILE)

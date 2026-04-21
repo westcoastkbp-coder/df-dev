@@ -54,8 +54,7 @@ def build_determinism_snapshot(
         },
         "action_result": action_result,
         "execution_order": [
-            str(step.get("step_name", "")).strip()
-            for step in trace_sequence
+            str(step.get("step_name", "")).strip() for step in trace_sequence
         ],
         "lifecycle_transitions": lifecycle_transitions,
     }
@@ -89,5 +88,7 @@ def append_determinism_replay_log(
     target = Path(log_path) if log_path is not None else DETERMINISM_REPLAY_LOG_FILE
     target.parent.mkdir(parents=True, exist_ok=True)
     with target.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(dict(entry), ensure_ascii=True, separators=(",", ":")) + "\n")
+        handle.write(
+            json.dumps(dict(entry), ensure_ascii=True, separators=(",", ":")) + "\n"
+        )
     return target

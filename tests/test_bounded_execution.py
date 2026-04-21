@@ -170,4 +170,3 @@ def test_bounded_execution_replay_keeps_context_payload_and_runtime_flat(
     assert all(size == context_sizes[0] for size in context_sizes), metrics
     assert all(size == payload_sizes[0] for size in payload_sizes), metrics
     assert tail_avg <= head_avg * 1.5 + 5.0, metrics
-

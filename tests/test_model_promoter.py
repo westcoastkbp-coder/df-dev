@@ -9,7 +9,10 @@ import app.learning.model_promoter as model_promoter_module
 import app.learning.model_update_config as model_update_config_module
 import app.learning.promotion_audit as promotion_audit_module
 from app.learning.model_promoter import evaluate_promotion, promote_model
-from app.learning.model_update_config import load_model_update_config, write_model_update_config
+from app.learning.model_update_config import (
+    load_model_update_config,
+    write_model_update_config,
+)
 
 
 def _write_model_update_config(
@@ -77,12 +80,16 @@ def _write_eval_artifacts(
     return refs
 
 
-def _configure_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> tuple[Path, Path, Path, Path]:
+def _configure_environment(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> tuple[Path, Path, Path, Path]:
     config_path = tmp_path / "config" / "model_update.json"
     evals_root = tmp_path / "DF" / "shared" / "evals"
     audits_root = tmp_path / "DF" / "shared" / "promotion_audits"
     models_root = tmp_path / "DF" / "shared" / "models"
-    monkeypatch.setattr(model_update_config_module, "MODEL_UPDATE_CONFIG_FILE", config_path)
+    monkeypatch.setattr(
+        model_update_config_module, "MODEL_UPDATE_CONFIG_FILE", config_path
+    )
     monkeypatch.setattr(model_promoter_module, "EVALS_ROOT", evals_root)
     monkeypatch.setattr(promotion_audit_module, "PROMOTION_AUDITS_ROOT", audits_root)
     monkeypatch.setattr(promotion_audit_module, "MODELS_ROOT", models_root)
@@ -94,7 +101,9 @@ def test_successful_promotion_commits_config_and_audit(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    config_path, evals_root, audits_root, models_root = _configure_environment(monkeypatch, tmp_path)
+    config_path, evals_root, audits_root, models_root = _configure_environment(
+        monkeypatch, tmp_path
+    )
     _write_model_update_config(config_path)
     evaluation_refs = _write_eval_artifacts(
         evals_root,
@@ -104,7 +113,9 @@ def test_successful_promotion_commits_config_and_audit(
         top1_true_count=15,
     )
     models_root.mkdir(parents=True, exist_ok=True)
-    (models_root / "memory_ranker_v2.json").write_text('{"model_id":"memory_ranker_v2"}\n', encoding="utf-8")
+    (models_root / "memory_ranker_v2.json").write_text(
+        '{"model_id":"memory_ranker_v2"}\n', encoding="utf-8"
+    )
 
     decision = evaluate_promotion()
     promotion = promote_model()
@@ -164,7 +175,9 @@ def test_successful_promotion_commits_config_and_audit(
         "min_samples": 20,
     }
     assert record["evaluation_refs"] == evaluation_refs
-    assert record["artifact_refs"] == [(models_root / "memory_ranker_v2.json").as_posix()]
+    assert record["artifact_refs"] == [
+        (models_root / "memory_ranker_v2.json").as_posix()
+    ]
     assert record["config_version_before"] != record["config_version_after"]
 
 
@@ -172,7 +185,9 @@ def test_failed_config_update_marks_audit_failed_and_keeps_active_model(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    config_path, evals_root, _audits_root, _models_root = _configure_environment(monkeypatch, tmp_path)
+    config_path, evals_root, _audits_root, _models_root = _configure_environment(
+        monkeypatch, tmp_path
+    )
     _write_model_update_config(config_path)
     _write_eval_artifacts(
         evals_root,
@@ -185,7 +200,9 @@ def test_failed_config_update_marks_audit_failed_and_keeps_active_model(
     def fail_config_write(config: dict[str, object]) -> None:
         raise OSError("config write blocked")
 
-    monkeypatch.setattr(model_promoter_module, "write_model_update_config", fail_config_write)
+    monkeypatch.setattr(
+        model_promoter_module, "write_model_update_config", fail_config_write
+    )
 
     with pytest.raises(OSError, match="config write blocked"):
         promote_model()
@@ -197,14 +214,19 @@ def test_failed_config_update_marks_audit_failed_and_keeps_active_model(
     assert len(audit_records) == 1
     assert audit_records[0]["status"] == "failed"
     assert audit_records[0]["decision"] == "accepted"
-    assert audit_records[0]["config_version_before"] == audit_records[0]["config_version_after"]
+    assert (
+        audit_records[0]["config_version_before"]
+        == audit_records[0]["config_version_after"]
+    )
 
 
 def test_failed_commit_audit_write_rolls_back_config(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    config_path, evals_root, _audits_root, _models_root = _configure_environment(monkeypatch, tmp_path)
+    config_path, evals_root, _audits_root, _models_root = _configure_environment(
+        monkeypatch, tmp_path
+    )
     _write_model_update_config(config_path)
     _write_eval_artifacts(
         evals_root,
@@ -221,7 +243,11 @@ def test_failed_commit_audit_write_rolls_back_config(
             raise OSError("commit audit blocked")
         return original_replace(record)
 
-    monkeypatch.setattr(model_promoter_module, "replace_promotion_audit_record", fail_committed_then_allow_failed)
+    monkeypatch.setattr(
+        model_promoter_module,
+        "replace_promotion_audit_record",
+        fail_committed_then_allow_failed,
+    )
 
     with pytest.raises(OSError, match="commit audit blocked"):
         promote_model()
@@ -233,14 +259,19 @@ def test_failed_commit_audit_write_rolls_back_config(
     assert len(audit_records) == 1
     assert audit_records[0]["status"] == "failed"
     assert audit_records[0]["decision"] == "accepted"
-    assert audit_records[0]["config_version_before"] == audit_records[0]["config_version_after"]
+    assert (
+        audit_records[0]["config_version_before"]
+        == audit_records[0]["config_version_after"]
+    )
 
 
 def test_pending_audit_state_is_not_treated_as_committed(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    _config_path, _evals_root, _audits_root, _models_root = _configure_environment(monkeypatch, tmp_path)
+    _config_path, _evals_root, _audits_root, _models_root = _configure_environment(
+        monkeypatch, tmp_path
+    )
     pending_record = promotion_audit_module.build_promotion_audit_record(
         active_model="memory_ranker_v1",
         candidate_model="memory_ranker_v2",
@@ -274,7 +305,9 @@ def test_multiple_runs_preserve_append_only_history(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    config_path, evals_root, _audits_root, _models_root = _configure_environment(monkeypatch, tmp_path)
+    config_path, evals_root, _audits_root, _models_root = _configure_environment(
+        monkeypatch, tmp_path
+    )
     _write_model_update_config(config_path)
     _write_eval_artifacts(
         evals_root,
@@ -314,7 +347,9 @@ def test_evaluate_promotion_rejects_when_sample_count_is_too_low(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    config_path, evals_root, _audits_root, _models_root = _configure_environment(monkeypatch, tmp_path)
+    config_path, evals_root, _audits_root, _models_root = _configure_environment(
+        monkeypatch, tmp_path
+    )
     _write_model_update_config(config_path)
     _write_eval_artifacts(
         evals_root,
@@ -344,7 +379,9 @@ def test_model_update_config_defaults_and_persists_promotion_rules(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    config_path, _evals_root, _audits_root, _models_root = _configure_environment(monkeypatch, tmp_path)
+    config_path, _evals_root, _audits_root, _models_root = _configure_environment(
+        monkeypatch, tmp_path
+    )
 
     config = load_model_update_config()
     assert config["promotion_rules"] == {

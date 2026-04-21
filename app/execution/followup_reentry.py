@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -64,7 +64,9 @@ def _existing_reentry_task(
     idempotency_key: str,
     store_path: Path,
 ) -> dict[str, object] | None:
-    existing_by_key = find_task_by_idempotency_key(idempotency_key, store_path=store_path)
+    existing_by_key = find_task_by_idempotency_key(
+        idempotency_key, store_path=store_path
+    )
     if existing_by_key is not None:
         return existing_by_key
     normalized_followup_task_id = str(followup_task_id or "").strip()
@@ -73,12 +75,15 @@ def _existing_reentry_task(
     for task in load_tasks(store_path):
         payload = normalize_mapping(task.get("payload"))
         task_idempotency_key = str(task.get("idempotency_key", "")).strip()
-        if not task_idempotency_key and str(task.get("followup_task_id", "")).strip() == normalized_followup_task_id:
+        if (
+            not task_idempotency_key
+            and str(task.get("followup_task_id", "")).strip()
+            == normalized_followup_task_id
+        ):
             return dict(task)
         if (
             not task_idempotency_key
-            and
-            str(payload.get("workflow_type", "")).strip() == WORKFLOW_TYPE
+            and str(payload.get("workflow_type", "")).strip() == WORKFLOW_TYPE
             and str(payload.get("reentry_source_followup_task_id", "")).strip()
             == normalized_followup_task_id
         ):
@@ -97,7 +102,9 @@ def reenter_completed_followup(
     if trace is None:
         trace = build_execution_trace(
             run_id=str(followup_context.get("task_id", "")).strip(),
-            lead_id=str(followup_context.get("payload", {}).get("parent_lead_id", "")).strip(),
+            lead_id=str(
+                followup_context.get("payload", {}).get("parent_lead_id", "")
+            ).strip(),
         )
     payload = followup_payload_from_task(followup_context)
     normalized_store = Path(store_path) if store_path is not None else TASKS_FILE
@@ -105,12 +112,9 @@ def reenter_completed_followup(
     followup_status = str(followup_context.get("status", "")).strip().lower()
     task_intent = str(followup_context.get("intent") or "").strip()
     payload_workflow_type = str(payload.get("workflow_type") or "").strip()
-    if (
-        followup_status != "completed"
-        or (
-            task_intent != MISSING_INPUT_FOLLOWUP_WORKFLOW_TYPE
-            and payload_workflow_type != MISSING_INPUT_FOLLOWUP_WORKFLOW_TYPE
-        )
+    if followup_status != "completed" or (
+        task_intent != MISSING_INPUT_FOLLOWUP_WORKFLOW_TYPE
+        and payload_workflow_type != MISSING_INPUT_FOLLOWUP_WORKFLOW_TYPE
     ):
         return {
             "status": "ignored",
@@ -216,7 +220,9 @@ def reenter_completed_followup(
         task_metadata=build_reentry_task_metadata(
             source_lead_id=normalized_lead_id,
             followup_task_id=followup_task_id,
-            original_task_id=str(payload.get("parent_task_id") or payload.get("original_task_id") or "").strip(),
+            original_task_id=str(
+                payload.get("parent_task_id") or payload.get("original_task_id") or ""
+            ).strip(),
             reentry_source=MISSING_INPUT_FOLLOWUP_WORKFLOW_TYPE,
         ),
         trace=trace,
@@ -272,8 +278,10 @@ def run_completion_followup(
     followup_context = build_followup_context_payload(task_data)
     payload = followup_payload_from_task(followup_context)
     if (
-        str(followup_context.get("intent", "")).strip() == MISSING_INPUT_FOLLOWUP_WORKFLOW_TYPE
-        or str(payload.get("workflow_type", "")).strip() == MISSING_INPUT_FOLLOWUP_WORKFLOW_TYPE
+        str(followup_context.get("intent", "")).strip()
+        == MISSING_INPUT_FOLLOWUP_WORKFLOW_TYPE
+        or str(payload.get("workflow_type", "")).strip()
+        == MISSING_INPUT_FOLLOWUP_WORKFLOW_TYPE
     ):
         _record_trace(
             trace,
@@ -282,4 +290,6 @@ def run_completion_followup(
             output_payload_type="followup_payload",
             result_status="success",
         )
-    return reenter_completed_followup(followup_context, store_path=store_path, trace=trace)
+    return reenter_completed_followup(
+        followup_context, store_path=store_path, trace=trace
+    )

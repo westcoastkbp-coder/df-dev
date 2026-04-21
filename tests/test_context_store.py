@@ -47,7 +47,9 @@ def test_set_active_mode_updates_system_context(tmp_path: Path) -> None:
     assert updated["active_mode"] == "owner"
     assert updated["current_focus"] == "permits"
     assert updated["last_update"]
-    saved_payload = json.loads((context_dir / "system_context.json").read_text(encoding="utf-8"))
+    saved_payload = json.loads(
+        (context_dir / "system_context.json").read_text(encoding="utf-8")
+    )
     assert saved_payload == updated
 
 

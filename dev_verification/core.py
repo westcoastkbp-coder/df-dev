@@ -74,7 +74,9 @@ def _result_payload(scenario: Mapping[str, object]) -> object:
 def _is_executed(scenario: Mapping[str, object]) -> bool:
     if "executed" in scenario:
         return bool(scenario.get("executed"))
-    return bool(_as_list(scenario.get("actions")) or _result_payload(scenario) is not None)
+    return bool(
+        _as_list(scenario.get("actions")) or _result_payload(scenario) is not None
+    )
 
 
 def _policy_allows_execution(scenario: Mapping[str, object]) -> bool:
@@ -140,7 +142,9 @@ def check_invariants(scenario: Mapping[str, object]) -> list[str]:
 
     task_id = _task_id_from_scenario(normalized)
     execution = _as_mapping(normalized.get("execution"))
-    boundary = _normalize_text(execution.get("boundary") or normalized.get("execution_boundary"))
+    boundary = _normalize_text(
+        execution.get("boundary") or normalized.get("execution_boundary")
+    )
     result = _as_mapping(_result_payload(normalized))
     result_task_id = _normalize_text(result.get("task_id"))
 
@@ -156,7 +160,9 @@ def check_invariants(scenario: Mapping[str, object]) -> list[str]:
         )
 
     if _is_executed(normalized) and not _policy_allows_execution(normalized):
-        failures.append("No execution without policy violated: execution occurred without policy")
+        failures.append(
+            "No execution without policy violated: execution occurred without policy"
+        )
 
     replay_output = normalized.get("replay_output", _result_payload(normalized))
     if _stable_json(_result_payload(normalized)) != _stable_json(replay_output):
@@ -165,11 +171,15 @@ def check_invariants(scenario: Mapping[str, object]) -> list[str]:
     expected_state = normalized.get("expected_state", normalized.get("final_state"))
     final_state = normalized.get("final_state", {})
     if _stable_json(expected_state) != _stable_json(final_state):
-        failures.append("No state mismatch violated: final_state does not match expected_state")
+        failures.append(
+            "No state mismatch violated: final_state does not match expected_state"
+        )
     else:
         final_task_id = _normalize_text(_as_mapping(final_state).get("task_id"))
         if task_id and final_task_id and final_task_id != task_id:
-            failures.append("No state mismatch violated: final_state task_id does not match scenario task_id")
+            failures.append(
+                "No state mismatch violated: final_state task_id does not match scenario task_id"
+            )
 
     action_signatures: list[str] = []
     for action in _as_list(normalized.get("actions")):
@@ -181,15 +191,17 @@ def check_invariants(scenario: Mapping[str, object]) -> list[str]:
     result_status = _result_status(normalized)
     final_state = _as_mapping(normalized.get("final_state"))
     final_state_status = _normalized_status(final_state.get("status"))
-    invalid_state = bool(normalized.get("invalid_state")) or final_state_status == "invalid"
-    continued_after_invalid_state = bool(normalized.get("continued_after_invalid_state"))
+    invalid_state = (
+        bool(normalized.get("invalid_state")) or final_state_status == "invalid"
+    )
+    continued_after_invalid_state = bool(
+        normalized.get("continued_after_invalid_state")
+    )
     safe_statuses = _safe_statuses()
 
     if missing_data:
         if result_status == "success":
-            failures.append(
-                "No false success violated: missing data produced success"
-            )
+            failures.append("No false success violated: missing data produced success")
         if _is_executed(normalized) and result_status not in safe_statuses:
             failures.append(
                 "Fail safely under imperfect inputs violated: missing data did not halt safely"
@@ -286,7 +298,10 @@ def assert_result(
 
     actual_failure_reason = _normalize_text(report.get("failure_reason"))
     normalized_expected_reason = _normalize_text(expected_failure_reason)
-    if normalized_expected_reason and actual_failure_reason != normalized_expected_reason:
+    if (
+        normalized_expected_reason
+        and actual_failure_reason != normalized_expected_reason
+    ):
         raise AssertionError(
             f"expected failure reason {normalized_expected_reason!r}, got {actual_failure_reason!r}"
         )

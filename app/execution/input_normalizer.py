@@ -114,13 +114,20 @@ def infer_intent_from_text(text: str) -> str:
         )
     ):
         return "service_request"
-    if "call" in normalized and any(word in normalized for word in ("client", "customer", "owner")):
+    if "call" in normalized and any(
+        word in normalized for word in ("client", "customer", "owner")
+    ):
         return "call_client"
-    if any(word in normalized for word in ("follow up", "follow-up", "check back", "remind")):
+    if any(
+        word in normalized
+        for word in ("follow up", "follow-up", "check back", "remind")
+    ):
         return "follow_up"
     if "address" in normalized:
         return "record_address"
-    if any(word in normalized for word in ("material", "materials", "supply", "supplies")):
+    if any(
+        word in normalized for word in ("material", "materials", "supply", "supplies")
+    ):
         return "record_materials"
     if any(word in normalized for word in ("note", "noted", "memo")):
         return "add_note"

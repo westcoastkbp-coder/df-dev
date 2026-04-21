@@ -29,7 +29,9 @@ def _json_dumps(payload: object) -> str:
     return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
 
 
-def _log_store_failure(*, code: str, action_id: str, operation: str, reason: str) -> None:
+def _log_store_failure(
+    *, code: str, action_id: str, operation: str, reason: str
+) -> None:
     log_event(
         "storage",
         {
@@ -82,7 +84,9 @@ class IdempotencyStore:
         self._db_path = _root_relative(db_path or IDEMPOTENCY_DB_FILE)
         self._max_terminal_records = max(1, int(max_terminal_records))
 
-    def get(self, *, action_id: object, idempotency_key: object) -> PersistedIdempotencyRecord | None:
+    def get(
+        self, *, action_id: object, idempotency_key: object
+    ) -> PersistedIdempotencyRecord | None:
         normalized_action_id = _normalize_text(action_id)
         normalized_key = _normalize_text(idempotency_key)
         if not normalized_key:
@@ -113,7 +117,9 @@ class IdempotencyStore:
             )
         if row is None:
             return None
-        return self._record_from_row(row, action_id=normalized_action_id, operation="get")
+        return self._record_from_row(
+            row, action_id=normalized_action_id, operation="get"
+        )
 
     def record(
         self,
@@ -128,7 +134,12 @@ class IdempotencyStore:
         normalized_key = _normalize_text(idempotency_key)
         normalized_action_type = _normalize_text(action_type).upper()
         normalized_status = _normalize_text(execution_status).lower()
-        if not normalized_action_id or not normalized_key or not normalized_action_type or not normalized_status:
+        if (
+            not normalized_action_id
+            or not normalized_key
+            or not normalized_action_type
+            or not normalized_status
+        ):
             self._raise_error(
                 code="persistence_error",
                 action_id=normalized_action_id,
@@ -199,7 +210,9 @@ class IdempotencyStore:
                 operation="record",
                 reason="persisted idempotency record was not readable after write",
             )
-        return self._record_from_row(row, action_id=normalized_action_id, operation="record")
+        return self._record_from_row(
+            row, action_id=normalized_action_id, operation="record"
+        )
 
     def _connect(self) -> sqlite3.Connection:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)

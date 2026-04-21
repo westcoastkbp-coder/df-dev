@@ -124,7 +124,9 @@ def test_voice_turn_can_be_created_and_linked_to_session() -> None:
     assert turn.trace_metadata.session_id == session.session_id
 
 
-def test_voice_orchestrator_routes_through_action_dispatcher(monkeypatch, tmp_path: Path) -> None:
+def test_voice_orchestrator_routes_through_action_dispatcher(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatcher_runtime(monkeypatch, tmp_path)
     orchestrator = VoiceOrchestrator()
 
@@ -143,8 +145,12 @@ def test_voice_orchestrator_routes_through_action_dispatcher(monkeypatch, tmp_pa
     assert validate_action_result_contract(result.action_result) == result.action_result
     assert result.action_contract["action_type"] == "OPENAI_REQUEST"
     assert result.action_result["result_type"] == "simulation"
-    assert result.action_result["payload"]["metadata"]["adapter_used"] == "openai_adapter"
-    assert result.turn.response_plan.action_refs == (result.action_contract["action_id"],)
+    assert (
+        result.action_result["payload"]["metadata"]["adapter_used"] == "openai_adapter"
+    )
+    assert result.turn.response_plan.action_refs == (
+        result.action_contract["action_id"],
+    )
 
 
 def test_response_plan_is_deterministic_and_contract_bound() -> None:
@@ -242,7 +248,10 @@ def test_malformed_input_is_normalized_safely() -> None:
     assert result.turn.input_text == ""
     assert result.turn.turn_status == "blocked"
     assert result.turn.response_plan.response_type == "input_error"
-    assert result.turn.response_plan.text_payload == "Voice input was empty after normalization."
+    assert (
+        result.turn.response_plan.text_payload
+        == "Voice input was empty after normalization."
+    )
     assert result.turn.trace_metadata is not None
     assert result.turn.trace_metadata.action_id is None
     assert result.turn.trace_metadata.result_status == "blocked"

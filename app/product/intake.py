@@ -52,13 +52,16 @@ def _mapped_task_request(task_id: str, *, scope_files: list[str]) -> dict[str, o
         "action": "execute",
         "task_id": str(task_definition.get("task_id", "")).strip(),
         "objective": f"Execute mapped task descriptor for {task_id}",
-        "scope_files": list(scope_files) or [str(task_definition.get("descriptor_path", "")).strip()],
+        "scope_files": list(scope_files)
+        or [str(task_definition.get("descriptor_path", "")).strip()],
         "descriptor_path": str(task_definition.get("descriptor_path", "")).strip(),
         "descriptor_action": str(task_definition.get("action", "")).strip(),
     }
 
 
-def _mapped_use_case_request(task_id: str, *, scope_files: list[str]) -> dict[str, object]:
+def _mapped_use_case_request(
+    task_id: str, *, scope_files: list[str]
+) -> dict[str, object]:
     try:
         chain = get_chain(task_id)
     except TaskRegistryError as exc:
@@ -124,9 +127,13 @@ def build_product_task_request(payload: object) -> dict[str, object]:
                 recoverable=True,
             )
         if str(parsed_command.get("action", "")).strip() == "execute_chain":
-            tasks = [str(item).strip() for item in list(parsed_command.get("tasks", []))]
+            tasks = [
+                str(item).strip() for item in list(parsed_command.get("tasks", []))
+            ]
             if len(tasks) == 1:
-                use_case_request = _mapped_use_case_request(tasks[0], scope_files=scope_files)
+                use_case_request = _mapped_use_case_request(
+                    tasks[0], scope_files=scope_files
+                )
                 if str(use_case_request.get("status", "")).strip() == "accepted":
                     return use_case_request
                 if str(use_case_request.get("status", "")).strip() == "error":

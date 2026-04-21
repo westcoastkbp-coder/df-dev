@@ -13,7 +13,12 @@ from runtime.token_report import get_last_run_report
 
 
 def _report_tokens_enabled() -> bool:
-    return str(os.getenv("REPORT_TOKENS", "")).strip().lower() in {"1", "true", "yes", "on"}
+    return str(os.getenv("REPORT_TOKENS", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def main() -> None:

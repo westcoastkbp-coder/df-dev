@@ -85,11 +85,19 @@ def local_compute_root(domain: object) -> Path:
 
 
 def compute_job_relative_path(job_id: object) -> Path:
-    return Path("compute") / "jobs" / f"{_safe_component(job_id, field_name='job_id')}.json"
+    return (
+        Path("compute")
+        / "jobs"
+        / f"{_safe_component(job_id, field_name='job_id')}.json"
+    )
 
 
 def compute_result_relative_path(job_id: object) -> Path:
-    return Path("compute") / "results" / f"{_safe_component(job_id, field_name='job_id')}.json"
+    return (
+        Path("compute")
+        / "results"
+        / f"{_safe_component(job_id, field_name='job_id')}.json"
+    )
 
 
 def compute_trace_relative_path(job_id: object, transition: object) -> Path:
@@ -155,7 +163,9 @@ class ComputeResultArtifact:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "type", _normalize_text(self.type) or "compute_result")
-        object.__setattr__(self, "job_id", _safe_component(self.job_id, field_name="job_id"))
+        object.__setattr__(
+            self, "job_id", _safe_component(self.job_id, field_name="job_id")
+        )
         object.__setattr__(
             self,
             "status",
@@ -182,7 +192,9 @@ class ComputeResultArtifact:
         if not self.output_ref:
             raise ComputeJobError("result.output_ref must not be empty.")
         if self.status == "completed" and self.error is not None:
-            raise ComputeJobError("completed compute results must not carry an error payload.")
+            raise ComputeJobError(
+                "completed compute results must not carry an error payload."
+            )
         if self.status == "failed" and not isinstance(self.error, dict):
             raise ComputeJobError("failed compute results must carry an error payload.")
 
@@ -211,7 +223,9 @@ class ComputeJob:
     result: ComputeResultArtifact | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "job_id", _safe_component(self.job_id, field_name="job_id"))
+        object.__setattr__(
+            self, "job_id", _safe_component(self.job_id, field_name="job_id")
+        )
         object.__setattr__(
             self,
             "job_type",
@@ -261,11 +275,17 @@ class ComputeJob:
         if not self.requested_by:
             raise ComputeJobError("requested_by must not be empty.")
         if self.status in {"queued", "running"} and self.result is not None:
-            raise ComputeJobError("queued and running jobs must not carry a result artifact.")
+            raise ComputeJobError(
+                "queued and running jobs must not carry a result artifact."
+            )
         if self.status in {"completed", "failed"} and self.result is None:
-            raise ComputeJobError("completed and failed jobs must carry a result artifact.")
+            raise ComputeJobError(
+                "completed and failed jobs must carry a result artifact."
+            )
         if self.result is not None and self.result.status != self.status:
-            raise ComputeJobError("job status must match result.status for terminal jobs.")
+            raise ComputeJobError(
+                "job status must match result.status for terminal jobs."
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -278,7 +298,9 @@ class ComputeJob:
             "requested_by": self.requested_by,
             "domain": self.domain,
             "payload": self.payload.to_dict(),
-            "result": self.result.to_dict() if isinstance(self.result, ComputeResultArtifact) else None,
+            "result": self.result.to_dict()
+            if isinstance(self.result, ComputeResultArtifact)
+            else None,
         }
 
 
@@ -299,7 +321,9 @@ def compute_result_artifact_from_mapping(value: object) -> ComputeResultArtifact
         job_id=mapped.get("job_id"),
         status=mapped.get("status"),
         output_ref=mapped.get("output_ref"),
-        metrics=mapped.get("metrics") if isinstance(mapped.get("metrics"), dict) else {},
+        metrics=mapped.get("metrics")
+        if isinstance(mapped.get("metrics"), dict)
+        else {},
         error=mapped.get("error") if isinstance(mapped.get("error"), dict) else None,
     )
 
@@ -312,7 +336,9 @@ def compute_job_from_mapping(value: object) -> ComputeJob:
         mode=mapped.get("mode"),
         status=mapped.get("status"),
         created_at=mapped.get("created_at") or _utc_timestamp(),
-        updated_at=mapped.get("updated_at") or mapped.get("created_at") or _utc_timestamp(),
+        updated_at=mapped.get("updated_at")
+        or mapped.get("created_at")
+        or _utc_timestamp(),
         requested_by=mapped.get("requested_by"),
         domain=mapped.get("domain"),
         payload=compute_job_payload_from_mapping(mapped.get("payload")),

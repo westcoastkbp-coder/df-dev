@@ -157,7 +157,8 @@ def set_context(
     else:
         existing_value = (
             dict(existing.get("value", {}))
-            if isinstance(existing, Mapping) and isinstance(existing.get("value", {}), Mapping)
+            if isinstance(existing, Mapping)
+            and isinstance(existing.get("value", {}), Mapping)
             else {}
         )
         payload = {
@@ -165,7 +166,8 @@ def set_context(
             "key": key,
             "updated_at": effective_timestamp,
             "task_id": normalized_task_id or _normalize_link(existing, "task_id"),
-            "interaction_id": normalized_interaction_id or _normalize_link(existing, "interaction_id"),
+            "interaction_id": normalized_interaction_id
+            or _normalize_link(existing, "interaction_id"),
             "value": _merge_json_value(existing_value, value),
         }
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -296,7 +298,9 @@ def _ensure_jsonl_file(path: Path) -> None:
 def _append_jsonl_record(path: Path, record: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(record, ensure_ascii=True, separators=(",", ":")) + "\n")
+        handle.write(
+            json.dumps(record, ensure_ascii=True, separators=(",", ":")) + "\n"
+        )
 
 
 def _read_json_file(path: Path) -> dict[str, object]:

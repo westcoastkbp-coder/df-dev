@@ -49,8 +49,16 @@ def test_codex_loop_writes_working_entry_on_approved_path(monkeypatch, capsys):
     }
 
     monkeypatch.setattr(codex_loop, "load_context", lambda: state["context"])
-    monkeypatch.setattr(codex_loop, "save_context", lambda payload: state.__setitem__("context", copy.deepcopy(payload)))
-    monkeypatch.setattr(codex_loop, "log_execution", lambda entry: state["audit"].append(copy.deepcopy(entry)))
+    monkeypatch.setattr(
+        codex_loop,
+        "save_context",
+        lambda payload: state.__setitem__("context", copy.deepcopy(payload)),
+    )
+    monkeypatch.setattr(
+        codex_loop,
+        "log_execution",
+        lambda entry: state["audit"].append(copy.deepcopy(entry)),
+    )
     monkeypatch.setattr(
         codex_loop,
         "detect_unstable_module",
@@ -91,8 +99,16 @@ def test_codex_loop_writes_blocked_entry_on_blocked_path(monkeypatch, capsys):
     }
 
     monkeypatch.setattr(codex_loop, "load_context", lambda: state["context"])
-    monkeypatch.setattr(codex_loop, "save_context", lambda payload: state.__setitem__("context", copy.deepcopy(payload)))
-    monkeypatch.setattr(codex_loop, "log_execution", lambda entry: state["audit"].append(copy.deepcopy(entry)))
+    monkeypatch.setattr(
+        codex_loop,
+        "save_context",
+        lambda payload: state.__setitem__("context", copy.deepcopy(payload)),
+    )
+    monkeypatch.setattr(
+        codex_loop,
+        "log_execution",
+        lambda entry: state["audit"].append(copy.deepcopy(entry)),
+    )
     monkeypatch.setattr(
         codex_loop,
         "detect_unstable_module",

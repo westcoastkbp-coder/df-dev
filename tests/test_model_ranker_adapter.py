@@ -8,7 +8,10 @@ import pytest
 
 from app.learning import memory_ranker as memory_ranker_module
 from app.learning.memory_ranker import rank_memory
-from app.learning.model_output_contract import ModelOutputContractError, normalize_model_output
+from app.learning.model_output_contract import (
+    ModelOutputContractError,
+    normalize_model_output,
+)
 from app.learning.model_ranker_adapter import score_with_model
 from app.memory import memory_registry, memory_resolver
 import app.policy.memory_policy_gate as memory_policy_gate_module
@@ -85,7 +88,9 @@ def test_normalize_model_output_rejects_invalid_payload() -> None:
 
 
 def test_normalize_model_output_rejects_out_of_range_values() -> None:
-    with pytest.raises(ModelOutputContractError, match=r"score must be within \[0, 1\]"):
+    with pytest.raises(
+        ModelOutputContractError, match=r"score must be within \[0, 1\]"
+    ):
         normalize_model_output(
             {
                 "schema_version": "v1",
@@ -154,7 +159,9 @@ def test_rank_memory_combines_model_and_heuristic_scores(
 ) -> None:
     context = {"domain": "dev", "type": "task", "tags": ["finance", "urgent"]}
     artifacts = [
-        _artifact("task-best", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]),
+        _artifact(
+            "task-best", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]
+        ),
         _artifact("task-partial", timestamp="2026-04-14T11:00:00Z", tags=["finance"]),
     ]
 
@@ -167,12 +174,10 @@ def test_rank_memory_combines_model_and_heuristic_scores(
 
     output = capsys.readouterr().out
     heuristic_scores = {
-        entry["memory_id"]: float(entry["score"])
-        for entry in heuristic_ranked
+        entry["memory_id"]: float(entry["score"]) for entry in heuristic_ranked
     }
     combined_scores = {
-        entry["memory_id"]: float(entry["score"])
-        for entry in combined_ranked
+        entry["memory_id"]: float(entry["score"]) for entry in combined_ranked
     }
 
     for memory_id, heuristic_score in heuristic_scores.items():
@@ -204,8 +209,14 @@ def test_rank_memory_model_can_change_ordering() -> None:
     heuristic_ranked = rank_memory(context, artifacts, model_enabled=False)
     combined_ranked = rank_memory(context, artifacts, model_enabled=True)
 
-    assert [entry["memory_id"] for entry in heuristic_ranked] == ["conflict-1", "task-recent"]
-    assert [entry["memory_id"] for entry in combined_ranked] == ["task-recent", "conflict-1"]
+    assert [entry["memory_id"] for entry in heuristic_ranked] == [
+        "conflict-1",
+        "task-recent",
+    ]
+    assert [entry["memory_id"] for entry in combined_ranked] == [
+        "task-recent",
+        "conflict-1",
+    ]
 
 
 def test_rank_memory_falls_back_to_heuristic_when_model_output_is_invalid(
@@ -214,8 +225,12 @@ def test_rank_memory_falls_back_to_heuristic_when_model_output_is_invalid(
 ) -> None:
     context = {"domain": "dev", "type": "task", "tags": ["finance", "urgent"]}
     artifacts = [
-        _artifact("task-recent", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]),
-        _artifact("task-old", timestamp="2026-04-14T09:30:00Z", tags=["finance", "urgent"]),
+        _artifact(
+            "task-recent", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]
+        ),
+        _artifact(
+            "task-old", timestamp="2026-04-14T09:30:00Z", tags=["finance", "urgent"]
+        ),
     ]
 
     def _invalid_model_output(
@@ -259,8 +274,12 @@ def test_rank_memory_falls_back_to_heuristic_when_schema_version_mismatches(
 ) -> None:
     context = {"domain": "dev", "type": "task", "tags": ["finance", "urgent"]}
     artifacts = [
-        _artifact("task-recent", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]),
-        _artifact("task-old", timestamp="2026-04-14T09:30:00Z", tags=["finance", "urgent"]),
+        _artifact(
+            "task-recent", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]
+        ),
+        _artifact(
+            "task-old", timestamp="2026-04-14T09:30:00Z", tags=["finance", "urgent"]
+        ),
     ]
 
     def _unsupported_schema_output(
@@ -279,7 +298,9 @@ def test_rank_memory_falls_back_to_heuristic_when_schema_version_mismatches(
             ],
         }
 
-    monkeypatch.setattr(memory_ranker_module, "score_with_model", _unsupported_schema_output)
+    monkeypatch.setattr(
+        memory_ranker_module, "score_with_model", _unsupported_schema_output
+    )
 
     assert rank_memory(context, artifacts, model_enabled=True) == rank_memory(
         context,
@@ -292,7 +313,11 @@ def test_resolver_model_toggle_keeps_policy_gate_behavior(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    monkeypatch.setattr(memory_registry, "REGISTRY_FILE", tmp_path / "df-system" / "memory_registry.json")
+    monkeypatch.setattr(
+        memory_registry,
+        "REGISTRY_FILE",
+        tmp_path / "df-system" / "memory_registry.json",
+    )
     monkeypatch.setattr(
         memory_policy_gate_module,
         "_utc_now",
@@ -333,7 +358,9 @@ def test_resolver_model_toggle_keeps_policy_gate_behavior(
     context = {"domain": "dev", "type": "task", "tags": ["finance", "urgent"]}
     task_packet = {"task_id": 91, "memory_context": context}
 
-    monkeypatch.setattr(memory_resolver, "MEMORY_RANKING_CONFIG_FILE", _write_config(tmp_path, top_k=2))
+    monkeypatch.setattr(
+        memory_resolver, "MEMORY_RANKING_CONFIG_FILE", _write_config(tmp_path, top_k=2)
+    )
     resolved_heuristic = memory_resolver.resolve_memory(context)
     decision_heuristic = evaluate_memory_policy(task_packet, resolved_heuristic)
 

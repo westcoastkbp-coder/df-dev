@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -13,10 +13,14 @@ import runtime.system_log as system_log_module
 from app.execution.execution_replay import replay_execution
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 
 
 def _configure_runtime(monkeypatch, tmp_path: Path) -> tuple[Path, Path]:
@@ -35,7 +39,11 @@ def _configure_runtime(monkeypatch, tmp_path: Path) -> tuple[Path, Path]:
     monkeypatch.setattr(system_log_module, "SYSTEM_LOG_FILE", system_log_file)
     monkeypatch.setattr(policy_gate_module, "POLICY_LOG_FILE", policy_log_file)
     monkeypatch.setattr(task_state_store_module, "ROOT_DIR", tmp_path)
-    monkeypatch.setattr(task_state_store_module, "TASK_STATE_DB_FILE", Path("runtime/state/task_state.sqlite3"))
+    monkeypatch.setattr(
+        task_state_store_module,
+        "TASK_STATE_DB_FILE",
+        Path("runtime/state/task_state.sqlite3"),
+    )
     monkeypatch.setattr(paths_module, "TASKS_FILE", task_store_path)
     monkeypatch.setattr(lead_estimate_decision_module, "TASKS_FILE", task_store_path)
     monkeypatch.setattr(task_factory_module, "TASK_SYSTEM_FILE", task_store_path)
@@ -78,7 +86,9 @@ def _build_task(
     return task_factory_module.save_task(task, store_path=store_path)
 
 
-def test_replay_execution_matches_stored_run_without_new_side_effects(monkeypatch, tmp_path: Path) -> None:
+def test_replay_execution_matches_stored_run_without_new_side_effects(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path, system_log_file = _configure_runtime(monkeypatch, tmp_path)
 
     queue = InMemoryTaskQueue()
@@ -211,4 +221,3 @@ def test_replay_execution_reports_trace_mismatch(monkeypatch, tmp_path: Path) ->
     assert report["replay_status"] == "mismatch"
     assert report["mismatched_step"] == "trace_length"
     assert report["notes"] == "trace sequence diverged"
-

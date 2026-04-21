@@ -10,7 +10,9 @@ if TYPE_CHECKING:
     from app.memory.memory_store import CanonicalMemoryStore
 
 
-SUPERSEDABLE_MEMORY_TYPES = frozenset({"fact", "decision", "preference", "document_ref"})
+SUPERSEDABLE_MEMORY_TYPES = frozenset(
+    {"fact", "decision", "preference", "document_ref"}
+)
 SUPPORTED_LIFECYCLE_STATES = frozenset(
     {"proposed", "validated", "active", "superseded", "deprecated", "archived"}
 )
@@ -45,10 +47,9 @@ def _memory_key(memory_type: object, structured_payload: dict[str, Any]) -> str:
     if normalized_memory_type == "fact":
         return _normalize_text(structured_payload.get("fact_key"))
     if normalized_memory_type == "document_ref":
-        return (
-            _normalize_text(structured_payload.get("document_id"))
-            or _normalize_text(structured_payload.get("document_locator"))
-        )
+        return _normalize_text(
+            structured_payload.get("document_id")
+        ) or _normalize_text(structured_payload.get("document_locator"))
     if normalized_memory_type == "entity_ref":
         return _normalize_text(structured_payload.get("entity_ref"))
     if normalized_memory_type == "relationship":
@@ -186,11 +187,18 @@ def plan_promotion(
                 limit=100,
             )
         )
-    active_records = tuple(item for item in all_conflict_records if item.status == "active")
+    active_records = tuple(
+        item for item in all_conflict_records if item.status == "active"
+    )
     if active_records:
-        candidate_value = _comparable_value(candidate.memory_type, candidate.structured_payload)
+        candidate_value = _comparable_value(
+            candidate.memory_type, candidate.structured_payload
+        )
         for record in active_records:
-            if _comparable_value(record.memory_type, record.structured_payload) == candidate_value:
+            if (
+                _comparable_value(record.memory_type, record.structured_payload)
+                == candidate_value
+            ):
                 raise MemoryLifecycleError(
                     "duplicate_active_memory: matching active canonical memory already exists"
                 )

@@ -61,7 +61,11 @@ def _extract_gemini_error(payload: dict[str, Any]) -> str:
     status = str(error_payload.get("status") or "").strip()
     code = error_payload.get("code")
 
-    parts = [part for part in (f"code={code}" if code is not None else "", status, message) if part]
+    parts = [
+        part
+        for part in (f"code={code}" if code is not None else "", status, message)
+        if part
+    ]
     return "Gemini API error: " + " | ".join(parts) if parts else "Gemini API error"
 
 
@@ -129,7 +133,10 @@ def _post_gemini_prompt(prompt: str) -> dict:
     )
     response_payload = _response_json(response)
     if not response.ok:
-        raise ValueError(_extract_gemini_error(response_payload) or f"gemini_http_{response.status_code}")
+        raise ValueError(
+            _extract_gemini_error(response_payload)
+            or f"gemini_http_{response.status_code}"
+        )
 
     text = _extract_candidate_text(response_payload)
     return _extract_json_from_text(text)

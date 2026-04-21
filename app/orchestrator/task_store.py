@@ -140,8 +140,12 @@ def create_task(
     return _public_task(persisted)
 
 
-def get_task(task_id: object, *, store_path: Path | None = None) -> dict[str, object] | None:
-    persisted = task_factory_module.get_task(_normalize_text(task_id), store_path=store_path)
+def get_task(
+    task_id: object, *, store_path: Path | None = None
+) -> dict[str, object] | None:
+    persisted = task_factory_module.get_task(
+        _normalize_text(task_id), store_path=store_path
+    )
     if persisted is None:
         return None
     return _public_task(persisted)
@@ -157,7 +161,9 @@ def update_task(
     decision_trace: Mapping[str, object] | None = None,
     store_path: Path | None = None,
 ) -> dict[str, object]:
-    persisted = task_factory_module.get_task(_normalize_text(task_id), store_path=store_path)
+    persisted = task_factory_module.get_task(
+        _normalize_text(task_id), store_path=store_path
+    )
     if persisted is None:
         raise ValueError(f"task not found: {task_id}")
 
@@ -203,7 +209,9 @@ def complete_task(
     decision_trace: Mapping[str, object] | None = None,
     store_path: Path | None = None,
 ) -> dict[str, object]:
-    persisted = task_factory_module.get_task(_normalize_text(task_id), store_path=store_path)
+    persisted = task_factory_module.get_task(
+        _normalize_text(task_id), store_path=store_path
+    )
     if persisted is None:
         raise ValueError(f"task not found: {task_id}")
 
@@ -238,7 +246,9 @@ def fail_task(
     decision_trace: Mapping[str, object] | None = None,
     store_path: Path | None = None,
 ) -> dict[str, object]:
-    persisted = task_factory_module.get_task(_normalize_text(task_id), store_path=store_path)
+    persisted = task_factory_module.get_task(
+        _normalize_text(task_id), store_path=store_path
+    )
     if persisted is None:
         raise ValueError(f"task not found: {task_id}")
 
@@ -281,7 +291,8 @@ def ensure_task_for_execution(
     sync_active_tasks_context(
         store_path=store_path,
         task_overrides=[validated_task],
-        timestamp=validated_task.get("last_updated_at") or validated_task.get("created_at"),
+        timestamp=validated_task.get("last_updated_at")
+        or validated_task.get("created_at"),
     )
     return dict(validated_task)
 

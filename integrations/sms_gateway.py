@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import logging
@@ -74,4 +74,3 @@ def send_sms(*, contact_id: str, text: str) -> dict[str, Any]:
     }
     _log_event(result["log"], f"mock sms recorded path={target_path}")
     return result
-

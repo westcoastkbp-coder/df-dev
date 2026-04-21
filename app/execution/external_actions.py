@@ -5,7 +5,10 @@ from dataclasses import dataclass
 from typing import Final
 
 from app.execution.action_result import build_action_result
-from app.execution.execution_boundary import current_execution_scope, require_execution_boundary
+from app.execution.execution_boundary import (
+    current_execution_scope,
+    require_execution_boundary,
+)
 from app.execution.external_modules import (
     ExternalModuleRegistry,
     build_external_module_request,
@@ -64,7 +67,9 @@ def _normalize_string_list(value: object, *, field_name: str) -> list[str]:
         raise ExternalActionValidationError(f"{field_name} must be a list")
     normalized = [_normalize_text(item) for item in value]
     if any(not item for item in normalized):
-        raise ExternalActionValidationError(f"{field_name} must not contain empty values")
+        raise ExternalActionValidationError(
+            f"{field_name} must not contain empty values"
+        )
     return normalized
 
 
@@ -80,7 +85,9 @@ def _validate_destination(action_type: str, destination: object) -> str:
     return normalized_destination
 
 
-def build_external_action_request(action_type: object, payload: object) -> ExternalActionRequest:
+def build_external_action_request(
+    action_type: object, payload: object
+) -> ExternalActionRequest:
     normalized_action_type = _normalize_text(action_type).upper()
     if normalized_action_type not in ALLOWED_EXTERNAL_ACTION_TYPES:
         raise ExternalActionValidationError(
@@ -119,7 +126,9 @@ def build_external_action_request(action_type: object, payload: object) -> Exter
         }
         for field_name in ("contact_id", "phone_number", "script"):
             if not request_payload[field_name]:
-                raise ExternalActionValidationError(f"payload.{field_name} must not be empty")
+                raise ExternalActionValidationError(
+                    f"payload.{field_name} must not be empty"
+                )
         return ExternalActionRequest(
             action_type=normalized_action_type,
             destination=destination,
@@ -140,7 +149,9 @@ def build_external_action_request(action_type: object, payload: object) -> Exter
             "confirmed": bool(normalized_payload.get("confirmed")),
         }
         if "@" not in request_payload["to"]:
-            raise ExternalActionValidationError("payload.to must be a valid email destination")
+            raise ExternalActionValidationError(
+                "payload.to must be a valid email destination"
+            )
         if not request_payload["subject"]:
             raise ExternalActionValidationError("payload.subject must not be empty")
         return ExternalActionRequest(
@@ -159,7 +170,8 @@ def build_external_action_request(action_type: object, payload: object) -> Exter
         ),
         "timeout_ms": normalized_payload.get("timeout_ms", 15000),
         "correlation_id": _normalize_text(
-            normalized_payload.get("correlation_id") or normalized_payload.get("request_id")
+            normalized_payload.get("correlation_id")
+            or normalized_payload.get("request_id")
         ),
         "confirmed": bool(normalized_payload.get("confirmed")),
     }
@@ -209,7 +221,8 @@ def _gateway_failure_result(
         action_type=action_type,
         result_payload={"provider_result": dict(provider_result)},
         error_code="external_action_failed",
-        error_message=_normalize_text(provider_result.get("error")) or "external action failed",
+        error_message=_normalize_text(provider_result.get("error"))
+        or "external action failed",
         source="app.execution.external_actions",
     )
 
@@ -325,7 +338,9 @@ def execute_external(
             },
         }
     )
-    module_result = execute_external_module(external_request, registry=effective_registry)
+    module_result = execute_external_module(
+        external_request, registry=effective_registry
+    )
     if module_result.status != "success":
         return build_action_result(
             status="failed",

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -50,7 +50,10 @@ def run_real_lead(
         input_valid, input_reason = validate_real_lead_input(normalized_input)
         if not input_valid:
             record_policy_decision(run_id, allowed=False, reason=input_reason)
-            log_event("validation", f"real lead input blocked: task={run_id} reason={input_reason}")
+            log_event(
+                "validation",
+                f"real lead input blocked: task={run_id} reason={input_reason}",
+            )
             created_child_task_ids: list[str] = []
             persisted_state_ok = False
             trace_link_ok = False
@@ -79,7 +82,10 @@ def run_real_lead(
             }
 
         record_policy_decision(run_id, allowed=True, reason=input_reason)
-        log_event("validation", f"real lead input allowed: task={run_id} reason={input_reason}")
+        log_event(
+            "validation",
+            f"real lead input allowed: task={run_id} reason={input_reason}",
+        )
         try:
             pipeline_result = execute_real_lead_pipeline(
                 normalized_input,
@@ -105,7 +111,9 @@ def run_real_lead(
                 }
             if error_message.startswith("contract_blocked:"):
                 blocked_parent = get_task(
-                    build_real_lead_run_id(str(normalized_input.get("lead_id", "")).strip()),
+                    build_real_lead_run_id(
+                        str(normalized_input.get("lead_id", "")).strip()
+                    ),
                     store_path=target_store,
                 )
                 return {
@@ -149,16 +157,22 @@ def run_real_lead(
 
         created_child_task_ids: list[str] = []
         child_task = None
-        if bool(binding.get("child_task_created")) and str(binding.get("child_task_id", "")).strip():
+        if (
+            bool(binding.get("child_task_created"))
+            and str(binding.get("child_task_id", "")).strip()
+        ):
             child_task_id = str(binding.get("child_task_id", "")).strip()
             created_child_task_ids.append(child_task_id)
             child_task = get_task(child_task_id, store_path=target_store)
 
-        persisted_parent = get_task(str(parent_task.get("task_id", "")).strip(), store_path=target_store)
+        persisted_parent = get_task(
+            str(parent_task.get("task_id", "")).strip(), store_path=target_store
+        )
         persisted_state_ok = bool(
             persisted_parent
             and isinstance(persisted_parent.get("result"), dict)
-            and dict(persisted_parent.get("result", {}).get("decision", {}) or {}) == dict(decision)
+            and dict(persisted_parent.get("result", {}).get("decision", {}) or {})
+            == dict(decision)
         )
         trace_link_ok = True
         failure_class = "none"
@@ -180,10 +194,15 @@ def run_real_lead(
             trace_link_ok = bool(
                 child_task
                 and str(child_task.get("intent", "")).strip() == expected_child_intent
-                and str(dict(child_task.get("payload", {}) or {}).get("parent_task_id", "")).strip()
+                and str(
+                    dict(child_task.get("payload", {}) or {}).get("parent_task_id", "")
+                ).strip()
                 == str(parent_task.get("task_id", "")).strip()
             )
-            if child_task is None or str(child_task.get("intent", "")).strip() != expected_child_intent:
+            if (
+                child_task is None
+                or str(child_task.get("intent", "")).strip() != expected_child_intent
+            ):
                 failure_class = "wrong_child_task_type"
                 notes = "child_type_mismatch"
         if not trace_link_ok and failure_class == "none":
@@ -200,7 +219,8 @@ def run_real_lead(
             "decision": dict(decision),
             "next_action": str(decision.get("next_step", "")).strip(),
             "created_child_task_ids": created_child_task_ids,
-            "archived_state_flag": str(binding.get("archive_status", "")).strip() == "archived",
+            "archived_state_flag": str(binding.get("archive_status", "")).strip()
+            == "archived",
             "parent_task_id": str(parent_task.get("task_id", "")).strip(),
             "persisted_state_ok": persisted_state_ok,
             "trace_link_ok": trace_link_ok,

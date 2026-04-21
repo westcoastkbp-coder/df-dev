@@ -28,7 +28,9 @@ def test_structured_logs_use_deterministic_shape(monkeypatch, tmp_path: Path) ->
     monkeypatch.setattr(system_log_module, "TASK_LOG_FILE", task_log_file)
     monkeypatch.setattr(policy_gate_module, "POLICY_LOG_FILE", policy_log_file)
 
-    log_event("system", {"message": "alpha"}, task_id="DF-LOG-STRUCTURE-V1", status="observed")
+    log_event(
+        "system", {"message": "alpha"}, task_id="DF-LOG-STRUCTURE-V1", status="observed"
+    )
     log_task_execution(
         task_id="DF-LOG-STRUCTURE-V1",
         status="completed",
@@ -70,7 +72,9 @@ def test_logging_failure_does_not_raise(monkeypatch, tmp_path: Path) -> None:
 
     monkeypatch.setattr(Path, "open", failing_open)
 
-    log_event("system", "should not fail", task_id="DF-LOG-FAILSAFE-V1", status="observed")
+    log_event(
+        "system", "should not fail", task_id="DF-LOG-FAILSAFE-V1", status="observed"
+    )
 
 
 def test_mode_trace_message_infers_task_id(monkeypatch, tmp_path: Path) -> None:

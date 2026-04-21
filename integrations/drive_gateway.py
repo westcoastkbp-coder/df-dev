@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import logging
 import os
@@ -185,4 +185,3 @@ def get_share_link(file_id: str) -> dict[str, Any]:
     }
     _log_event(result["log"], f"mock share link generated link={share_link}")
     return result
-

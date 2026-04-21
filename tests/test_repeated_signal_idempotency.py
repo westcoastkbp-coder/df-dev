@@ -18,8 +18,14 @@ def _configure_runtime(monkeypatch, tmp_path: Path) -> Path:
         Path("runtime/state/task_state.sqlite3"),
     )
     monkeypatch.setattr(task_factory_module, "TASK_SYSTEM_FILE", store_path)
-    monkeypatch.setattr(task_queue_module, "TASK_QUEUE_FILE", tmp_path / "runtime" / "state" / "task_queue.json")
-    monkeypatch.setattr(task_queue_module, "TASK_LOG_FILE", tmp_path / "runtime" / "logs" / "tasks.log")
+    monkeypatch.setattr(
+        task_queue_module,
+        "TASK_QUEUE_FILE",
+        tmp_path / "runtime" / "state" / "task_queue.json",
+    )
+    monkeypatch.setattr(
+        task_queue_module, "TASK_LOG_FILE", tmp_path / "runtime" / "logs" / "tasks.log"
+    )
     task_factory_module.clear_task_runtime_store()
     return store_path
 
@@ -49,7 +55,9 @@ def test_repeated_identical_text_signal_creates_single_task_single_execution_and
     tasks_after_creation = task_factory_module.load_tasks(store_path)
     assert len(set(created_task_ids)) == 1
     assert len(tasks_after_creation) == 1
-    assert sum(task["status"] == "AWAITING_APPROVAL" for task in tasks_after_creation) == 1
+    assert (
+        sum(task["status"] == "AWAITING_APPROVAL" for task in tasks_after_creation) == 1
+    )
 
     approved_task = task_factory_module.apply_task_approval(
         created_task_ids[0],
@@ -81,13 +89,17 @@ def test_repeated_identical_text_signal_creates_single_task_single_execution_and
 
     def fake_run_execution(task_data: dict[str, object], **kwargs) -> dict[str, object]:
         execution_calls.append(str(task_data.get("task_id", "")).strip())
-        fallback_observed.append(str(dict(task_data.get("payload", {})).get("fallback", "")).strip())
+        fallback_observed.append(
+            str(dict(task_data.get("payload", {})).get("fallback", "")).strip()
+        )
         return {
             **dict(task_data),
             "status": "COMPLETED",
             "result": {
                 "outcome": "completed",
-                "fallback": str(dict(task_data.get("payload", {})).get("fallback", "")).strip(),
+                "fallback": str(
+                    dict(task_data.get("payload", {})).get("fallback", "")
+                ).strip(),
             },
         }
 

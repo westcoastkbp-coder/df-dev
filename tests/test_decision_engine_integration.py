@@ -53,7 +53,9 @@ def _configure_runtime(monkeypatch, tmp_path: Path) -> None:
     task_factory_module.clear_task_runtime_store()
 
 
-def test_run_execution_records_decision_before_executor(monkeypatch, tmp_path: Path) -> None:
+def test_run_execution_records_decision_before_executor(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_runtime(monkeypatch, tmp_path)
     executor_calls = 0
 
@@ -130,11 +132,15 @@ def test_run_execution_supports_ai_decision_mode(monkeypatch, tmp_path: Path) ->
 
     assert executed["status"] == "COMPLETED"
     assert executor_calls == 1
-    assert executed["result"]["decision_trace"]["reason"] == "decision approved execution"
+    assert (
+        executed["result"]["decision_trace"]["reason"] == "decision approved execution"
+    )
     assert executed["result"]["decision_trace"]["vendor"] == "openai"
 
 
-def test_run_execution_fails_when_decision_is_missing(monkeypatch, tmp_path: Path) -> None:
+def test_run_execution_fails_when_decision_is_missing(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_runtime(monkeypatch, tmp_path)
     executor_calls = 0
 
@@ -163,7 +169,9 @@ def test_run_execution_fails_when_decision_is_missing(monkeypatch, tmp_path: Pat
     assert executed["result"]["decision_trace"]["policy_result"].startswith("blocked:")
 
 
-def test_run_execution_decision_can_block_for_confirmation(monkeypatch, tmp_path: Path) -> None:
+def test_run_execution_decision_can_block_for_confirmation(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_runtime(monkeypatch, tmp_path)
     executor_calls = 0
 
@@ -195,10 +203,15 @@ def test_run_execution_decision_can_block_for_confirmation(monkeypatch, tmp_path
     assert executed["error"] == "manual confirmation required before write_file"
     assert executor_calls == 0
     assert executed["result"]["error_code"] == "decision_confirmation_required"
-    assert executed["result"]["result_payload"]["action_plan"]["requires_confirmation"] is True
+    assert (
+        executed["result"]["result_payload"]["action_plan"]["requires_confirmation"]
+        is True
+    )
 
 
-def test_run_command_fails_without_decision(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_run_command_fails_without_decision(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     pytest.importorskip("requests")
     import scripts.run_command as run_command_module
 
@@ -242,6 +255,9 @@ def test_run_command_fails_without_decision(monkeypatch, tmp_path: Path, capsys)
     assert executor_calls == 0
     output_payload = json.loads(capsys.readouterr().out.strip())
     assert output_payload["result"]["status"] == "error"
-    assert output_payload["result"]["message"] == "decision engine must return an action plan dict"
+    assert (
+        output_payload["result"]["message"]
+        == "decision engine must return an action plan dict"
+    )
     assert output_payload["decision_trace"]["policy_result"].startswith("blocked:")
     assert not execution_log_path.exists()

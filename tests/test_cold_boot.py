@@ -41,7 +41,9 @@ def _configure_cold_boot_runtime(monkeypatch, tmp_path: Path) -> Path:
     task_queue_file = root_dir / "runtime" / "state" / "task_queue.json"
     token_usage_log_file = root_dir / "runtime" / "logs" / "token_usage.jsonl"
     token_efficiency_log_file = root_dir / "runtime" / "logs" / "token_efficiency.jsonl"
-    execution_priority_log_file = root_dir / "runtime" / "logs" / "execution_priority.jsonl"
+    execution_priority_log_file = (
+        root_dir / "runtime" / "logs" / "execution_priority.jsonl"
+    )
 
     monkeypatch.setattr(paths_module, "ROOT_DIR", root_dir)
     monkeypatch.setattr(paths_module, "DATA_DIR", data_dir)
@@ -72,7 +74,9 @@ def _configure_cold_boot_runtime(monkeypatch, tmp_path: Path) -> Path:
     monkeypatch.setattr(system_log_module, "SYSTEM_LOG_FILE", system_log_file)
     monkeypatch.setattr(system_log_module, "TASK_LOG_FILE", task_log_file)
     monkeypatch.setattr(policy_gate_module, "POLICY_LOG_FILE", policy_log_file)
-    monkeypatch.setattr(token_telemetry_module, "TOKEN_USAGE_LOG_FILE", token_usage_log_file)
+    monkeypatch.setattr(
+        token_telemetry_module, "TOKEN_USAGE_LOG_FILE", token_usage_log_file
+    )
     monkeypatch.setattr(
         token_efficiency_module,
         "TOKEN_EFFICIENCY_LOG_FILE",
@@ -87,7 +91,9 @@ def _configure_cold_boot_runtime(monkeypatch, tmp_path: Path) -> Path:
     return cold_boot_log_file
 
 
-def test_cold_boot_runs_lead_estimate_from_zero_state(monkeypatch, tmp_path: Path) -> None:
+def test_cold_boot_runs_lead_estimate_from_zero_state(
+    monkeypatch, tmp_path: Path
+) -> None:
     cold_boot_log_file = _configure_cold_boot_runtime(monkeypatch, tmp_path)
 
     report = cold_boot_module.run_cold_boot_validation(log_path=cold_boot_log_file)

@@ -123,7 +123,9 @@ def _safe_filename(value: object) -> str:
     return safe or "unknown"
 
 
-def _dispatcher_supports_kwarg(dispatcher: Callable[..., dict[str, object]], name: str) -> bool:
+def _dispatcher_supports_kwarg(
+    dispatcher: Callable[..., dict[str, object]], name: str
+) -> bool:
     try:
         signature = inspect.signature(dispatcher)
     except (TypeError, ValueError):
@@ -170,8 +172,12 @@ def _build_owner_prompt(
     canonical_preferences = canonical_memory_context.get("preferences")
     canonical_decisions = canonical_memory_context.get("relevant_decisions")
     fact_entries = list(canonical_facts) if isinstance(canonical_facts, list) else []
-    preference_entries = list(canonical_preferences) if isinstance(canonical_preferences, list) else []
-    decision_entries = list(canonical_decisions) if isinstance(canonical_decisions, list) else []
+    preference_entries = (
+        list(canonical_preferences) if isinstance(canonical_preferences, list) else []
+    )
+    decision_entries = (
+        list(canonical_decisions) if isinstance(canonical_decisions, list) else []
+    )
     lines = [
         "Digital Foreman OwnerBox Interaction Layer v1",
         f"owner_session_id={session.owner_session_id}",
@@ -188,7 +194,9 @@ def _build_owner_prompt(
     for index, record in enumerate(memory_records[:3], start=1):
         lines.append(f"memory_{index}={_resolved_memory_summary(record)}")
     for index, entry in enumerate(fact_entries[:2], start=1):
-        lines.append(f"canonical_fact_{index}={_canonical_context_summary(_mapping(entry))}")
+        lines.append(
+            f"canonical_fact_{index}={_canonical_context_summary(_mapping(entry))}"
+        )
     for index, entry in enumerate(preference_entries[:2], start=1):
         lines.append(
             f"canonical_preference_{index}={_canonical_context_summary(_mapping(entry))}"
@@ -285,15 +293,22 @@ def _operation_preview_text(
 ) -> str | None:
     operation = _normalize_text(parameters.get("operation")).lower()
     if action_type == "EMAIL_ACTION":
-        recipient_list = list(parameters.get("to")) if isinstance(parameters.get("to"), list) else []
+        recipient_list = (
+            list(parameters.get("to")) if isinstance(parameters.get("to"), list) else []
+        )
         recipient_summary = ", ".join(str(item) for item in recipient_list[:2])
         if len(recipient_list) > 2:
             recipient_summary += ", ..."
         suffix = f" to {recipient_summary}" if recipient_summary else ""
         if operation == "create_draft":
-            return _truncate(f"System wants to prepare a draft email{suffix}.", limit=_MAX_PREVIEW_LENGTH)
+            return _truncate(
+                f"System wants to prepare a draft email{suffix}.",
+                limit=_MAX_PREVIEW_LENGTH,
+            )
         if operation == "send_email":
-            return _truncate(f"System wants to send an email{suffix}.", limit=_MAX_PREVIEW_LENGTH)
+            return _truncate(
+                f"System wants to send an email{suffix}.", limit=_MAX_PREVIEW_LENGTH
+            )
         if operation == "reply_email":
             reply_to_id = _normalize_text(parameters.get("reply_to_id")) or "thread"
             return _truncate(
@@ -313,7 +328,9 @@ def _operation_preview_text(
         if operation in labels:
             return _truncate(labels[operation], limit=_MAX_PREVIEW_LENGTH)
     if action_type == "PRINT_DOCUMENT":
-        document_title = _normalize_text(parameters.get("document_title")) or "Untitled Document"
+        document_title = (
+            _normalize_text(parameters.get("document_title")) or "Untitled Document"
+        )
         document_text = _collapse_whitespace(parameters.get("document_text"))
         printer_name = _normalize_text(parameters.get("printer_name"))
         suffix = f" on {printer_name}" if printer_name else ""
@@ -355,13 +372,20 @@ def _confirmation_summary(
     action_contract: Mapping[str, object],
 ) -> str:
     action_type = _normalize_text(action_contract.get("action_type")).upper()
-    operation = _normalize_text(_mapping(action_contract.get("parameters")).get("operation")).lower()
+    operation = _normalize_text(
+        _mapping(action_contract.get("parameters")).get("operation")
+    ).lower()
     if action_type == "EMAIL_ACTION" and operation == "create_draft":
         return "System prepared a draft email. Review or approve."
     if action_type == "PRINT_DOCUMENT":
-        return _truncate(f"{preview_text} Physical print approval required.", limit=_MAX_PREVIEW_LENGTH)
+        return _truncate(
+            f"{preview_text} Physical print approval required.",
+            limit=_MAX_PREVIEW_LENGTH,
+        )
     if action_type in {"EMAIL_ACTION", "BROWSER_ACTION"}:
-        return _truncate(f"{preview_text} Approval required.", limit=_MAX_PREVIEW_LENGTH)
+        return _truncate(
+            f"{preview_text} Approval required.", limit=_MAX_PREVIEW_LENGTH
+        )
     return _truncate(
         f"{preview_text} Confirm? trust_class={trust_class}",
         limit=_MAX_PREVIEW_LENGTH,
@@ -396,13 +420,16 @@ def _response_metadata(
         "result_status": _normalize_text(result.get("status")) or "blocked",
         "result_type": _normalize_text(result.get("result_type")) or "owner_response",
         "started_at": request.created_at,
-        "completed_at": _normalize_text(result.get("timestamp")) or trace_metadata.get("completed_at"),
+        "completed_at": _normalize_text(result.get("timestamp"))
+        or trace_metadata.get("completed_at"),
         "latency_ms": int(result_metadata.get("dispatcher_latency_ms") or 0),
         "approval_id": None if approval is None else approval.approval_id,
         "approval_status": None if approval is None else approval.status,
         "trust_class": None if risk_profile is None else risk_profile.trust_class,
         "preview_text": preview_text,
-        "boundary_application": dict(_mapping(owner_context.get("boundary_application"))),
+        "boundary_application": dict(
+            _mapping(owner_context.get("boundary_application"))
+        ),
         "trace_metadata": dict(trace_metadata),
         "action_risk_profile": None if risk_profile is None else risk_profile.to_dict(),
     }
@@ -498,10 +525,16 @@ class OwnerInteractionResult:
             "session": self.session.to_dict(),
             "request": self.request.to_dict(),
             "owner_context": dict(self.owner_context),
-            "action_contract": None if self.action_contract is None else dict(self.action_contract),
-            "action_result": None if self.action_result is None else dict(self.action_result),
+            "action_contract": None
+            if self.action_contract is None
+            else dict(self.action_contract),
+            "action_result": None
+            if self.action_result is None
+            else dict(self.action_result),
             "response_plan": self.response_plan.to_dict(),
-            "queue_entry": None if self.queue_entry is None else self.queue_entry.to_dict(),
+            "queue_entry": None
+            if self.queue_entry is None
+            else self.queue_entry.to_dict(),
             "trace_metadata": dict(self.trace_metadata),
             "approval": None if self.approval is None else self.approval.to_dict(),
         }
@@ -519,10 +552,16 @@ class OwnerApprovalResolutionResult:
     def to_dict(self) -> dict[str, object]:
         return {
             "approval": None if self.approval is None else self.approval.to_dict(),
-            "action_contract": None if self.action_contract is None else dict(self.action_contract),
-            "action_result": None if self.action_result is None else dict(self.action_result),
+            "action_contract": None
+            if self.action_contract is None
+            else dict(self.action_contract),
+            "action_result": None
+            if self.action_result is None
+            else dict(self.action_result),
             "response_plan": self.response_plan.to_dict(),
-            "queue_entry": None if self.queue_entry is None else self.queue_entry.to_dict(),
+            "queue_entry": None
+            if self.queue_entry is None
+            else self.queue_entry.to_dict(),
             "trace_metadata": dict(self.trace_metadata),
         }
 
@@ -577,9 +616,15 @@ class OwnerOrchestrator:
     def approval_store(self) -> OwnerApprovalStore:
         return self._approval_store
 
-    def export_pending_approval_state(self, approval_id: object) -> dict[str, object] | None:
+    def export_pending_approval_state(
+        self, approval_id: object
+    ) -> dict[str, object] | None:
         approval = self._approval_store.get(approval_id)
-        pending = None if approval is None else self._approval_runtime.get(approval.approval_id)
+        pending = (
+            None
+            if approval is None
+            else self._approval_runtime.get(approval.approval_id)
+        )
         if approval is None or pending is None:
             return None
         queue_entry = self._action_queue.get(pending.queue_entry_id)
@@ -597,11 +642,15 @@ class OwnerOrchestrator:
             "workflow_step_id": pending.workflow_step_id,
             "max_retries": pending.max_retries,
             "step_timeout_seconds": pending.step_timeout_seconds,
-            "action_result": None if pending.action_result is None else dict(pending.action_result),
+            "action_result": None
+            if pending.action_result is None
+            else dict(pending.action_result),
             "response_plan_id": pending.response_plan_id,
         }
 
-    def hydrate_pending_approval_state(self, payload: Mapping[str, object]) -> OwnerApproval:
+    def hydrate_pending_approval_state(
+        self, payload: Mapping[str, object]
+    ) -> OwnerApproval:
         approval = OwnerApproval(**dict(_mapping(payload.get("approval"))))
         session = OwnerSession(**dict(_mapping(payload.get("session"))))
         request = OwnerRequest(**dict(_mapping(payload.get("request"))))
@@ -669,12 +718,16 @@ class OwnerOrchestrator:
             domain_binding = _mapping(owner_context.get("domain_binding"))
             dispatch_kwargs["dispatch_context"] = {
                 "owner_id": _normalize_text(domain_binding.get("owner_id")),
-                "trust_class": None if risk_profile is None else risk_profile.trust_class,
+                "trust_class": None
+                if risk_profile is None
+                else risk_profile.trust_class,
                 "approval_id": None if approval is None else approval.approval_id,
                 "scenario_type": _normalize_text(scenario_type) or None,
                 "workflow_id": _normalize_text(workflow_id) or None,
                 "step_id": _normalize_text(workflow_step_id) or None,
-                "step_timeout_seconds": None if step_timeout_seconds is None else str(step_timeout_seconds),
+                "step_timeout_seconds": None
+                if step_timeout_seconds is None
+                else str(step_timeout_seconds),
             }
         return self._dispatcher(action_contract, **dispatch_kwargs)
 
@@ -684,7 +737,10 @@ class OwnerOrchestrator:
         operation = _normalize_text(parameters.get("operation")).lower()
         if action_type == "OPENAI_REQUEST":
             return True
-        if action_type == "BROWSER_ACTION" and operation in SAFE_BROWSER_RETRY_OPERATIONS:
+        if (
+            action_type == "BROWSER_ACTION"
+            and operation in SAFE_BROWSER_RETRY_OPERATIONS
+        ):
             return True
         return False
 
@@ -752,7 +808,9 @@ class OwnerOrchestrator:
                     action_result,
                     attempt_count=attempts,
                     max_retries=max_retries,
-                    retry_status="succeeded_after_retry" if attempts > 1 else "not_needed",
+                    retry_status="succeeded_after_retry"
+                    if attempts > 1
+                    else "not_needed",
                     step_timeout_seconds=step_timeout_seconds,
                 )
             if retryable_error and safe_to_retry and retries_remaining:
@@ -797,8 +855,12 @@ class OwnerOrchestrator:
             "response_plan_id": _normalize_text(response_plan_id),
             "result_status": _normalize_text(result_status).lower() or approval.status,
         }
-        trace_path = ROOT_DIR / OWNER_APPROVAL_TRACE_DIR / (
-            f"{_safe_filename(approval.approval_id)}_{_safe_filename(event_name)}.json"
+        trace_path = (
+            ROOT_DIR
+            / OWNER_APPROVAL_TRACE_DIR
+            / (
+                f"{_safe_filename(approval.approval_id)}_{_safe_filename(event_name)}.json"
+            )
         )
         trace_path.parent.mkdir(parents=True, exist_ok=True)
         logical_key = compute_artifact_key(
@@ -905,7 +967,9 @@ class OwnerOrchestrator:
             owner_session_id=session.owner_session_id,
             request_id=blocked_request.request_id,
             owner_id=blocked_request.owner_id,
-            action_id=None if action_contract is None else action_contract.get("action_id"),
+            action_id=None
+            if action_contract is None
+            else action_contract.get("action_id"),
             result_status="blocked",
             response_plan_id=response_plan_id,
             request_created_at=blocked_request.created_at,
@@ -915,7 +979,9 @@ class OwnerOrchestrator:
             approval_status=None if approval is None else approval.status,
             trust_class=None if risk_profile is None else risk_profile.trust_class,
             approval_created=approval is not None,
-            approval_resolved=bool(approval is not None and approval.status != "pending"),
+            approval_resolved=bool(
+                approval is not None and approval.status != "pending"
+            ),
         )
         response_plan = create_owner_response_plan(
             response_plan_id=response_plan_id,
@@ -924,9 +990,13 @@ class OwnerOrchestrator:
             response_type=response_type,
             target_language=blocked_request.detected_language,
             summary_text=summary_text,
-            action_refs=[] if action_contract is None else [str(action_contract["action_id"])],
+            action_refs=[]
+            if action_contract is None
+            else [str(action_contract["action_id"])],
             requires_confirmation=False,
-            requires_high_trust=False if risk_profile is None else risk_profile.requires_high_trust,
+            requires_high_trust=False
+            if risk_profile is None
+            else risk_profile.requires_high_trust,
             approval_id=None if approval is None else approval.approval_id,
             trust_class=None if risk_profile is None else risk_profile.trust_class,
             preview_text=preview_text,
@@ -1000,7 +1070,9 @@ class OwnerOrchestrator:
             owner_session_id=owner_session_id,
         )
         resolved_context_ref = _normalize_text(context_ref) or owner_session.context_ref
-        resolved_detected_language = _normalize_text(detected_language) or owner_session.active_language
+        resolved_detected_language = (
+            _normalize_text(detected_language) or owner_session.active_language
+        )
         request = create_owner_request(
             owner_session_id=owner_session.owner_session_id,
             owner_id=normalized_owner_id,
@@ -1031,18 +1103,23 @@ class OwnerOrchestrator:
             trust_profile=trust_profile,
             memory_records=memory_records,
         )
-        if canonical_memory_store is not None and canonical_memory_context_request is not None:
-            owner_context["canonical_memory_context"] = assemble_owner_canonical_context(
-                owner_domain=owner_domain,
-                request_ref=OwnerRequestContextRef(
-                    request_ref=request.request_id,
-                    owner_id=normalized_owner_id,
-                    session_ref=owner_session.owner_session_id,
-                    trace_id=trace_id,
-                    memory_context={},
-                ),
-                memory_store=canonical_memory_store,
-                context_request=canonical_memory_context_request,
+        if (
+            canonical_memory_store is not None
+            and canonical_memory_context_request is not None
+        ):
+            owner_context["canonical_memory_context"] = (
+                assemble_owner_canonical_context(
+                    owner_domain=owner_domain,
+                    request_ref=OwnerRequestContextRef(
+                        request_ref=request.request_id,
+                        owner_id=normalized_owner_id,
+                        session_ref=owner_session.owner_session_id,
+                        trace_id=trace_id,
+                        memory_context={},
+                    ),
+                    memory_store=canonical_memory_store,
+                    context_request=canonical_memory_context_request,
+                )
             )
 
         if not request.request_text:
@@ -1089,7 +1166,10 @@ class OwnerOrchestrator:
                 risk_profile=risk_profile,
                 preview_text=None,
             )
-        if action_scope.blocked_action_types and risk_profile.action_type in action_scope.blocked_action_types:
+        if (
+            action_scope.blocked_action_types
+            and risk_profile.action_type in action_scope.blocked_action_types
+        ):
             return self._build_blocked_interaction(
                 session=owner_session,
                 request=request,
@@ -1101,7 +1181,10 @@ class OwnerOrchestrator:
                 risk_profile=risk_profile,
                 preview_text=None,
             )
-        if action_scope.allowed_action_types and risk_profile.action_type not in action_scope.allowed_action_types:
+        if (
+            action_scope.allowed_action_types
+            and risk_profile.action_type not in action_scope.allowed_action_types
+        ):
             return self._build_blocked_interaction(
                 session=owner_session,
                 request=request,
@@ -1165,7 +1248,8 @@ class OwnerOrchestrator:
                 response_plan_id=response_plan_id,
                 request_created_at=completed_request.created_at,
                 response_created_at=_utc_timestamp(),
-                completed_at=_normalize_text(action_result.get("timestamp")) or _utc_timestamp(),
+                completed_at=_normalize_text(action_result.get("timestamp"))
+                or _utc_timestamp(),
                 trust_class=risk_profile.trust_class,
             )
             response_plan = create_owner_response_plan(
@@ -1194,7 +1278,9 @@ class OwnerOrchestrator:
                     risk_profile=risk_profile,
                     preview_text=preview_text,
                 ),
-                status=_response_plan_status(_normalize_text(action_result.get("status"))),
+                status=_response_plan_status(
+                    _normalize_text(action_result.get("status"))
+                ),
             )
             queue_entry = self._action_queue.enqueue(
                 create_owner_action_queue_entry(
@@ -1209,7 +1295,8 @@ class OwnerOrchestrator:
                     requires_high_trust=risk_profile.requires_high_trust,
                     priority_class=completed_request.priority_class,
                     created_at=completed_request.created_at,
-                    updated_at=_normalize_text(action_result.get("timestamp")) or response_plan.created_at,
+                    updated_at=_normalize_text(action_result.get("timestamp"))
+                    or response_plan.created_at,
                 )
             )
             return OwnerInteractionResult(
@@ -1330,7 +1417,9 @@ class OwnerOrchestrator:
             approval=approval,
         )
 
-    def _missing_approval_resolution(self, *, approval_id: object, message: str) -> OwnerApprovalResolutionResult:
+    def _missing_approval_resolution(
+        self, *, approval_id: object, message: str
+    ) -> OwnerApprovalResolutionResult:
         response_plan_id = _new_identifier("owner-response-plan")
         trace_metadata = create_owner_trace_metadata(
             owner_session_id="",
@@ -1374,7 +1463,11 @@ class OwnerOrchestrator:
 
     def approve_action(self, approval_id: object) -> OwnerApprovalResolutionResult:
         approval = self._approval_store.get(approval_id)
-        pending = None if approval is None else self._approval_runtime.get(approval.approval_id)
+        pending = (
+            None
+            if approval is None
+            else self._approval_runtime.get(approval.approval_id)
+        )
         if approval is None or pending is None:
             return self._missing_approval_resolution(
                 approval_id=approval_id,
@@ -1393,10 +1486,12 @@ class OwnerOrchestrator:
                 owner_id=pending.request.owner_id,
                 action_id=pending.action_contract["action_id"],
                 result_status=_normalize_text(pending.action_result.get("status")),
-                response_plan_id=pending.response_plan_id or _new_identifier("owner-response-plan"),
+                response_plan_id=pending.response_plan_id
+                or _new_identifier("owner-response-plan"),
                 request_created_at=pending.request.created_at,
                 response_created_at=_utc_timestamp(),
-                completed_at=_normalize_text(pending.action_result.get("timestamp")) or _utc_timestamp(),
+                completed_at=_normalize_text(pending.action_result.get("timestamp"))
+                or _utc_timestamp(),
                 approval_id=approval.approval_id,
                 approval_status=approval.status,
                 trust_class=approval.trust_class,
@@ -1429,7 +1524,9 @@ class OwnerOrchestrator:
                     risk_profile=pending.risk_profile,
                     preview_text=pending.preview_text,
                 ),
-                status=_response_plan_status(_normalize_text(pending.action_result.get("status"))),
+                status=_response_plan_status(
+                    _normalize_text(pending.action_result.get("status"))
+                ),
             )
             return OwnerApprovalResolutionResult(
                 approval=approval,
@@ -1470,7 +1567,8 @@ class OwnerOrchestrator:
                 _normalize_text(action_result.get("status")),
                 requires_confirmation=False,
             ),
-            updated_at=_normalize_text(action_result.get("timestamp")) or _utc_timestamp(),
+            updated_at=_normalize_text(action_result.get("timestamp"))
+            or _utc_timestamp(),
         )
         response_plan_id = _new_identifier("owner-response-plan")
         pending.response_plan_id = response_plan_id
@@ -1483,7 +1581,8 @@ class OwnerOrchestrator:
             response_plan_id=response_plan_id,
             request_created_at=pending.request.created_at,
             response_created_at=_utc_timestamp(),
-            completed_at=_normalize_text(action_result.get("timestamp")) or _utc_timestamp(),
+            completed_at=_normalize_text(action_result.get("timestamp"))
+            or _utc_timestamp(),
             approval_id=resolved_approval.approval_id,
             approval_status=resolved_approval.status,
             trust_class=resolved_approval.trust_class,
@@ -1494,7 +1593,9 @@ class OwnerOrchestrator:
             response_plan_id=response_plan_id,
             owner_session_id=pending.session.owner_session_id,
             owner_id=pending.request.owner_id,
-            response_type=_response_type_from_result_status(_normalize_text(action_result.get("status"))),
+            response_type=_response_type_from_result_status(
+                _normalize_text(action_result.get("status"))
+            ),
             target_language=pending.request.detected_language,
             summary_text=_result_payload_text(action_result),
             action_refs=[str(pending.action_contract["action_id"])],
@@ -1527,7 +1628,11 @@ class OwnerOrchestrator:
 
     def reject_action(self, approval_id: object) -> OwnerApprovalResolutionResult:
         approval = self._approval_store.get(approval_id)
-        pending = None if approval is None else self._approval_runtime.get(approval.approval_id)
+        pending = (
+            None
+            if approval is None
+            else self._approval_runtime.get(approval.approval_id)
+        )
         if approval is None or pending is None:
             return self._missing_approval_resolution(
                 approval_id=approval_id,
@@ -1546,7 +1651,8 @@ class OwnerOrchestrator:
                 owner_id=pending.request.owner_id,
                 action_id=pending.action_contract["action_id"],
                 result_status="blocked",
-                response_plan_id=pending.response_plan_id or _new_identifier("owner-response-plan"),
+                response_plan_id=pending.response_plan_id
+                or _new_identifier("owner-response-plan"),
                 request_created_at=pending.request.created_at,
                 response_created_at=_utc_timestamp(),
                 completed_at=_utc_timestamp(),

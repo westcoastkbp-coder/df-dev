@@ -2,11 +2,19 @@ from __future__ import annotations
 
 import pytest
 
-from tests.office_scenario_pack import SCENARIOS, configure_scenario_runtime, run_scenario
+from tests.office_scenario_pack import (
+    SCENARIOS,
+    configure_scenario_runtime,
+    run_scenario,
+)
 
 
-@pytest.mark.parametrize("scenario", SCENARIOS, ids=[scenario.scenario_id for scenario in SCENARIOS])
-def test_office_scenario_pack_matches_expected_flow(monkeypatch, tmp_path, scenario) -> None:
+@pytest.mark.parametrize(
+    "scenario", SCENARIOS, ids=[scenario.scenario_id for scenario in SCENARIOS]
+)
+def test_office_scenario_pack_matches_expected_flow(
+    monkeypatch, tmp_path, scenario
+) -> None:
     store_path = configure_scenario_runtime(monkeypatch, tmp_path)
 
     output = run_scenario(scenario, store_path=store_path)
@@ -18,8 +26,12 @@ def test_office_scenario_pack_matches_expected_flow(monkeypatch, tmp_path, scena
     assert output["final_state"] == scenario.expected_final_state
 
 
-@pytest.mark.parametrize("scenario", SCENARIOS, ids=[scenario.scenario_id for scenario in SCENARIOS])
-def test_office_scenario_pack_uses_only_allowed_status_progression(monkeypatch, tmp_path, scenario) -> None:
+@pytest.mark.parametrize(
+    "scenario", SCENARIOS, ids=[scenario.scenario_id for scenario in SCENARIOS]
+)
+def test_office_scenario_pack_uses_only_allowed_status_progression(
+    monkeypatch, tmp_path, scenario
+) -> None:
     store_path = configure_scenario_runtime(monkeypatch, tmp_path)
 
     output = run_scenario(scenario, store_path=store_path)

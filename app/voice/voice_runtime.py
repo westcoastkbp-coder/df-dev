@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import asyncio
 import base64
@@ -122,4 +122,3 @@ def publish_tts_text(
         VOICE_RUNTIME_BUS.publish(call_session_id, event)
         published.append(event)
     return published
-

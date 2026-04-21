@@ -26,7 +26,9 @@ def _base_context() -> dict[str, object]:
     }
 
 
-def test_commit_loop_result_stages_and_commits_after_approved_success(monkeypatch) -> None:
+def test_commit_loop_result_stages_and_commits_after_approved_success(
+    monkeypatch,
+) -> None:
     calls: list[tuple[list[str], dict[str, object]]] = []
 
     def fake_run(command, **kwargs):
@@ -58,7 +60,9 @@ def test_commit_loop_result_stages_and_commits_after_approved_success(monkeypatc
     ]
 
 
-def test_commit_loop_result_creates_empty_commit_after_blocked_review(monkeypatch) -> None:
+def test_commit_loop_result_creates_empty_commit_after_blocked_review(
+    monkeypatch,
+) -> None:
     calls: list[tuple[list[str], dict[str, object]]] = []
 
     def fake_run(command, **kwargs):
@@ -168,7 +172,9 @@ def test_codex_loop_success_path_invokes_commit_discipline(monkeypatch, capsys) 
     monkeypatch.setattr(
         codex_loop,
         "commit_loop_result",
-        lambda module_name, status, review: commits.append((module_name, status, review)),
+        lambda module_name, status, review: commits.append(
+            (module_name, status, review)
+        ),
     )
 
     codex_loop.main()
@@ -220,7 +226,9 @@ def test_codex_loop_blocked_path_invokes_commit_discipline(monkeypatch, capsys) 
     monkeypatch.setattr(
         codex_loop,
         "commit_loop_result",
-        lambda module_name, status, review: commits.append((module_name, status, review)),
+        lambda module_name, status, review: commits.append(
+            (module_name, status, review)
+        ),
     )
 
     codex_loop.main()

@@ -8,11 +8,18 @@ from app.execution.lead_estimate_contract import WORKFLOW_TYPE, validate_input_p
 from app.execution.lead_estimate_read import resolve_estimate_decision
 from app.execution.lead_estimate_write import bind_decision_action
 from app.execution.paths import OUTPUT_DIR, ROOT_DIR, TASKS_FILE
-from app.orchestrator.task_factory import clear_task_runtime_store, create_task, get_task, save_task
+from app.orchestrator.task_factory import (
+    clear_task_runtime_store,
+    create_task,
+    get_task,
+    save_task,
+)
 from app.orchestrator.task_state_store import run_in_transaction
 
 
-VALIDATION_REPORT_FILE = OUTPUT_DIR / "validation" / "lead_decision_binding_validation.json"
+VALIDATION_REPORT_FILE = (
+    OUTPUT_DIR / "validation" / "lead_decision_binding_validation.json"
+)
 FAILURE_CLASSES = {
     "classification_error",
     "missing_required_input",
@@ -184,7 +191,9 @@ def _run_once(
     run_index: int,
     store_path: Path,
 ) -> dict[str, object]:
-    source_task = _create_source_task(scenario, run_index=run_index, store_path=store_path)
+    source_task = _create_source_task(
+        scenario, run_index=run_index, store_path=store_path
+    )
     payload = _scenario_payload(scenario)
     decision = resolve_estimate_decision(
         task_id=source_task.get("task_id", ""),
@@ -202,8 +211,13 @@ def _run_once(
         store_path=store_path,
     )
     child_task = None
-    if bool(binding.get("child_task_created")) and str(binding.get("child_task_id", "")).strip():
-        child_task = get_task(str(binding.get("child_task_id", "")).strip(), store_path=store_path)
+    if (
+        bool(binding.get("child_task_created"))
+        and str(binding.get("child_task_id", "")).strip()
+    ):
+        child_task = get_task(
+            str(binding.get("child_task_id", "")).strip(), store_path=store_path
+        )
     return {
         "source_task": persisted_source,
         "decision": decision,
@@ -251,10 +265,16 @@ def _classify_failure(
             return "wrong_archive_path", "archive_mismatch"
         return "wrong_child_task_type", "action_mismatch"
     if expected_action == "archive_lead":
-        if bool(binding.get("child_task_created")) or str(binding.get("archive_status", "")).strip() != "archived":
+        if (
+            bool(binding.get("child_task_created"))
+            or str(binding.get("archive_status", "")).strip() != "archived"
+        ):
             return "wrong_archive_path", "archive_mismatch"
     else:
-        if child_task is None or str(child_task.get("intent", "")).strip() != expected_child_intent:
+        if (
+            child_task is None
+            or str(child_task.get("intent", "")).strip() != expected_child_intent
+        ):
             return "wrong_child_task_type", "child_type_mismatch"
         child_payload = dict(child_task.get("payload", {}) or {})
         if (
@@ -264,7 +284,9 @@ def _classify_failure(
             != str(binding.get("source_lead_id", "")).strip()
         ):
             return "traceability_gap", "trace_mismatch"
-    persisted_source = get_task(str(source_task.get("task_id", "")).strip(), store_path=store_path)
+    persisted_source = get_task(
+        str(source_task.get("task_id", "")).strip(), store_path=store_path
+    )
     if persisted_source is None or not isinstance(persisted_source.get("result"), dict):
         return "state_inconsistency", "state_missing"
     if not repeatable:
@@ -292,10 +314,11 @@ def run_validation_pack(*, store_path: Path | None = None) -> dict[str, object]:
             expected_decision = dict(scenario.get("expected_decision", {}) or {})
             actual_action = str(first["binding"].get("binding_action", "")).strip()
             expected_action = str(scenario.get("expected_action", "")).strip()
-            repeatable = (
-                _decision_snapshot(dict(first["decision"])) == _decision_snapshot(dict(second["decision"]))
-                and _binding_shape(dict(first["binding"])) == _binding_shape(dict(second["binding"]))
-            )
+            repeatable = _decision_snapshot(
+                dict(first["decision"])
+            ) == _decision_snapshot(dict(second["decision"])) and _binding_shape(
+                dict(first["binding"])
+            ) == _binding_shape(dict(second["binding"]))
             failure_class, notes = _classify_failure(
                 input_valid=input_valid,
                 expected_decision=expected_decision,
@@ -307,7 +330,9 @@ def run_validation_pack(*, store_path: Path | None = None) -> dict[str, object]:
                     if isinstance(first.get("child_task"), dict)
                     else None
                 ),
-                expected_child_intent=str(scenario.get("expected_child_intent", "")).strip(),
+                expected_child_intent=str(
+                    scenario.get("expected_child_intent", "")
+                ).strip(),
                 binding=dict(first["binding"]),
                 source_task=dict(first["source_task"]),
                 repeatable=repeatable,
@@ -341,7 +366,11 @@ def write_validation_report(
     output_path: Path | None = None,
 ) -> Path:
     report = run_validation_pack(store_path=store_path)
-    target = Path(output_path) if output_path is not None else ROOT_DIR / VALIDATION_REPORT_FILE
+    target = (
+        Path(output_path)
+        if output_path is not None
+        else ROOT_DIR / VALIDATION_REPORT_FILE
+    )
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return target

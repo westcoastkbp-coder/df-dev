@@ -139,7 +139,9 @@ def test_evaluate_policy_writes_policy_log(monkeypatch, tmp_path: Path) -> None:
     }
 
 
-def test_evaluate_external_action_policy_blocks_critical_action_without_confirmation() -> None:
+def test_evaluate_external_action_policy_blocks_critical_action_without_confirmation() -> (
+    None
+):
     result = evaluate_external_action_policy(
         "SEND_EMAIL",
         {
@@ -160,7 +162,9 @@ def test_evaluate_external_action_policy_blocks_critical_action_without_confirma
     assert result.policy_trace["confirmation_received"] is False
 
 
-def test_evaluate_external_action_policy_allows_critical_action_with_confirmation() -> None:
+def test_evaluate_external_action_policy_allows_critical_action_with_confirmation() -> (
+    None
+):
     result = evaluate_external_action_policy(
         "SEND_EMAIL",
         {

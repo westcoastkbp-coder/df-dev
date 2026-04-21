@@ -13,7 +13,12 @@ import runtime.token_efficiency as token_efficiency_module
 from app.execution.lead_estimate_contract import WORKFLOW_TYPE
 from app.execution.task_schema import TASK_CONTRACT_VERSION
 from app.orchestrator.execution_runner import run_execution
-from runtime.token_telemetry import finalize_run, get_average_token_cost, record_step, start_run
+from runtime.token_telemetry import (
+    finalize_run,
+    get_average_token_cost,
+    record_step,
+    start_run,
+)
 from runtime.token_efficiency import (
     append_efficiency_record,
     build_efficiency_record,
@@ -108,7 +113,9 @@ def test_logs_are_written_correctly(monkeypatch, tmp_path: Path) -> None:
     assert records[0]["steps"][0]["step_name"] == "input_normalization"
     assert records[0]["steps"][0]["payload_bytes_in"] == 80
     assert records[0]["steps"][0]["payload_bytes_out"] == 64
-    efficiency_records = _read_records(token_efficiency_module.TOKEN_EFFICIENCY_LOG_FILE)
+    efficiency_records = _read_records(
+        token_efficiency_module.TOKEN_EFFICIENCY_LOG_FILE
+    )
     assert len(efficiency_records) == 1
     assert efficiency_records[0]["successful_steps"] == 2
     assert efficiency_records[0]["payload_bytes_total"] == 280
@@ -163,7 +170,9 @@ def test_telemetry_does_not_affect_execution(monkeypatch, tmp_path: Path) -> Non
     def broken_start_run(*args, **kwargs):
         raise RuntimeError("telemetry unavailable")
 
-    monkeypatch.setattr("runtime.pipeline.managed_execution.start_run", broken_start_run)
+    monkeypatch.setattr(
+        "runtime.pipeline.managed_execution.start_run", broken_start_run
+    )
 
     executed_task = run_execution(
         task_data,
@@ -222,10 +231,15 @@ def test_average_token_cost_breakdown(monkeypatch, tmp_path: Path) -> None:
     assert averages["avg_payload_size_bytes_per_run"] == 25.0
     assert averages["breakdown_per_task_type"]["decision"]["runs"] == 2
     assert averages["breakdown_per_task_type"]["decision"]["avg_tokens_per_run"] == 22.5
-    assert averages["breakdown_per_task_type"]["decision"]["avg_payload_size_bytes"] == 25.0
+    assert (
+        averages["breakdown_per_task_type"]["decision"]["avg_payload_size_bytes"]
+        == 25.0
+    )
 
 
-def test_execution_run_writes_payload_size_per_step(monkeypatch, tmp_path: Path) -> None:
+def test_execution_run_writes_payload_size_per_step(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runtime(monkeypatch, tmp_path)
     task_data = _build_workflow_task(
         store_path=task_store_path,
@@ -251,7 +265,9 @@ def test_execution_run_writes_payload_size_per_step(monkeypatch, tmp_path: Path)
     assert records[-1]["avg_payload_size_bytes"] > 0
 
 
-def test_execution_run_estimates_non_zero_tokens_from_payload(monkeypatch, tmp_path: Path) -> None:
+def test_execution_run_estimates_non_zero_tokens_from_payload(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runtime(monkeypatch, tmp_path)
     task_data = _build_workflow_task(
         store_path=task_store_path,
@@ -292,7 +308,11 @@ def test_tei_calculation() -> None:
             "steps": [
                 {"step_success": True, "payload_bytes_in": 10, "payload_bytes_out": 15},
                 {"step_success": False, "payload_bytes_in": 20, "payload_bytes_out": 5},
-                {"step_success": True, "payload_bytes_in": None, "payload_bytes_out": 30},
+                {
+                    "step_success": True,
+                    "payload_bytes_in": None,
+                    "payload_bytes_out": 30,
+                },
             ],
         }
     )
@@ -313,8 +333,12 @@ def test_empty_efficiency_log_behavior(monkeypatch, tmp_path: Path) -> None:
     _configure_runtime(monkeypatch, tmp_path)
     log_file = token_efficiency_module.TOKEN_EFFICIENCY_LOG_FILE
 
-    assert get_average_tokens_per_task("lead_estimate_decision", log_file=log_file) == 0.0
-    assert get_average_tokens_per_step("lead_estimate_decision", log_file=log_file) == 0.0
+    assert (
+        get_average_tokens_per_task("lead_estimate_decision", log_file=log_file) == 0.0
+    )
+    assert (
+        get_average_tokens_per_step("lead_estimate_decision", log_file=log_file) == 0.0
+    )
     assert get_average_tei("lead_estimate_decision", log_file=log_file) == 0.0
     assert build_efficiency_report("lead_estimate_decision", log_file=log_file) == {
         "task_type": "lead_estimate_decision",
@@ -356,9 +380,15 @@ def test_efficiency_rolling_averages_and_report(monkeypatch, tmp_path: Path) -> 
         log_file=log_file,
     )
 
-    assert get_average_tokens_per_task("lead_estimate_decision", log_file=log_file) == 30.0
-    assert get_average_tokens_per_step("lead_estimate_decision", log_file=log_file) == 15.0
-    assert get_average_tei("lead_estimate_decision", log_file=log_file) == pytest.approx(0.075)
+    assert (
+        get_average_tokens_per_task("lead_estimate_decision", log_file=log_file) == 30.0
+    )
+    assert (
+        get_average_tokens_per_step("lead_estimate_decision", log_file=log_file) == 15.0
+    )
+    assert get_average_tei(
+        "lead_estimate_decision", log_file=log_file
+    ) == pytest.approx(0.075)
     assert build_efficiency_report("lead_estimate_decision", log_file=log_file) == {
         "task_type": "lead_estimate_decision",
         "avg_tokens_per_task": 30.0,
@@ -384,7 +414,9 @@ def test_efficiency_log_is_append_only(monkeypatch, tmp_path: Path) -> None:
             "task_type": "lead_estimate_decision",
             "total_tokens": 10,
             "execution_time_ms": 50,
-            "steps": [{"step_success": True, "payload_bytes_in": 1, "payload_bytes_out": 1}],
+            "steps": [
+                {"step_success": True, "payload_bytes_in": 1, "payload_bytes_out": 1}
+            ],
         },
         log_file=log_file,
     )
@@ -394,7 +426,9 @@ def test_efficiency_log_is_append_only(monkeypatch, tmp_path: Path) -> None:
             "task_type": "lead_estimate_decision",
             "total_tokens": 12,
             "execution_time_ms": 60,
-            "steps": [{"step_success": True, "payload_bytes_in": 2, "payload_bytes_out": 2}],
+            "steps": [
+                {"step_success": True, "payload_bytes_in": 2, "payload_bytes_out": 2}
+            ],
         },
         log_file=log_file,
     )

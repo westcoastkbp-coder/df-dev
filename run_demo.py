@@ -10,8 +10,16 @@ from app.execution.paths import ROOT_DIR
 from app.execution.system_context import DEFAULT_SYSTEM_CONTEXT_PATH, load_yaml_file
 from app.product.runner import dispatch_action_trigger
 from memory.storage import load_memory_records, save_task_record
-from runtime.context.write_packet import AUDITS_FILE, append_audit, append_decision, append_execution
-from runtime.decision.evaluator import build_runtime_decision, reset_runtime_decision_history
+from runtime.context.write_packet import (
+    AUDITS_FILE,
+    append_audit,
+    append_decision,
+    append_execution,
+)
+from runtime.decision.evaluator import (
+    build_runtime_decision,
+    reset_runtime_decision_history,
+)
 
 
 DEMO_TASK_ID = "demo_task"
@@ -32,7 +40,11 @@ def _read_jsonl_tail(path: Path) -> dict[str, object]:
     if not path.exists():
         return {}
 
-    lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    lines = [
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     if not lines:
         return {}
 
@@ -59,7 +71,9 @@ def _build_demo_task() -> dict[str, object]:
     }
 
 
-def _build_runtime_inputs(timestamp: str) -> tuple[dict[str, object], dict[str, object]]:
+def _build_runtime_inputs(
+    timestamp: str,
+) -> tuple[dict[str, object], dict[str, object]]:
     metrics = {
         "cpu": 34.0,
         "memory": 48.0,
@@ -87,11 +101,20 @@ def main() -> None:
     memory_before = load_memory_records()
     audit_count_before = 1 if _read_jsonl_tail(AUDITS_FILE) else 0
     if AUDITS_FILE.exists():
-        audit_count_before = len([line for line in AUDITS_FILE.read_text(encoding="utf-8").splitlines() if line.strip()])
+        audit_count_before = len(
+            [
+                line
+                for line in AUDITS_FILE.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+        )
 
     system_context = load_yaml_file(DEFAULT_SYSTEM_CONTEXT_PATH)
     runtime_config = load_runtime_config(root_dir=ROOT_DIR)
-    company_name = str(system_context.get("product_box", {}).get("company_name", "")).strip() or "unknown"
+    company_name = (
+        str(system_context.get("product_box", {}).get("company_name", "")).strip()
+        or "unknown"
+    )
 
     reset_runtime_decision_history()
     metrics, network_snapshot = _build_runtime_inputs(timestamp)
@@ -143,7 +166,9 @@ def main() -> None:
         }
     )
 
-    review_content = str(review_result.get("result_payload", {}).get("content", "")).strip()
+    review_content = str(
+        review_result.get("result_payload", {}).get("content", "")
+    ).strip()
     review_passed = "demo_task execution path reached the filesystem" in review_content
     review_summary = "review_passed" if review_passed else "review_failed"
 
@@ -183,7 +208,13 @@ def main() -> None:
     audit_after = _read_jsonl_tail(AUDITS_FILE)
     audit_count_after = audit_count_before + 1
     if AUDITS_FILE.exists():
-        audit_count_after = len([line for line in AUDITS_FILE.read_text(encoding="utf-8").splitlines() if line.strip()])
+        audit_count_after = len(
+            [
+                line
+                for line in AUDITS_FILE.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+        )
 
     final_status = "success"
     if execution_result.get("status") != "completed" or not review_passed:

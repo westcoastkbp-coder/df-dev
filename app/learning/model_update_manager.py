@@ -6,13 +6,18 @@ from typing import Any
 
 from app.compute.compute_dispatcher import create_compute_job
 import app.learning.model_loader as model_loader_module
-from app.learning.model_update_config import load_model_update_config, write_model_update_config
+from app.learning.model_update_config import (
+    load_model_update_config,
+    write_model_update_config,
+)
 import app.training.dataset_builder as dataset_builder_module
 from app.training.dataset_builder import (
     build_dataset,
     dataset_contract_path,
     training_input_dir,
 )
+
+
 class ModelUpdateManagerError(RuntimeError):
     """Raised when the model update loop cannot validate or persist control state."""
 
@@ -23,6 +28,8 @@ def _normalize_text(value: object) -> str:
 
 def _normalize_dataset_type(dataset_type: object) -> str:
     return dataset_builder_module._normalize_dataset_type(dataset_type)
+
+
 def _dataset_settings(config: dict[str, Any], dataset_type: str) -> dict[str, int]:
     raw_settings = config.get(dataset_type)
     if not isinstance(raw_settings, dict):
@@ -41,7 +48,9 @@ def _dataset_settings(config: dict[str, Any], dataset_type: str) -> dict[str, in
     }
 
 
-def _count_training_records(dataset_type: str, *, shared_root: Path | str | None = None) -> int:
+def _count_training_records(
+    dataset_type: str, *, shared_root: Path | str | None = None
+) -> int:
     source_dir = training_input_dir(dataset_type, shared_root=shared_root)
     return len(dataset_builder_module._iter_training_records(source_dir))
 
@@ -118,7 +127,9 @@ def trigger_model_update(
     candidate_model = _next_model_id(normalized_type, config)
     output_path = f"DF/shared/models/{candidate_model}.json"
     dataset_local_path = (
-        dataset_builder_module.dataset_output_dir(normalized_type, shared_root=shared_root)
+        dataset_builder_module.dataset_output_dir(
+            normalized_type, shared_root=shared_root
+        )
         / f"{dataset_id}.json"
     )
     job = create_compute_job(
@@ -133,8 +144,12 @@ def trigger_model_update(
             "params": {
                 "model_type": "memory_ranker",
                 "dataset_type": normalized_type,
-                "dataset_version": int(dataset.get("version", dataset_builder_module.DATASET_VERSION)),
-                "dataset_contract_path": dataset_contract_path(normalized_type, dataset_id),
+                "dataset_version": int(
+                    dataset.get("version", dataset_builder_module.DATASET_VERSION)
+                ),
+                "dataset_contract_path": dataset_contract_path(
+                    normalized_type, dataset_id
+                ),
                 "dataset_local_path": str(dataset_local_path),
                 "expected_model_id": candidate_model,
                 "model_output_path": output_path,
@@ -146,7 +161,9 @@ def trigger_model_update(
     config["candidate_model"] = candidate_model
     config[normalized_type] = {
         "min_new_records": settings["min_new_records"],
-        "last_dataset_size": int(dataset.get("stats", {}).get("num_records", current_records)),
+        "last_dataset_size": int(
+            dataset.get("stats", {}).get("num_records", current_records)
+        ),
     }
     write_model_update_config(config)
 

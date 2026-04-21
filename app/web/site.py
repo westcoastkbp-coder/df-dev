@@ -8,7 +8,9 @@ SITE_TITLE = "West Coast KBP"
 
 def _layout(*, title: str, active_path: str, body: str) -> HTMLResponse:
     home_class = "site-nav__link is-active" if active_path == "/" else "site-nav__link"
-    contact_class = "site-nav__link is-active" if active_path == "/contact" else "site-nav__link"
+    contact_class = (
+        "site-nav__link is-active" if active_path == "/contact" else "site-nav__link"
+    )
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>

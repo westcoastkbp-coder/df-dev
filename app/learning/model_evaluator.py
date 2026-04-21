@@ -37,10 +37,15 @@ def _agreement_score(active_ids: list[str], candidate_ids: list[str]) -> float:
         return 1.0
 
     active_ranks = {memory_id: index + 1 for index, memory_id in enumerate(active_ids)}
-    candidate_ranks = {memory_id: index + 1 for index, memory_id in enumerate(candidate_ids)}
+    candidate_ranks = {
+        memory_id: index + 1 for index, memory_id in enumerate(candidate_ids)
+    }
     default_rank = len(union_ids) + 1
     total_diff = sum(
-        abs(active_ranks.get(memory_id, default_rank) - candidate_ranks.get(memory_id, default_rank))
+        abs(
+            active_ranks.get(memory_id, default_rank)
+            - candidate_ranks.get(memory_id, default_rank)
+        )
         for memory_id in union_ids
     )
     max_diff = len(union_ids) * len(union_ids)
@@ -49,7 +54,9 @@ def _agreement_score(active_ids: list[str], candidate_ids: list[str]) -> float:
     return round(max(0.0, min(1.0, 1.0 - (total_diff / max_diff))), 6)
 
 
-def _top_k_overlap(active_ids: list[str], candidate_ids: list[str], *, top_k: int = DEFAULT_TOP_K) -> float:
+def _top_k_overlap(
+    active_ids: list[str], candidate_ids: list[str], *, top_k: int = DEFAULT_TOP_K
+) -> float:
     effective_k = min(top_k, max(len(active_ids), len(candidate_ids)))
     if effective_k <= 0:
         return 1.0
@@ -59,22 +66,32 @@ def _top_k_overlap(active_ids: list[str], candidate_ids: list[str], *, top_k: in
 
 
 def _write_eval_artifact(payload: dict[str, Any]) -> Path:
-    timestamp = _normalize_text(payload.get("evaluated_at")).replace(":", "").replace("-", "")
+    timestamp = (
+        _normalize_text(payload.get("evaluated_at")).replace(":", "").replace("-", "")
+    )
     safe_timestamp = timestamp.replace("+00", "Z")
     target_path = EVALS_ROOT / f"{safe_timestamp}.json"
     target_path.parent.mkdir(parents=True, exist_ok=True)
-    target_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    target_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return target_path
 
 
-def deterministic_sample_selected(task_packet: dict[str, Any] | None, sample_rate: float) -> bool:
+def deterministic_sample_selected(
+    task_packet: dict[str, Any] | None, sample_rate: float
+) -> bool:
     bounded_rate = max(0.0, min(1.0, float(sample_rate)))
     if bounded_rate <= 0.0:
         return False
     if bounded_rate >= 1.0:
         return True
 
-    serialized = json.dumps(task_packet if isinstance(task_packet, dict) else {}, sort_keys=True, default=str)
+    serialized = json.dumps(
+        task_packet if isinstance(task_packet, dict) else {},
+        sort_keys=True,
+        default=str,
+    )
     digest = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
     bucket = int(digest[:8], 16) / 0xFFFFFFFF
     return bucket < bounded_rate
@@ -90,11 +107,17 @@ def evaluate_models(
     if not active_model or not candidate_model or active_model == candidate_model:
         return None
 
-    active_rankings = rank_memory(task_packet, memory_objects, model_enabled=True, model_id=active_model)
-    candidate_rankings = rank_memory(task_packet, memory_objects, model_enabled=True, model_id=candidate_model)
+    active_rankings = rank_memory(
+        task_packet, memory_objects, model_enabled=True, model_id=active_model
+    )
+    candidate_rankings = rank_memory(
+        task_packet, memory_objects, model_enabled=True, model_id=candidate_model
+    )
     active_ids = _rank_memory_ids(active_rankings)
     candidate_ids = _rank_memory_ids(candidate_rankings)
-    top1_match = bool(active_ids and candidate_ids and active_ids[0] == candidate_ids[0])
+    top1_match = bool(
+        active_ids and candidate_ids and active_ids[0] == candidate_ids[0]
+    )
     metrics = {
         "active_model": active_model,
         "candidate_model": candidate_model,

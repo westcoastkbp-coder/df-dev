@@ -28,7 +28,9 @@ def _parse_timestamp(value: object) -> datetime:
     if not normalized:
         return datetime.min.replace(tzinfo=timezone.utc)
     try:
-        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(timezone.utc)
+        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(
+            timezone.utc
+        )
     except ValueError:
         return datetime.min.replace(tzinfo=timezone.utc)
 
@@ -41,7 +43,10 @@ def _deterministic_assembled_at(
     if request.reference_timestamp:
         return request.reference_timestamp
     if retrieved:
-        return max(retrieved, key=lambda item: (_parse_timestamp(item.updated_at), item.memory_id)).updated_at
+        return max(
+            retrieved,
+            key=lambda item: (_parse_timestamp(item.updated_at), item.memory_id),
+        ).updated_at
     return "1970-01-01T00:00:00Z"
 
 
@@ -88,13 +93,19 @@ class MemoryContextRequest:
     trust_classes: tuple[str, ...] = ()
     freshness_window_days: int | None = None
     reference_timestamp: str | None = None
-    per_type_limits: dict[str, int] = field(default_factory=lambda: dict(DEFAULT_PER_TYPE_LIMITS))
+    per_type_limits: dict[str, int] = field(
+        default_factory=lambda: dict(DEFAULT_PER_TYPE_LIMITS)
+    )
     limit: int = 8
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "domain_type", _normalize_text(self.domain_type).lower())
+        object.__setattr__(
+            self, "domain_type", _normalize_text(self.domain_type).lower()
+        )
         object.__setattr__(self, "owner_ref", _normalize_text(self.owner_ref))
-        object.__setattr__(self, "subject_ref", _normalize_text(self.subject_ref) or None)
+        object.__setattr__(
+            self, "subject_ref", _normalize_text(self.subject_ref) or None
+        )
         object.__setattr__(self, "text_query", _normalize_text(self.text_query))
         normalized_memory_types = self.memory_types
         if isinstance(normalized_memory_types, str):
@@ -104,7 +115,11 @@ class MemoryContextRequest:
         object.__setattr__(
             self,
             "memory_types",
-            tuple(_normalize_text(item).lower() for item in normalized_memory_types if _normalize_text(item)),
+            tuple(
+                _normalize_text(item).lower()
+                for item in normalized_memory_types
+                if _normalize_text(item)
+            ),
         )
         normalized_status_filters = self.status_filters
         if isinstance(normalized_status_filters, str):
@@ -135,7 +150,10 @@ class MemoryContextRequest:
                 if _normalize_text(item)
             ),
         )
-        if self.freshness_window_days is None or _normalize_text(self.freshness_window_days) == "":
+        if (
+            self.freshness_window_days is None
+            or _normalize_text(self.freshness_window_days) == ""
+        ):
             object.__setattr__(self, "freshness_window_days", None)
         else:
             object.__setattr__(
@@ -143,8 +161,14 @@ class MemoryContextRequest:
                 "freshness_window_days",
                 max(0, int(self.freshness_window_days)),
             )
-        object.__setattr__(self, "reference_timestamp", _normalize_text(self.reference_timestamp) or None)
-        object.__setattr__(self, "per_type_limits", _normalize_type_limits(self.per_type_limits))
+        object.__setattr__(
+            self,
+            "reference_timestamp",
+            _normalize_text(self.reference_timestamp) or None,
+        )
+        object.__setattr__(
+            self, "per_type_limits", _normalize_type_limits(self.per_type_limits)
+        )
         object.__setattr__(self, "limit", max(1, min(int(self.limit), 20)))
         if not self.domain_type:
             raise ValueError("domain_type must not be empty")
@@ -163,7 +187,9 @@ def assemble_context(
         if explicit_status_filters == ("active",)
         else explicit_status_filters
     )
-    pool_limit = max(request.limit * 6, sum(request.per_type_limits.values()), request.limit)
+    pool_limit = max(
+        request.limit * 6, sum(request.per_type_limits.values()), request.limit
+    )
     retrieved = retrieve_memory_objects(
         store=store,
         query=MemoryRetrievalQuery(
@@ -205,11 +231,21 @@ def assemble_context(
 
     return {
         "memory_refs": [_memory_ref(item) for item in included],
-        "fact_summaries": [_summary_entry(item) for item in included if item.memory_type == "fact"],
-        "preferences": [_summary_entry(item) for item in included if item.memory_type == "preference"],
-        "relevant_decisions": [_summary_entry(item) for item in included if item.memory_type == "decision"],
+        "fact_summaries": [
+            _summary_entry(item) for item in included if item.memory_type == "fact"
+        ],
+        "preferences": [
+            _summary_entry(item)
+            for item in included
+            if item.memory_type == "preference"
+        ],
+        "relevant_decisions": [
+            _summary_entry(item) for item in included if item.memory_type == "decision"
+        ],
         "related_document_refs": [
-            _summary_entry(item) for item in included if item.memory_type == "document_ref"
+            _summary_entry(item)
+            for item in included
+            if item.memory_type == "document_ref"
         ],
         "assembly_metadata": {
             "domain_type": request.domain_type,

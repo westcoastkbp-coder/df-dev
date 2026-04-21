@@ -25,7 +25,9 @@ def prepare_real_lead_parent_task_input(
         "lead_input_payload": lead_input_payload,
         "task_input": {
             "task_id": task_id
-            or build_real_lead_run_id(str(lead_input_payload.get("lead_id", "")).strip()),
+            or build_real_lead_run_id(
+                str(lead_input_payload.get("lead_id", "")).strip()
+            ),
             "status": "created",
             "intent": WORKFLOW_TYPE,
             "payload": build_real_lead_workflow_payload(lead_input_payload),

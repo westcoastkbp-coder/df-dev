@@ -9,7 +9,9 @@ from app.adapters.printer_adapter import (
 )
 
 
-def _valid_printer_action_contract(*, execution_mode: str = "live") -> dict[str, object]:
+def _valid_printer_action_contract(
+    *, execution_mode: str = "live"
+) -> dict[str, object]:
     return {
         "action_id": "act-print-001",
         "action_type": "print_document",
@@ -56,7 +58,11 @@ def test_printer_adapter_dry_run_never_calls_runtime() -> None:
     result = execute_printer_action(
         _valid_printer_action_contract(execution_mode="dry_run"),
         runtime=FailingRuntime(),
-        config={"enabled": True, "printer_name": "Zephyrus_Main", "timeout_seconds": 30},
+        config={
+            "enabled": True,
+            "printer_name": "Zephyrus_Main",
+            "timeout_seconds": 30,
+        },
     )
 
     assert called is False
@@ -88,7 +94,11 @@ def test_printer_adapter_normalizes_device_unavailable_failure(tmp_path: Path) -
     result = execute_printer_action(
         _valid_printer_action_contract(),
         runtime=UnavailableRuntime(),
-        config={"enabled": True, "printer_name": "Zephyrus_Main", "timeout_seconds": 30},
+        config={
+            "enabled": True,
+            "printer_name": "Zephyrus_Main",
+            "timeout_seconds": 30,
+        },
     )
 
     assert result["status"] == "failed"

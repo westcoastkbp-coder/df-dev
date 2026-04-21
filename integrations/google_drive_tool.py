@@ -9,7 +9,9 @@ from urllib.error import HTTPError, URLError
 from integrations import google_drive_reader
 
 BINARY_FILE_PLACEHOLDER = "[BINARY FILE - NOT PARSED]"
-CACHE_DIR = Path(__file__).resolve().parents[1] / "artifacts" / "tool_cache" / "google_drive"
+CACHE_DIR = (
+    Path(__file__).resolve().parents[1] / "artifacts" / "tool_cache" / "google_drive"
+)
 
 
 def _http_error_message(error: HTTPError) -> str:
@@ -81,7 +83,9 @@ def _validated_file_id(input_payload: dict[str, Any]) -> str:
     return file_id
 
 
-def run_google_drive_read_file_external(input_payload: dict[str, Any]) -> dict[str, str]:
+def run_google_drive_read_file_external(
+    input_payload: dict[str, Any],
+) -> dict[str, str]:
     file_id = _validated_file_id(input_payload)
     if not google_drive_reader._has_required_credentials():
         raise RuntimeError("Google Drive credentials are not configured.")
@@ -89,7 +93,9 @@ def run_google_drive_read_file_external(input_payload: dict[str, Any]) -> dict[s
     access_token = google_drive_reader._access_token()
     metadata = google_drive_reader._fetch_file_metadata(file_id, access_token)
     mime_type = str(metadata.get("mimeType") or "").strip()
-    content_bytes = google_drive_reader._fetch_file_content(file_id, mime_type, access_token)
+    content_bytes = google_drive_reader._fetch_file_content(
+        file_id, mime_type, access_token
+    )
 
     if content_bytes is None:
         content_text = BINARY_FILE_PLACEHOLDER
@@ -109,7 +115,9 @@ def run_google_drive_read_file_external(input_payload: dict[str, Any]) -> dict[s
     return result
 
 
-def run_google_drive_read_file_fallback(input_payload: dict[str, Any]) -> dict[str, str]:
+def run_google_drive_read_file_fallback(
+    input_payload: dict[str, Any],
+) -> dict[str, str]:
     file_id = _validated_file_id(input_payload)
     cached_result = _read_cached_result(file_id)
     if cached_result is None:
@@ -126,7 +134,14 @@ def run_google_drive_read_file(input_payload: dict[str, Any]) -> dict[str, str]:
         if cached_result is not None:
             return cached_result
         raise RuntimeError(_http_error_message(error)) from error
-    except (URLError, OSError, TimeoutError, json.JSONDecodeError, ValueError, RuntimeError) as error:
+    except (
+        URLError,
+        OSError,
+        TimeoutError,
+        json.JSONDecodeError,
+        ValueError,
+        RuntimeError,
+    ) as error:
         cached_result = _read_cached_result(file_id)
         if cached_result is not None:
             return cached_result

@@ -36,7 +36,9 @@ def _normalized_gap(gap: Mapping[str, object]) -> dict[str, object]:
         raise ValueError(f"unsupported system gap severity: {severity or '(empty)'}")
     impact_score = _normalize_text(priority_enriched_gap.get("impact_score")).lower()
     if impact_score not in SUPPORTED_IMPACT_SCORES:
-        raise ValueError(f"unsupported system gap impact score: {impact_score or '(empty)'}")
+        raise ValueError(
+            f"unsupported system gap impact score: {impact_score or '(empty)'}"
+        )
     urgency = _normalize_text(priority_enriched_gap.get("urgency")).lower()
     if urgency not in SUPPORTED_URGENCY:
         raise ValueError(f"unsupported system gap urgency: {urgency or '(empty)'}")
@@ -50,13 +52,21 @@ def _normalized_gap(gap: Mapping[str, object]) -> dict[str, object]:
         "frequency": int(priority_enriched_gap.get("frequency") or 1),
         "urgency": urgency,
         "priority_score": int(priority_enriched_gap.get("priority_score") or 0),
-        "priority_level": _normalize_text(priority_enriched_gap.get("priority_level")).lower(),
+        "priority_level": _normalize_text(
+            priority_enriched_gap.get("priority_level")
+        ).lower(),
         "interaction_id": _normalize_text(priority_enriched_gap.get("interaction_id")),
         "task_id": _normalize_text(priority_enriched_gap.get("task_id")),
-        "context_reference": _normalize_text(priority_enriched_gap.get("context_reference")),
+        "context_reference": _normalize_text(
+            priority_enriched_gap.get("context_reference")
+        ),
         "dedupe_key": _normalize_text(priority_enriched_gap.get("dedupe_key")),
     }
-    if not normalized["problem"] or not normalized["impact"] or not normalized["proposed_fix"]:
+    if (
+        not normalized["problem"]
+        or not normalized["impact"]
+        or not normalized["proposed_fix"]
+    ):
         raise ValueError("system gap missing required fields")
     return normalized
 
@@ -72,7 +82,9 @@ def _gap_identity(normalized_gap: Mapping[str, object]) -> str:
         "severity": _normalize_text(normalized_gap.get("severity")),
     }
     digest = hashlib.sha256(
-        json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        json.dumps(
+            payload, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
     ).hexdigest()
     return f"system_gap:{digest}"
 
@@ -98,7 +110,9 @@ def _priority_route(
             "status": "created",
             "approval_status": "approved",
             "requires_approval": False,
-            "route_target": "immediate_execution" if priority_level == HIGH_PRIORITY else "execution",
+            "route_target": "immediate_execution"
+            if priority_level == HIGH_PRIORITY
+            else "execution",
             "priority": "HIGH" if priority_level == HIGH_PRIORITY else "NORMAL",
             "auto_task_mode": "queued",
         }
@@ -106,7 +120,9 @@ def _priority_route(
         "status": "awaiting_approval",
         "approval_status": "pending",
         "requires_approval": True,
-        "route_target": "approval_queue" if priority_level == HIGH_PRIORITY else "manual_review",
+        "route_target": "approval_queue"
+        if priority_level == HIGH_PRIORITY
+        else "manual_review",
         "priority": "HIGH" if priority_level == HIGH_PRIORITY else "NORMAL",
         "auto_task_mode": "approval_queue",
     }
@@ -123,7 +139,9 @@ def gap_to_task_input(
     dedupe_key = _gap_identity(normalized_gap)
     source_task_id = _normalize_text(normalized_gap.get("task_id"))
     interaction_id = _normalize_text(normalized_gap.get("interaction_id"))
-    context_reference = _normalize_text(normalized_gap.get("context_reference")) or "system_context"
+    context_reference = (
+        _normalize_text(normalized_gap.get("context_reference")) or "system_context"
+    )
     priority_metadata = {
         "severity": normalized_gap["severity"],
         "impact_score": normalized_gap["impact_score"],
@@ -246,7 +264,9 @@ def ingest_system_gaps(
             _normalize_text(normalized_gap.get("severity")) == LOW_SEVERITY
             and _normalize_text(normalized_gap.get("priority_level")) != LOW_PRIORITY
         )
-        allow_auto_task = (not auto_eligible) or auto_tasks_used < MAX_AUTO_TASKS_PER_CYCLE
+        allow_auto_task = (
+            not auto_eligible
+        ) or auto_tasks_used < MAX_AUTO_TASKS_PER_CYCLE
         safety_mode = blocked_tasks > BLOCKED_TASKS_SAFETY_THRESHOLD
         try:
             created_tasks.append(
@@ -286,7 +306,9 @@ def _write_priority_context(
 ) -> None:
     payload = dict(task_data.get("payload", {}) or {})
     dedupe_key = _gap_identity(normalized_gap)
-    context_reference = _normalize_text(normalized_gap.get("context_reference")) or "system_context"
+    context_reference = (
+        _normalize_text(normalized_gap.get("context_reference")) or "system_context"
+    )
     set_context(
         "system_context",
         {
@@ -299,11 +321,16 @@ def _write_priority_context(
                     "frequency": int(normalized_gap.get("frequency") or 1),
                     "urgency": _normalize_text(normalized_gap.get("urgency")),
                     "priority_score": int(normalized_gap.get("priority_score") or 0),
-                    "priority_level": _normalize_text(normalized_gap.get("priority_level")),
-                    "core_impact": _normalize_text(payload.get("core_impact")).lower() == "true",
+                    "priority_level": _normalize_text(
+                        normalized_gap.get("priority_level")
+                    ),
+                    "core_impact": _normalize_text(payload.get("core_impact")).lower()
+                    == "true",
                     "route_target": _normalize_text(payload.get("route_target")),
                     "auto_task_mode": _normalize_text(payload.get("auto_task_mode")),
-                    "approval_status": _normalize_text(task_data.get("approval_status")),
+                    "approval_status": _normalize_text(
+                        task_data.get("approval_status")
+                    ),
                 }
             },
             "system_improvement_limits": {

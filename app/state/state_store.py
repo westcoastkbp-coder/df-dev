@@ -15,7 +15,9 @@ from app.storage.storage_adapter import (
 
 STATE_ARTIFACT_TYPE = "state"
 ALLOWED_DOMAINS = frozenset({"dev", "ownerbox"})
-ALLOWED_ENTITY_TYPES = frozenset({"task", "resource", "conflict", "owner_object", "compute_job"})
+ALLOWED_ENTITY_TYPES = frozenset(
+    {"task", "resource", "conflict", "owner_object", "compute_job"}
+)
 HISTORY_DIRNAME = "history"
 _SAFE_COMPONENT_PATTERN = re.compile(r"[^A-Za-z0-9._-]+")
 
@@ -78,8 +80,10 @@ def _state_root(domain: str, *, base_root_override: Path | None = None) -> Path:
 
 
 def _active_state_relative_path(entity_type: str, entity_id: str) -> Path:
-    return Path("state") / _safe_component(entity_type, field_name="entity_type") / (
-        f"{_safe_component(entity_id, field_name='entity_id')}.json"
+    return (
+        Path("state")
+        / _safe_component(entity_type, field_name="entity_type")
+        / (f"{_safe_component(entity_id, field_name='entity_id')}.json")
     )
 
 
@@ -90,9 +94,7 @@ def _history_state_relative_path(
     updated_at: str,
 ) -> Path:
     timestamp_component = (
-        _normalize_text(updated_at)
-        .replace(":", "-")
-        .replace("+", "_")
+        _normalize_text(updated_at).replace(":", "-").replace("+", "_")
     )
     return (
         Path("state")
@@ -167,9 +169,9 @@ def _load_active_state_record(
     *,
     base_root_override: Path | None = None,
 ) -> dict[str, Any] | None:
-    path = _state_root(domain, base_root_override=base_root_override) / _active_state_relative_path(
-        entity_type, entity_id
-    ).relative_to("state")
+    path = _state_root(
+        domain, base_root_override=base_root_override
+    ) / _active_state_relative_path(entity_type, entity_id).relative_to("state")
     if not path.exists():
         return None
     try:
@@ -188,7 +190,9 @@ def _persist_historical_snapshot(
     base_root_override: Path | None = None,
 ) -> None:
     current_state = _state_record_to_object(current_record)
-    history_updated_at = _normalize_text(current_state.get("updated_at")) or _utc_timestamp()
+    history_updated_at = (
+        _normalize_text(current_state.get("updated_at")) or _utc_timestamp()
+    )
     history_payload = _state_payload(
         domain=domain,
         entity_type=str(current_state["entity_type"]),
@@ -280,8 +284,10 @@ def set_state(
     if not normalized_source_artifact:
         raise StateStoreError("source_artifact must not be empty.")
 
-    resolved_domain = _normalize_domain(domain) if domain is not None else _infer_domain_from_source(
-        normalized_source_artifact
+    resolved_domain = (
+        _normalize_domain(domain)
+        if domain is not None
+        else _infer_domain_from_source(normalized_source_artifact)
     )
     base_root_override = _base_root_from_source_artifact(normalized_source_artifact)
     current_record = _load_active_state_record(
@@ -314,7 +320,9 @@ def set_state(
         payload,
         overwrite=True,
         artifact_status="active",
-        relative_path=_active_state_relative_path(normalized_entity_type, normalized_entity_id),
+        relative_path=_active_state_relative_path(
+            normalized_entity_type, normalized_entity_id
+        ),
         domain_root_override=_base_root(
             resolved_domain,
             base_root_override=base_root_override,
@@ -337,11 +345,21 @@ def set_state(
 
 def _infer_domain_from_source(source_artifact: str) -> str:
     normalized = _normalize_text(source_artifact)
-    if "/ownerbox/" in normalized or normalized.startswith("ownerbox/") or "DF/owner/" in normalized:
+    if (
+        "/ownerbox/" in normalized
+        or normalized.startswith("ownerbox/")
+        or "DF/owner/" in normalized
+    ):
         return "ownerbox"
-    if "/df-dev/" in normalized or normalized.startswith("exports/dev/") or "DF/dev/" in normalized:
+    if (
+        "/df-dev/" in normalized
+        or normalized.startswith("exports/dev/")
+        or "DF/dev/" in normalized
+    ):
         return "dev"
-    raise StateStoreError("domain is required when it cannot be inferred from source_artifact.")
+    raise StateStoreError(
+        "domain is required when it cannot be inferred from source_artifact."
+    )
 
 
 def get_state(

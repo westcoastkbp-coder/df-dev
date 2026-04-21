@@ -125,7 +125,9 @@ def test_print_document_action_contract_passes() -> None:
 
 
 def test_malformed_action_contract_rejected() -> None:
-    with pytest.raises(ActionContractViolation, match="action contract missing required fields"):
+    with pytest.raises(
+        ActionContractViolation, match="action contract missing required fields"
+    ):
         validate_action_contract(
             {
                 "action_id": "act-001",
@@ -146,7 +148,9 @@ def test_unsupported_execution_mode_rejected() -> None:
     payload = _valid_action_payload()
     payload["execution_mode"] = "auto"
 
-    with pytest.raises(ActionContractViolation, match="unsupported execution_mode: auto"):
+    with pytest.raises(
+        ActionContractViolation, match="unsupported execution_mode: auto"
+    ):
         validate_action_contract(payload)
 
 
@@ -154,7 +158,9 @@ def test_missing_idempotency_key_rejected() -> None:
     payload = _valid_action_payload()
     payload["idempotency_key"] = ""
 
-    with pytest.raises(ActionContractViolation, match="idempotency_key must not be empty"):
+    with pytest.raises(
+        ActionContractViolation, match="idempotency_key must not be empty"
+    ):
         validate_action_contract(payload)
 
 
@@ -174,7 +180,9 @@ def test_precheck_blocks_duplicate_idempotency_key() -> None:
 
 
 def test_precheck_blocks_missing_confirmation() -> None:
-    result = precheck_action_contract(_valid_action_payload(), confirmation_received=False)
+    result = precheck_action_contract(
+        _valid_action_payload(), confirmation_received=False
+    )
 
     assert result["allowed"] is False
     assert result["status"] == "blocked"
@@ -242,9 +250,15 @@ def test_trace_serialization_is_deterministic() -> None:
         "action_id": "act-001",
     }
 
-    assert serialize_action_contract(built_action) == serialize_action_contract(action_variant)
-    assert serialize_action_result_contract(built_result) == serialize_action_result_contract(result_variant)
-    assert json.loads(serialize_action_contract(built_action)) == validate_action_contract(_valid_action_payload())
-    assert json.loads(serialize_action_result_contract(built_result)) == validate_action_result_contract(
-        _valid_action_result_payload()
+    assert serialize_action_contract(built_action) == serialize_action_contract(
+        action_variant
     )
+    assert serialize_action_result_contract(
+        built_result
+    ) == serialize_action_result_contract(result_variant)
+    assert json.loads(
+        serialize_action_contract(built_action)
+    ) == validate_action_contract(_valid_action_payload())
+    assert json.loads(
+        serialize_action_result_contract(built_result)
+    ) == validate_action_result_contract(_valid_action_result_payload())

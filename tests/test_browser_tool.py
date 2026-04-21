@@ -10,7 +10,10 @@ from app.execution.browser_tool import (
     BrowserToolValidationError,
     execute_browser_action,
 )
-from app.execution.execution_boundary import ExecutionBoundaryViolationError, execution_boundary
+from app.execution.execution_boundary import (
+    ExecutionBoundaryViolationError,
+    execution_boundary,
+)
 
 
 class _FakeResponse:
@@ -50,7 +53,9 @@ def _read_jsonl(path: Path) -> list[dict[str, object]]:
 
 
 def test_browser_tool_requires_execution_boundary() -> None:
-    with pytest.raises(ExecutionBoundaryViolationError, match="direct_browser_tool_call_blocked"):
+    with pytest.raises(
+        ExecutionBoundaryViolationError, match="direct_browser_tool_call_blocked"
+    ):
         execute_browser_action(
             {
                 "task_id": "DF-BROWSER-DIRECT-V1",
@@ -71,7 +76,10 @@ def test_browser_tool_blocks_unallowlisted_url() -> None:
                 {
                     "task_id": "DF-BROWSER-BLOCKED-V1",
                     "steps": [
-                        {"operation": "open_url", "url": "https://malicious.example.net/"},
+                        {
+                            "operation": "open_url",
+                            "url": "https://malicious.example.net/",
+                        },
                     ],
                 }
             )
@@ -149,4 +157,6 @@ def test_browser_tool_blocks_form_submission_without_confirmation(monkeypatch) -
 
     assert result["status"] == "policy_blocked"
     assert result["error_code"] == "POLICY_VIOLATION"
-    assert result["error_message"] == "critical action requires confirmation: BROWSER_TOOL"
+    assert (
+        result["error_message"] == "critical action requires confirmation: BROWSER_TOOL"
+    )

@@ -39,7 +39,8 @@ def _compact_context_snapshot(value: object) -> dict[str, object]:
             normalize_text(key): _clone_json_like(item)
             for key, item in dict(nested_value).items()
             if normalize_text(key)
-            and normalize_text(key) not in {"decision_context", "previous_context", "history"}
+            and normalize_text(key)
+            not in {"decision_context", "previous_context", "history"}
         }
     return {
         "task_id": normalize_text(value.get("task_id")),
@@ -59,7 +60,9 @@ def _has_contact_info(value: object) -> bool:
 
 def _has_non_qualified_flag(value: object) -> bool:
     if isinstance(value, Mapping):
-        normalized = {str(key).strip().lower(): bool(item) for key, item in dict(value).items()}
+        normalized = {
+            str(key).strip().lower(): bool(item) for key, item in dict(value).items()
+        }
         return bool(
             normalized.get("non_qualified")
             or normalized.get("invalid")
@@ -146,7 +149,9 @@ def resolve_estimate_decision(*, task_id: object, payload: object) -> dict[str, 
             "workflow_type": WORKFLOW_TYPE,
             "decision": dict(resolved),
             "decision_context": {
-                "global_context": dict(global_context) if isinstance(global_context, Mapping) else {},
+                "global_context": dict(global_context)
+                if isinstance(global_context, Mapping)
+                else {},
                 "active_task_context": _compact_context_snapshot(current_task_context),
                 "input_payload": dict(normalized_payload),
             },

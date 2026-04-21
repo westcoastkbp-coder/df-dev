@@ -13,7 +13,10 @@ from app.ownerbox.domain import (
 )
 from app.ownerbox.owner_session import OwnerSession
 from app.ownerbox.workflow import summarize_owner_workflow_step
-from app.ownerbox.workflow_orchestrator import OwnerWorkflowOrchestrator, OwnerWorkflowRunResult
+from app.ownerbox.workflow_orchestrator import (
+    OwnerWorkflowOrchestrator,
+    OwnerWorkflowRunResult,
+)
 
 
 OPERATIONAL_SCENARIO_TYPES = frozenset(
@@ -49,7 +52,9 @@ def _stable_identifier(value: object, *, field_name: str) -> str:
     if not normalized:
         raise OperationalScenarioValidationError(f"{field_name} must not be empty")
     if _IDENTIFIER_PATTERN.fullmatch(normalized) is None:
-        raise OperationalScenarioValidationError(f"{field_name} must be a stable identifier")
+        raise OperationalScenarioValidationError(
+            f"{field_name} must be a stable identifier"
+        )
     return normalized
 
 
@@ -84,7 +89,9 @@ def _string_mapping(value: object, *, field_name: str) -> dict[str, str]:
         normalized_key = _normalize_text(key)
         normalized_value = _normalize_text(value[key])
         if not normalized_key:
-            raise OperationalScenarioValidationError(f"{field_name} keys must not be empty")
+            raise OperationalScenarioValidationError(
+                f"{field_name} keys must not be empty"
+            )
         if not normalized_value:
             raise OperationalScenarioValidationError(
                 f"{field_name}.{normalized_key} must not be empty"
@@ -102,12 +109,16 @@ def _object_mapping(value: object, *, field_name: str) -> dict[str, object]:
     for key in sorted(value):
         normalized_key = _normalize_text(key)
         if not normalized_key:
-            raise OperationalScenarioValidationError(f"{field_name} keys must not be empty")
+            raise OperationalScenarioValidationError(
+                f"{field_name} keys must not be empty"
+            )
         normalized[normalized_key] = value[key]
     return normalized
 
 
-def _string_list(value: object, *, field_name: str, required: bool = False) -> list[str]:
+def _string_list(
+    value: object, *, field_name: str, required: bool = False
+) -> list[str]:
     if value in (None, ""):
         if required:
             raise OperationalScenarioValidationError(f"{field_name} must not be empty")
@@ -118,7 +129,9 @@ def _string_list(value: object, *, field_name: str, required: bool = False) -> l
     for item in value:
         text = _normalize_text(item)
         if not text:
-            raise OperationalScenarioValidationError(f"{field_name} items must not be empty")
+            raise OperationalScenarioValidationError(
+                f"{field_name} items must not be empty"
+            )
         normalized.append(text)
     if required and not normalized:
         raise OperationalScenarioValidationError(f"{field_name} must not be empty")
@@ -129,7 +142,9 @@ def _email_list(value: object, *, field_name: str) -> list[str]:
     emails = _string_list(value, field_name=field_name, required=True)
     for email in emails:
         if _EMAIL_PATTERN.fullmatch(email.lower()) is None:
-            raise OperationalScenarioValidationError(f"{field_name} contains invalid recipient: {email}")
+            raise OperationalScenarioValidationError(
+                f"{field_name} contains invalid recipient: {email}"
+            )
     return [email.lower() for email in emails]
 
 
@@ -143,10 +158,13 @@ def _bounded_positive_int(value: object, *, field_name: str, allowed: set[int]) 
     try:
         normalized = int(value)
     except (TypeError, ValueError) as exc:
-        raise OperationalScenarioValidationError(f"{field_name} must be an integer") from exc
+        raise OperationalScenarioValidationError(
+            f"{field_name} must be an integer"
+        ) from exc
     if normalized not in allowed:
         raise OperationalScenarioValidationError(
-            f"{field_name} must be one of: " + ", ".join(str(item) for item in sorted(allowed))
+            f"{field_name} must be one of: "
+            + ", ".join(str(item) for item in sorted(allowed))
         )
     return normalized
 
@@ -189,14 +207,20 @@ class OwnerOperationalScenarioRequest:
     title: str | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "scenario_type", _normalize_scenario_type(self.scenario_type))
-        object.__setattr__(self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id"))
+        object.__setattr__(
+            self, "scenario_type", _normalize_scenario_type(self.scenario_type)
+        )
+        object.__setattr__(
+            self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id")
+        )
         object.__setattr__(
             self,
             "owner_session_id",
             _optional_identifier(self.owner_session_id, field_name="owner_session_id"),
         )
-        object.__setattr__(self, "context_ref", _normalize_text(self.context_ref) or None)
+        object.__setattr__(
+            self, "context_ref", _normalize_text(self.context_ref) or None
+        )
         object.__setattr__(
             self,
             "target_url",
@@ -212,42 +236,60 @@ class OwnerOperationalScenarioRequest:
             "structured_inputs",
             _object_mapping(self.structured_inputs, field_name="structured_inputs"),
         )
-        object.__setattr__(self, "draft_content", _normalize_text(self.draft_content) or None)
-        object.__setattr__(self, "prompt_input", _normalize_text(self.prompt_input) or None)
+        object.__setattr__(
+            self, "draft_content", _normalize_text(self.draft_content) or None
+        )
+        object.__setattr__(
+            self, "prompt_input", _normalize_text(self.prompt_input) or None
+        )
         object.__setattr__(
             self,
             "approval_required",
             _bool(self.approval_required, field_name="approval_required"),
         )
-        object.__setattr__(self, "active_language", _normalize_text(self.active_language) or "und")
+        object.__setattr__(
+            self, "active_language", _normalize_text(self.active_language) or "und"
+        )
         object.__setattr__(
             self,
             "detected_language",
             _normalize_text(self.detected_language) or self.active_language,
         )
-        object.__setattr__(self, "execution_mode", _normalize_text(self.execution_mode) or "live")
+        object.__setattr__(
+            self, "execution_mode", _normalize_text(self.execution_mode) or "live"
+        )
         object.__setattr__(self, "title", _normalize_text(self.title) or None)
         self._validate()
 
     def _validate(self) -> None:
         if self.scenario_type == "owner_email_review_and_send":
-            unexpected_keys = sorted(set(self.structured_inputs) - {"attachments", "subject", "to"})
+            unexpected_keys = sorted(
+                set(self.structured_inputs) - {"attachments", "subject", "to"}
+            )
             if unexpected_keys:
                 raise OperationalScenarioValidationError(
                     "structured_inputs contains unsupported fields: "
                     + ", ".join(unexpected_keys)
                 )
             if self.target_url is not None:
-                raise OperationalScenarioValidationError("target_url is not supported for this scenario")
+                raise OperationalScenarioValidationError(
+                    "target_url is not supported for this scenario"
+                )
             if self.target_fields:
-                raise OperationalScenarioValidationError("target_fields is not supported for this scenario")
-            _email_list(self.structured_inputs.get("to"), field_name="structured_inputs.to")
+                raise OperationalScenarioValidationError(
+                    "target_fields is not supported for this scenario"
+                )
+            _email_list(
+                self.structured_inputs.get("to"), field_name="structured_inputs.to"
+            )
             if not _normalize_text(self.structured_inputs.get("subject")):
                 raise OperationalScenarioValidationError(
                     "structured_inputs.subject must not be empty"
                 )
             if self.draft_content is None:
-                raise OperationalScenarioValidationError("draft_content must not be empty")
+                raise OperationalScenarioValidationError(
+                    "draft_content must not be empty"
+                )
             _string_list(
                 self.structured_inputs.get("attachments"),
                 field_name="structured_inputs.attachments",
@@ -255,7 +297,9 @@ class OwnerOperationalScenarioRequest:
             return
 
         if self.scenario_type == "owner_web_form_review_and_submit":
-            unexpected_keys = sorted(set(self.structured_inputs) - {"extract_selector", "form_selector"})
+            unexpected_keys = sorted(
+                set(self.structured_inputs) - {"extract_selector", "form_selector"}
+            )
             if unexpected_keys:
                 raise OperationalScenarioValidationError(
                     "structured_inputs contains unsupported fields: "
@@ -267,7 +311,9 @@ class OwnerOperationalScenarioRequest:
                 )
             _url(self.target_url, field_name="target_url", required=True)
             if not self.target_fields:
-                raise OperationalScenarioValidationError("target_fields must not be empty")
+                raise OperationalScenarioValidationError(
+                    "target_fields must not be empty"
+                )
             if not _normalize_text(self.structured_inputs.get("form_selector")):
                 raise OperationalScenarioValidationError(
                     "structured_inputs.form_selector must not be empty"
@@ -282,7 +328,9 @@ class OwnerOperationalScenarioRequest:
                     + ", ".join(unexpected_keys)
                 )
             if self.target_fields:
-                raise OperationalScenarioValidationError("target_fields is not supported for this scenario")
+                raise OperationalScenarioValidationError(
+                    "target_fields is not supported for this scenario"
+                )
             if self.draft_content is not None or self.prompt_input is not None:
                 raise OperationalScenarioValidationError(
                     "draft_content and prompt_input are not supported for this scenario"
@@ -291,7 +339,9 @@ class OwnerOperationalScenarioRequest:
             return
 
         if self.scenario_type == "owner_draft_then_browser_update":
-            unexpected_keys = sorted(set(self.structured_inputs) - {"draft_field_name", "form_selector"})
+            unexpected_keys = sorted(
+                set(self.structured_inputs) - {"draft_field_name", "form_selector"}
+            )
             if unexpected_keys:
                 raise OperationalScenarioValidationError(
                     "structured_inputs contains unsupported fields: "
@@ -302,7 +352,9 @@ class OwnerOperationalScenarioRequest:
                 raise OperationalScenarioValidationError(
                     "structured_inputs.form_selector must not be empty"
                 )
-            draft_field_name = _normalize_text(self.structured_inputs.get("draft_field_name"))
+            draft_field_name = _normalize_text(
+                self.structured_inputs.get("draft_field_name")
+            )
             if not draft_field_name:
                 raise OperationalScenarioValidationError(
                     "structured_inputs.draft_field_name must not be empty"
@@ -318,16 +370,23 @@ class OwnerOperationalScenarioRequest:
             return
 
         if self.scenario_type == "owner_generate_review_and_print_document":
-            unexpected_keys = sorted(set(self.structured_inputs) - {"copies", "document_title", "printer_name"})
+            unexpected_keys = sorted(
+                set(self.structured_inputs)
+                - {"copies", "document_title", "printer_name"}
+            )
             if unexpected_keys:
                 raise OperationalScenarioValidationError(
                     "structured_inputs contains unsupported fields: "
                     + ", ".join(unexpected_keys)
                 )
             if self.target_url is not None:
-                raise OperationalScenarioValidationError("target_url is not supported for this scenario")
+                raise OperationalScenarioValidationError(
+                    "target_url is not supported for this scenario"
+                )
             if self.target_fields:
-                raise OperationalScenarioValidationError("target_fields is not supported for this scenario")
+                raise OperationalScenarioValidationError(
+                    "target_fields is not supported for this scenario"
+                )
             if not self.approval_required:
                 raise OperationalScenarioValidationError(
                     "approval_required must be true for this scenario"
@@ -342,7 +401,9 @@ class OwnerOperationalScenarioRequest:
                 allowed={1},
             )
             printer_name = _normalize_text(self.structured_inputs.get("printer_name"))
-            if printer_name and any(character in printer_name for character in ("\x00", "\n", "\r")):
+            if printer_name and any(
+                character in printer_name for character in ("\x00", "\n", "\r")
+            ):
                 raise OperationalScenarioValidationError(
                     "structured_inputs.printer_name contains unsupported characters"
                 )
@@ -356,7 +417,9 @@ class OwnerOperationalScenarioRequest:
                 )
             return
 
-        raise OperationalScenarioValidationError(f"unsupported scenario_type: {self.scenario_type}")
+        raise OperationalScenarioValidationError(
+            f"unsupported scenario_type: {self.scenario_type}"
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -401,7 +464,9 @@ class OwnerOperationalScenarioResult:
         return {
             "scenario_type": self.scenario_type,
             "workflow_id": self.workflow_id,
-            "current_step": None if self.current_step is None else dict(self.current_step),
+            "current_step": None
+            if self.current_step is None
+            else dict(self.current_step),
             "preview_text": self.preview_text,
             "pending_approval_ids": list(self.pending_approval_ids),
             "final_result_summary": self.final_result_summary,
@@ -414,17 +479,33 @@ SCENARIO_REGISTRY: dict[str, OperationalScenarioDefinition] = {
     "owner_email_review_and_send": OperationalScenarioDefinition(
         scenario_type="owner_email_review_and_send",
         description="Create an email draft, expose the preview, then wait for approval before send.",
-        required_inputs=("owner_id", "structured_inputs.to", "structured_inputs.subject", "draft_content"),
+        required_inputs=(
+            "owner_id",
+            "structured_inputs.to",
+            "structured_inputs.subject",
+            "draft_content",
+        ),
         generated_workflow_type="email_draft_then_send",
-        trust_profile_expectations=("email drafts may auto-run", "send_email remains trust-gated"),
+        trust_profile_expectations=(
+            "email drafts may auto-run",
+            "send_email remains trust-gated",
+        ),
         confirmation_requirements=("preview draft before send approval",),
     ),
     "owner_web_form_review_and_submit": OperationalScenarioDefinition(
         scenario_type="owner_web_form_review_and_submit",
         description="Open a page, review it, fill a form, then wait for approval before submit.",
-        required_inputs=("owner_id", "target_url", "target_fields", "structured_inputs.form_selector"),
+        required_inputs=(
+            "owner_id",
+            "target_url",
+            "target_fields",
+            "structured_inputs.form_selector",
+        ),
         generated_workflow_type="browser_open_extract_fill_submit",
-        trust_profile_expectations=("read and fill browser actions may auto-run", "submit_form remains trust-gated"),
+        trust_profile_expectations=(
+            "read and fill browser actions may auto-run",
+            "submit_form remains trust-gated",
+        ),
         confirmation_requirements=("preview page state before submit approval",),
     ),
     "owner_page_review_and_extract": OperationalScenarioDefinition(
@@ -446,7 +527,10 @@ SCENARIO_REGISTRY: dict[str, OperationalScenarioDefinition] = {
             "prompt_input|draft_content",
         ),
         generated_workflow_type="openai_then_browser_open_fill_submit",
-        trust_profile_expectations=("draft generation may auto-run", "submit_form remains trust-gated"),
+        trust_profile_expectations=(
+            "draft generation may auto-run",
+            "submit_form remains trust-gated",
+        ),
         confirmation_requirements=("preview populated form before submit approval",),
     ),
     "owner_generate_review_and_print_document": OperationalScenarioDefinition(
@@ -458,8 +542,13 @@ SCENARIO_REGISTRY: dict[str, OperationalScenarioDefinition] = {
             "draft_content|prompt_input",
         ),
         generated_workflow_type="print_document",
-        trust_profile_expectations=("document preparation may auto-run", "print_document remains trust-gated"),
-        confirmation_requirements=("preview printable text before physical print approval",),
+        trust_profile_expectations=(
+            "document preparation may auto-run",
+            "print_document remains trust-gated",
+        ),
+        confirmation_requirements=(
+            "preview printable text before physical print approval",
+        ),
     ),
 }
 
@@ -468,7 +557,8 @@ def _normalize_scenario_type(value: object) -> str:
     normalized = _normalize_text(value).lower()
     if normalized not in OPERATIONAL_SCENARIO_TYPES:
         raise OperationalScenarioValidationError(
-            "scenario_type must be one of: " + ", ".join(sorted(OPERATIONAL_SCENARIO_TYPES))
+            "scenario_type must be one of: "
+            + ", ".join(sorted(OPERATIONAL_SCENARIO_TYPES))
         )
     return normalized
 
@@ -508,7 +598,9 @@ def create_owner_operational_scenario_request(
     )
 
 
-def get_operational_scenario_definition(scenario_type: object) -> OperationalScenarioDefinition:
+def get_operational_scenario_definition(
+    scenario_type: object,
+) -> OperationalScenarioDefinition:
     return SCENARIO_REGISTRY[_normalize_scenario_type(scenario_type)]
 
 
@@ -517,7 +609,9 @@ def compile_owner_operational_scenario(
 ) -> OperationalScenarioCompilation:
     definition = get_operational_scenario_definition(request.scenario_type)
     if request.scenario_type == "owner_email_review_and_send":
-        recipients = _email_list(request.structured_inputs.get("to"), field_name="structured_inputs.to")
+        recipients = _email_list(
+            request.structured_inputs.get("to"), field_name="structured_inputs.to"
+        )
         subject = _normalize_text(request.structured_inputs.get("subject"))
         attachments = _string_list(
             request.structured_inputs.get("attachments"),
@@ -559,7 +653,9 @@ def compile_owner_operational_scenario(
 
     if request.scenario_type == "owner_web_form_review_and_submit":
         form_selector = _normalize_text(request.structured_inputs.get("form_selector"))
-        extract_selector = _normalize_text(request.structured_inputs.get("extract_selector")) or "body"
+        extract_selector = (
+            _normalize_text(request.structured_inputs.get("extract_selector")) or "body"
+        )
         payload = {
             "open_page_action": {
                 "request_text": "Open the target page for owner review.",
@@ -610,7 +706,9 @@ def compile_owner_operational_scenario(
         )
 
     if request.scenario_type == "owner_page_review_and_extract":
-        extract_selector = _normalize_text(request.structured_inputs.get("extract_selector")) or "body"
+        extract_selector = (
+            _normalize_text(request.structured_inputs.get("extract_selector")) or "body"
+        )
         payload = {
             "open_page_action": {
                 "request_text": "Open the requested page.",
@@ -643,7 +741,9 @@ def compile_owner_operational_scenario(
 
     if request.scenario_type == "owner_draft_then_browser_update":
         form_selector = _normalize_text(request.structured_inputs.get("form_selector"))
-        draft_field_name = _normalize_text(request.structured_inputs.get("draft_field_name"))
+        draft_field_name = _normalize_text(
+            request.structured_inputs.get("draft_field_name")
+        )
         prompt = request.prompt_input or "Return the provided draft content only."
         if request.draft_content:
             prompt = (
@@ -703,13 +803,17 @@ def compile_owner_operational_scenario(
         )
 
     if request.scenario_type == "owner_generate_review_and_print_document":
-        document_title = _normalize_text(request.structured_inputs.get("document_title"))
+        document_title = _normalize_text(
+            request.structured_inputs.get("document_title")
+        )
         copies = _bounded_positive_int(
             request.structured_inputs.get("copies", 1),
             field_name="structured_inputs.copies",
             allowed={1},
         )
-        printer_name = _normalize_text(request.structured_inputs.get("printer_name")) or None
+        printer_name = (
+            _normalize_text(request.structured_inputs.get("printer_name")) or None
+        )
         print_action_parameters: dict[str, object] = {
             "operation": "print_document",
             "document_title": document_title,
@@ -782,7 +886,9 @@ def _scenario_type_from_run_result(run_result: OwnerWorkflowRunResult) -> str:
     return "unknown"
 
 
-def _current_step_payload(run_result: OwnerWorkflowRunResult) -> dict[str, object] | None:
+def _current_step_payload(
+    run_result: OwnerWorkflowRunResult,
+) -> dict[str, object] | None:
     if run_result.current_step is None:
         return None
     return summarize_owner_workflow_step(run_result.current_step)
@@ -791,8 +897,13 @@ def _current_step_payload(run_result: OwnerWorkflowRunResult) -> dict[str, objec
 def _failure_reason(run_result: OwnerWorkflowRunResult) -> str | None:
     if run_result.workflow.status not in {"failed", "rejected", "partial_failure"}:
         return None
-    if run_result.current_step is not None and run_result.current_step.last_error is not None:
-        message = _normalize_text(run_result.current_step.last_error.get("error_message"))
+    if (
+        run_result.current_step is not None
+        and run_result.current_step.last_error is not None
+    ):
+        message = _normalize_text(
+            run_result.current_step.last_error.get("error_message")
+        )
         code = _normalize_text(run_result.current_step.last_error.get("error_code"))
         if code and message:
             return f"{code}: {message}"
@@ -843,7 +954,9 @@ class OwnerOperationalScenarioOrchestrator:
         *,
         workflow_orchestrator: OwnerWorkflowOrchestrator | None = None,
     ) -> None:
-        self._workflow_orchestrator = workflow_orchestrator or OwnerWorkflowOrchestrator()
+        self._workflow_orchestrator = (
+            workflow_orchestrator or OwnerWorkflowOrchestrator()
+        )
 
     def execute_scenario(
         self,

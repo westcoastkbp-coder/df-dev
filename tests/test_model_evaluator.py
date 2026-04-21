@@ -37,7 +37,9 @@ def _write_policy(tmp_path: Path) -> Path:
     return policy_path
 
 
-def _write_model(models_root: Path, model_id: str, *, weights: dict[str, float]) -> None:
+def _write_model(
+    models_root: Path, model_id: str, *, weights: dict[str, float]
+) -> None:
     model_path = models_root / f"{model_id}.json"
     model_path.parent.mkdir(parents=True, exist_ok=True)
     model_path.write_text(
@@ -139,15 +141,21 @@ def _artifact(
     }
 
 
-def _configure_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> tuple[Path, Path, Path, Path]:
+def _configure_environment(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> tuple[Path, Path, Path, Path]:
     models_root = tmp_path / "DF" / "shared" / "models"
     evals_root = tmp_path / "DF" / "shared" / "evals"
     model_update_config = tmp_path / "config" / "model_update.json"
     memory_ranking_config = tmp_path / "config" / "memory_ranking.json"
     monkeypatch.setattr(model_loader_module, "MODELS_ROOT", models_root)
     monkeypatch.setattr(model_evaluator_module, "EVALS_ROOT", evals_root)
-    monkeypatch.setattr(model_update_config_module, "MODEL_UPDATE_CONFIG_FILE", model_update_config)
-    monkeypatch.setattr(memory_resolver, "MEMORY_RANKING_CONFIG_FILE", memory_ranking_config)
+    monkeypatch.setattr(
+        model_update_config_module, "MODEL_UPDATE_CONFIG_FILE", model_update_config
+    )
+    monkeypatch.setattr(
+        memory_resolver, "MEMORY_RANKING_CONFIG_FILE", memory_ranking_config
+    )
     monkeypatch.setattr(storage_adapter, "POLICY_FILE", _write_policy(tmp_path))
     monkeypatch.setattr(
         memory_registry,
@@ -161,8 +169,8 @@ def test_evaluate_models_runs_both_models_and_stores_artifact(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    models_root, evals_root, model_update_config, _memory_ranking_config = _configure_environment(
-        monkeypatch, tmp_path
+    models_root, evals_root, model_update_config, _memory_ranking_config = (
+        _configure_environment(monkeypatch, tmp_path)
     )
     _write_model(
         models_root,
@@ -189,12 +197,18 @@ def test_evaluate_models_runs_both_models_and_stores_artifact(
         },
     )
     _write_model_update_config(model_update_config)
-    monkeypatch.setattr(model_evaluator_module, "_utc_timestamp", lambda: "2026-04-14T12:00:00.123456Z")
+    monkeypatch.setattr(
+        model_evaluator_module, "_utc_timestamp", lambda: "2026-04-14T12:00:00.123456Z"
+    )
 
     metrics = evaluate_models(
         {"domain": "dev", "type": "task", "tags": ["finance", "urgent"]},
         [
-            _artifact("task-recent", timestamp="2026-04-14T11:30:00Z", tags=["finance", "urgent"]),
+            _artifact(
+                "task-recent",
+                timestamp="2026-04-14T11:30:00Z",
+                tags=["finance", "urgent"],
+            ),
             _artifact(
                 "conflict-1",
                 artifact_type="conflict_escalation",
@@ -216,8 +230,14 @@ def test_evaluate_models_runs_both_models_and_stores_artifact(
     stored = json.loads(artifact_path.read_text(encoding="utf-8"))
     assert stored["active_model"] == "memory_ranker_v1"
     assert stored["candidate_model"] == "memory_ranker_v2"
-    assert [entry["memory_id"] for entry in stored["active_rankings"]] == ["conflict-1", "task-recent"]
-    assert [entry["memory_id"] for entry in stored["candidate_rankings"]] == ["task-recent", "conflict-1"]
+    assert [entry["memory_id"] for entry in stored["active_rankings"]] == [
+        "conflict-1",
+        "task-recent",
+    ]
+    assert [entry["memory_id"] for entry in stored["candidate_rankings"]] == [
+        "task-recent",
+        "conflict-1",
+    ]
 
 
 def test_evaluate_models_logs_summary(
@@ -225,8 +245,8 @@ def test_evaluate_models_logs_summary(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    models_root, _evals_root, model_update_config, _memory_ranking_config = _configure_environment(
-        monkeypatch, tmp_path
+    models_root, _evals_root, model_update_config, _memory_ranking_config = (
+        _configure_environment(monkeypatch, tmp_path)
     )
     _write_model(
         models_root,
@@ -277,8 +297,8 @@ def test_resolver_evaluation_mode_does_not_change_ranking_output(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    models_root, evals_root, model_update_config, memory_ranking_config = _configure_environment(
-        monkeypatch, tmp_path
+    models_root, evals_root, model_update_config, memory_ranking_config = (
+        _configure_environment(monkeypatch, tmp_path)
     )
     _write_model(
         models_root,
@@ -304,8 +324,12 @@ def test_resolver_evaluation_mode_does_not_change_ranking_output(
             "state_flag": 0.0,
         },
     )
-    _write_memory_ranking_config(memory_ranking_config, model_id="memory_ranker_v1", top_k=2)
-    monkeypatch.setattr(model_evaluator_module, "_utc_timestamp", lambda: "2026-04-14T12:00:00.123456Z")
+    _write_memory_ranking_config(
+        memory_ranking_config, model_id="memory_ranker_v1", top_k=2
+    )
+    monkeypatch.setattr(
+        model_evaluator_module, "_utc_timestamp", lambda: "2026-04-14T12:00:00.123456Z"
+    )
     monkeypatch.setattr(model_evaluator_module, "EVALS_ROOT", evals_root)
 
     monkeypatch.setattr(
@@ -329,15 +353,25 @@ def test_resolver_evaluation_mode_does_not_change_ranking_output(
         timestamp="2026-04-14T08:00:00Z",
     )
 
-    _write_model_update_config(model_update_config, evaluation_mode=False, evaluation_sample_rate=1.0)
-    without_eval = memory_resolver.resolve_memory({"domain": "dev", "type": "task", "tags": ["finance", "urgent"]})
+    _write_model_update_config(
+        model_update_config, evaluation_mode=False, evaluation_sample_rate=1.0
+    )
+    without_eval = memory_resolver.resolve_memory(
+        {"domain": "dev", "type": "task", "tags": ["finance", "urgent"]}
+    )
     _ = capsys.readouterr()
 
-    _write_model_update_config(model_update_config, evaluation_mode=True, evaluation_sample_rate=1.0)
-    with_eval = memory_resolver.resolve_memory({"domain": "dev", "type": "task", "tags": ["finance", "urgent"]})
+    _write_model_update_config(
+        model_update_config, evaluation_mode=True, evaluation_sample_rate=1.0
+    )
+    with_eval = memory_resolver.resolve_memory(
+        {"domain": "dev", "type": "task", "tags": ["finance", "urgent"]}
+    )
     output = capsys.readouterr().out
 
-    assert [entry["id"] for entry in without_eval] == [entry["id"] for entry in with_eval]
+    assert [entry["id"] for entry in without_eval] == [
+        entry["id"] for entry in with_eval
+    ]
     assert [entry["id"] for entry in with_eval] == ["task-recent"]
     assert "[MODEL_EVAL] active=memory_ranker_v1 candidate=memory_ranker_v2" in output
     assert len(list(evals_root.glob("*.json"))) == 1

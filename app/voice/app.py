@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import json
 import logging
 import re
@@ -9,7 +9,14 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from fastapi import FastAPI, Header, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    Header,
+    HTTPException,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.exception_handlers import (
     request_validation_exception_handler as fastapi_request_validation_exception_handler,
 )
@@ -157,9 +164,8 @@ VOICE_AGENT_TIMEOUT_SECONDS = 20.0
 VOICE_FIRST_RESPONSE_TEXT = "Digital Foreman connected. Go ahead."
 VOICE_TURN_ACK_TEXT = "One moment."
 VOICE_INTERRUPT_ACK_TEXT = "Okay, go ahead."
-VOICE_FALLBACK_RESPONSE_TEXT = (
-    "I lost the execution path, but the call session is still active. Please repeat that."
-)
+VOICE_FALLBACK_RESPONSE_TEXT = "I lost the execution path, but the call session is still active. Please repeat that."
+
 
 def _get_operator_task_worker() -> TaskWorker:
     global _OPERATOR_TASK_WORKER
@@ -430,8 +436,14 @@ def _voice_call_response_text_from_secretary(result: dict[str, object]) -> str:
     if message:
         return message
     task_payload = dict(result.get("task", {}))
-    task_id = str(result.get("task_id", "")).strip() or str(task_payload.get("task_id", "")).strip()
-    task_status = str(result.get("status", "")).strip() or str(task_payload.get("status", "")).strip()
+    task_id = (
+        str(result.get("task_id", "")).strip()
+        or str(task_payload.get("task_id", "")).strip()
+    )
+    task_status = (
+        str(result.get("status", "")).strip()
+        or str(task_payload.get("status", "")).strip()
+    )
     if task_id:
         if task_status:
             return f"Task {task_id} is {task_status}."
@@ -459,7 +471,9 @@ def _voice_call_state_payload(session: dict[str, object]) -> dict[str, object]:
         "user_role": str(session.get("user_role", "")).strip(),
         "from_number": str(session.get("from_number", "")).strip(),
         "to_number": str(session.get("to_number", "")).strip(),
-        "last_partial_transcript": str(session.get("last_partial_transcript", "")).strip(),
+        "last_partial_transcript": str(
+            session.get("last_partial_transcript", "")
+        ).strip(),
         "last_transcript": str(session.get("last_transcript", "")).strip(),
         "last_response_text": str(session.get("last_response_text", "")).strip(),
         "last_ack_text": str(session.get("last_ack_text", "")).strip(),
@@ -470,14 +484,22 @@ def _voice_call_state_payload(session: dict[str, object]) -> dict[str, object]:
         "last_validation_at": str(session.get("last_validation_at", "")).strip(),
         "active_turn_event_id": str(session.get("active_turn_event_id", "")).strip(),
         "last_runtime_state": str(session.get("last_runtime_state", "")).strip(),
-        "last_runtime_confidence": str(session.get("last_runtime_confidence", "")).strip(),
+        "last_runtime_confidence": str(
+            session.get("last_runtime_confidence", "")
+        ).strip(),
         "voice_latency_metrics": dict(session.get("voice_latency_metrics", {})),
-        "guardrail_activation_count": int(session.get("guardrail_activation_count", 0) or 0),
-        "runtime_transition_count": int(session.get("runtime_transition_count", 0) or 0),
+        "guardrail_activation_count": int(
+            session.get("guardrail_activation_count", 0) or 0
+        ),
+        "runtime_transition_count": int(
+            session.get("runtime_transition_count", 0) or 0
+        ),
         "runtime_verdict": str(session.get("runtime_verdict", "")).strip(),
         "voice_runtime_verdict": str(session.get("voice_runtime_verdict", "")).strip(),
         "runtime_verdict_score": int(session.get("runtime_verdict_score", 0) or 0),
-        "last_runtime_verdict_at": str(session.get("last_runtime_verdict_at", "")).strip(),
+        "last_runtime_verdict_at": str(
+            session.get("last_runtime_verdict_at", "")
+        ).strip(),
         "reconnect_count": int(session.get("reconnect_count", 0) or 0),
         "interruption_count": int(session.get("interruption_count", 0) or 0),
         "pending_outbound": list_pending_outbound(call_session_id),
@@ -740,7 +762,8 @@ def _evaluate_voice_runtime_validation(
     validation_latency_ms = (time.monotonic() - validation_started) * 1000.0
     routing_contract = materialize_routing_contract(
         execution_mode="LOCAL",
-        runtime_profile=str(task_data.get("runtime_profile", "VOICE")).strip() or "VOICE",
+        runtime_profile=str(task_data.get("runtime_profile", "VOICE")).strip()
+        or "VOICE",
         routing_reason={
             "type": "runtime_decision",
             "value": runtime_decision.get("overall_runtime_state", "NORMAL"),
@@ -748,7 +771,12 @@ def _evaluate_voice_runtime_validation(
             "confidence": runtime_decision.get("confidence", "HIGH_CONFIDENCE"),
         },
         telemetry_snapshot=metrics,
-        safety_override={"triggered": False, "reason": "", "value": 0.0, "threshold": 0.0},
+        safety_override={
+            "triggered": False,
+            "reason": "",
+            "value": 0.0,
+            "threshold": 0.0,
+        },
         network_snapshot=network_snapshot,
         network_policy={"voice_protected": True, "prefer_remote": False},
         runtime_decision=runtime_decision,
@@ -819,8 +847,12 @@ def _evaluate_voice_runtime_validation(
         network_snapshot=network_snapshot,
     )
     previous_runtime_state = str(session.get("last_runtime_state", "")).strip()
-    previous_runtime_confidence = str(session.get("last_runtime_confidence", "")).strip()
-    current_runtime_state = str(runtime_decision.get("overall_runtime_state", "")).strip()
+    previous_runtime_confidence = str(
+        session.get("last_runtime_confidence", "")
+    ).strip()
+    current_runtime_state = str(
+        runtime_decision.get("overall_runtime_state", "")
+    ).strip()
     current_runtime_confidence = str(runtime_decision.get("confidence", "")).strip()
     if previous_runtime_state and previous_runtime_state != current_runtime_state:
         updated_session = _increment_voice_counter(
@@ -1211,7 +1243,12 @@ def _require_internal_only_call(x_df_internal_call: str | None) -> None:
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def _model_payload(model: BaseModel) -> dict[str, object]:
@@ -1272,9 +1309,11 @@ def _secretary_service_request_payload(
     source_channel: str,
 ) -> dict[str, object]:
     lowered = normalized_text.lower()
-    service_type = "plumbing" if any(
-        phrase in lowered for phrase in ("faucet", "plumb", "pipe", "leak")
-    ) else "general_service"
+    service_type = (
+        "plumbing"
+        if any(phrase in lowered for phrase in ("faucet", "plumb", "pipe", "leak"))
+        else "general_service"
+    )
     requested_time = "tomorrow" if "tomorrow" in lowered else ""
     location = _secretary_extract_city(normalized_text)
     callback_requested = "call me back" in lowered
@@ -1320,7 +1359,7 @@ def _secretary_intent_and_payload(
             "call customer and say ",
         ):
             if lowered.startswith(prefix):
-                outbound_text = normalized_text[len(prefix):].strip()
+                outbound_text = normalized_text[len(prefix) :].strip()
                 break
         if any(
             phrase in lowered
@@ -1338,7 +1377,13 @@ def _secretary_intent_and_payload(
 
     if any(
         phrase in lowered
-        for phrase in ("Ð½Ð°Ð¿Ð¸ÑˆÐ¸ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ñƒ", "message client", "text client", "sms client", "send sms")
+        for phrase in (
+            "Ð½Ð°Ð¿Ð¸ÑˆÐ¸ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ñƒ",
+            "message client",
+            "text client",
+            "sms client",
+            "send sms",
+        )
     ):
         outbound_text = normalized_text
         for prefix in (
@@ -1349,7 +1394,7 @@ def _secretary_intent_and_payload(
             "send sms that ",
         ):
             if lowered.startswith(prefix):
-                outbound_text = normalized_text[len(prefix):].strip()
+                outbound_text = normalized_text[len(prefix) :].strip()
                 break
         payload["message_text"] = outbound_text or normalized_text
         payload["summary"] = f"Send SMS: {payload['message_text']}"
@@ -1359,7 +1404,11 @@ def _secretary_intent_and_payload(
         phrase in lowered
         for phrase in ("new lead", "lead", "new customer", "new client")
     ):
-        phone_numbers = [str(item).strip() for item in contact.get("phone_numbers", []) if str(item).strip()]
+        phone_numbers = [
+            str(item).strip()
+            for item in contact.get("phone_numbers", [])
+            if str(item).strip()
+        ]
         payload.update(
             {
                 "name": _secretary_extract_name(normalized_text),
@@ -1373,7 +1422,15 @@ def _secretary_intent_and_payload(
 
     if any(
         phrase in lowered
-        for phrase in ("leaking faucet", "leak", "faucet", "plumber", "plumbing", "fix", "repair")
+        for phrase in (
+            "leaking faucet",
+            "leak",
+            "faucet",
+            "plumber",
+            "plumbing",
+            "fix",
+            "repair",
+        )
     ):
         return (
             "service_request",
@@ -1709,7 +1766,9 @@ def _filter_operator_tasks(
     elif normalized_status in {"done", "failed"}:
         allowed_statuses = {normalized_status}
     else:
-        raise HTTPException(status_code=400, detail="status must be one of: open, done, failed")
+        raise HTTPException(
+            status_code=400, detail="status must be one of: open, done, failed"
+        )
     return [
         dict(task)
         for task in tasks
@@ -2006,7 +2065,9 @@ def _run_product_task_internal(
             "task_id": str(getattr(payload, "task_id", "") or "").strip(),
             "objective": str(getattr(payload, "objective", "") or "").strip(),
             "scope_files": list(getattr(payload, "scope_files", []) or []),
-            "descriptor_path": str(getattr(payload, "descriptor_path", "") or "").strip(),
+            "descriptor_path": str(
+                getattr(payload, "descriptor_path", "") or ""
+            ).strip(),
             "descriptor_action": descriptor_action,
         }
     else:
@@ -2035,7 +2096,12 @@ def _run_product_task_internal(
                     result_summary=str(validation_gate.get("reason", "")).strip(),
                     task_id=task_id,
                 )
-        elif descriptor_action in {"RUN_TESTS", "BUILD_WEBSITE", "SYSTEM_STATUS", "RESOURCES"}:
+        elif descriptor_action in {
+            "RUN_TESTS",
+            "BUILD_WEBSITE",
+            "SYSTEM_STATUS",
+            "RESOURCES",
+        }:
             validation_gate = {
                 "valid": True,
                 "reason": "",
@@ -2088,9 +2154,7 @@ def _run_product_task_internal(
                 "orchestrated" if lifecycle_state == "completed" else "rejected"
             ),
             "validation_status": (
-                "passed"
-                if bool(validation_gate.get("valid", False))
-                else "failed"
+                "passed" if bool(validation_gate.get("valid", False)) else "failed"
             ),
             "lifecycle_state": lifecycle_state,
             "lifecycle_history": (
@@ -2257,7 +2321,9 @@ def _voice_history_response(
         f"ÐŸÐ¾ÑÐ»ÐµÐ´Ð½ÑÑ Ð·Ð°Ð´Ð°Ñ‡Ð° {latest.get('task_id', '')} ÑÐµÐ¹Ñ‡Ð°Ñ Ð² ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ð¸ {latest.get('lifecycle_state', 'unknown')}."
     ]
     if len(items) > 1:
-        spoken_lines.append(f"Ð’ÑÐµÐ³Ð¾ Ð² Ð¾Ñ‚Ñ‡Ñ‘Ñ‚Ðµ {len(items)} Ð¿Ð¾ÑÐ»ÐµÐ´Ð½Ð¸Ñ… Ð·Ð°Ð´Ð°Ñ‡.")
+        spoken_lines.append(
+            f"Ð’ÑÐµÐ³Ð¾ Ð² Ð¾Ñ‚Ñ‡Ñ‘Ñ‚Ðµ {len(items)} Ð¿Ð¾ÑÐ»ÐµÐ´Ð½Ð¸Ñ… Ð·Ð°Ð´Ð°Ñ‡."
+        )
     body = "\n".join(
         f"{item.get('task_id', '')}: {item.get('lifecycle_state', '')} - {item.get('objective', '')}"
         for item in items[:3]
@@ -2345,7 +2411,9 @@ def _voice_first_entry_with_sessions(
     if intent == "repeat":
         repeated_summary = str(session.get("last_response_summary", "")).strip()
         if not repeated_summary:
-            repeated_summary = "ÐœÐ½Ðµ Ð¿Ð¾ÐºÐ° Ð½ÐµÑ‡ÐµÐ³Ð¾ Ð¿Ð¾Ð²Ñ‚Ð¾Ñ€Ð¸Ñ‚ÑŒ Ð² ÑÑ‚Ð¾Ð¹ ÑÐµÑÑÐ¸Ð¸."
+            repeated_summary = (
+                "ÐœÐ½Ðµ Ð¿Ð¾ÐºÐ° Ð½ÐµÑ‡ÐµÐ³Ð¾ Ð¿Ð¾Ð²Ñ‚Ð¾Ñ€Ð¸Ñ‚ÑŒ Ð² ÑÑ‚Ð¾Ð¹ ÑÐµÑÑÐ¸Ð¸."
+            )
         session = _update_voice_session(
             session=session,
             payload=payload,
@@ -2634,7 +2702,9 @@ def _voice_history_response(
         f"{latest.get('lifecycle_state', 'unknown')}."
     )
     if len(items) > 1:
-        spoken_response += f" Ð’ÑÐµÐ³Ð¾ Ð² Ð¾Ñ‚Ñ‡Ñ‘Ñ‚Ðµ {len(items)} Ð¿Ð¾ÑÐ»ÐµÐ´Ð½Ð¸Ñ… Ð·Ð°Ð´Ð°Ñ‡."
+        spoken_response += (
+            f" Ð’ÑÐµÐ³Ð¾ Ð² Ð¾Ñ‚Ñ‡Ñ‘Ñ‚Ðµ {len(items)} Ð¿Ð¾ÑÐ»ÐµÐ´Ð½Ð¸Ñ… Ð·Ð°Ð´Ð°Ñ‡."
+        )
     body = "\n".join(
         f"{item.get('task_id', '')}: {item.get('lifecycle_state', '')} - {item.get('objective', '')}"
         for item in items[:3]
@@ -2836,9 +2906,7 @@ def _voice_first_entry_with_sessions(
             x_df_principal_token=x_df_principal_token,
         )
         if not resolved_task_id:
-            spoken_response = (
-                "ÐœÐ½Ðµ Ð½ÑƒÐ¶ÐµÐ½ Ð¸Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð·Ð°Ð´Ð°Ñ‡Ð¸, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð¾Ð·Ð²ÑƒÑ‡Ð¸Ñ‚ÑŒ ÐµÑ‘ ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ðµ."
-            )
+            spoken_response = "ÐœÐ½Ðµ Ð½ÑƒÐ¶ÐµÐ½ Ð¸Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð·Ð°Ð´Ð°Ñ‡Ð¸, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð¾Ð·Ð²ÑƒÑ‡Ð¸Ñ‚ÑŒ ÐµÑ‘ ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ðµ."
             session = _advance_voice_session(
                 session=session,
                 payload=payload,
@@ -3166,7 +3234,9 @@ def secretary_entry(
         session.get("pending_confirmation_payload", "")
     )
     session_id = session["session_id"]
-    is_confirmation_yes = pending_message is not None and _secretary_yes(payload.message)
+    is_confirmation_yes = pending_message is not None and _secretary_yes(
+        payload.message
+    )
     is_confirmation_no = pending_message is not None and _secretary_no(payload.message)
     trace_intent = ""
     trace_service_type = ""
@@ -3318,9 +3388,13 @@ def telnyx_voice_gateway_event(payload: VoiceGatewayEventRequest):
     )
     if session is None:
         raise HTTPException(status_code=404, detail="voice call session not found")
-    event_id = str(payload.event_id or "").strip() or f"voice-event-{uuid.uuid4().hex[:12]}"
+    event_id = (
+        str(payload.event_id or "").strip() or f"voice-event-{uuid.uuid4().hex[:12]}"
+    )
     if not register_processed_event(session["call_session_id"], event_id):
-        latest = find_call_session(call_session_id=session["call_session_id"]) or session
+        latest = (
+            find_call_session(call_session_id=session["call_session_id"]) or session
+        )
         return {
             "ok": True,
             "duplicate": True,
@@ -3395,7 +3469,15 @@ def telnyx_voice_gateway_event(payload: VoiceGatewayEventRequest):
             )
     elif normalized_event_type in {"final_asr", "speech_final"}:
         turn_started = time.monotonic()
-        session, _, _, runtime_validation, routing_contract, runtime_decision, runtime_verdict = _evaluate_voice_runtime_validation(
+        (
+            session,
+            _,
+            _,
+            runtime_validation,
+            routing_contract,
+            runtime_decision,
+            runtime_verdict,
+        ) = _evaluate_voice_runtime_validation(
             session,
             transcript=transcript,
             event_id=event_id,
@@ -3599,19 +3681,24 @@ async def telnyx_media_stream(call_session_id: str, websocket: WebSocket):
                 continue
             inbound = receive_task.result()
             frame = TelnyxMediaFrameRequest.model_validate(inbound)
-            stream_id = str(frame.stream_id or "").strip() or str(
-                dict(frame.payload).get("stream_id", "")
-            ).strip()
+            stream_id = (
+                str(frame.stream_id or "").strip()
+                or str(dict(frame.payload).get("stream_id", "")).strip()
+            )
             if stream_id:
                 update_voice_call_session(call_session_id, stream_id=stream_id)
-            transcript = _normalize_voice_text(frame.transcript or dict(frame.payload).get("transcript", ""))
+            transcript = _normalize_voice_text(
+                frame.transcript or dict(frame.payload).get("transcript", "")
+            )
             event_name = str(frame.event or "").strip().lower()
             if transcript:
                 telnyx_voice_gateway_event(
                     VoiceGatewayEventRequest(
                         call_session_id=call_session_id,
                         event_id=f"ws-{uuid.uuid4().hex[:12]}",
-                        event_type="speech_final" if event_name in {"media", "final"} else "speech_partial",
+                        event_type="speech_final"
+                        if event_name in {"media", "final"}
+                        else "speech_partial",
                         transcript=transcript,
                         stream_id=stream_id,
                         sequence_number=frame.sequence_number,
@@ -3637,7 +3724,9 @@ async def telnyx_media_stream(call_session_id: str, websocket: WebSocket):
                         sequence_number=frame.sequence_number,
                     )
                 )
-                await websocket.send_json({"event": "stream_stopped", "call_session_id": call_session_id})
+                await websocket.send_json(
+                    {"event": "stream_stopped", "call_session_id": call_session_id}
+                )
                 break
     except WebSocketDisconnect:
         disconnected_session = update_voice_call_session(
@@ -3714,7 +3803,9 @@ def list_operator_tasks(
     )
     return {
         "count": len(sorted_tasks),
-        "items": [_operator_task_item(task) for task in sorted_tasks[: max(0, int(limit))]],
+        "items": [
+            _operator_task_item(task) for task in sorted_tasks[: max(0, int(limit))]
+        ],
     }
 
 
@@ -4015,4 +4106,3 @@ def get_controlled_execution_report(
     if record is None:
         return {"detail": "controlled execution report not found", "task_id": task_id}
     return record
-

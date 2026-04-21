@@ -14,7 +14,8 @@ def _write_json(path: Path, payload: dict[str, object]) -> None:
 def _write_jsonl(path: Path, *entries: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        "\n".join(json.dumps(entry, ensure_ascii=True) for entry in entries) + ("\n" if entries else ""),
+        "\n".join(json.dumps(entry, ensure_ascii=True) for entry in entries)
+        + ("\n" if entries else ""),
         encoding="utf-8",
     )
 
@@ -42,20 +43,42 @@ def test_analyzer_detects_repeated_failures_and_delays() -> None:
     gaps = analyze_system_gap_inputs(
         task_contexts=[
             _task_context(task_id="TASK-1", status="FAILED", summary="Lead followup"),
-            _task_context(task_id="TASK-2", status="DEFERRED", summary="Invoice sync", payload={"summary": "Invoice sync", "offload_latency": 420}),
+            _task_context(
+                task_id="TASK-2",
+                status="DEFERRED",
+                summary="Invoice sync",
+                payload={"summary": "Invoice sync", "offload_latency": 420},
+            ),
         ],
         audit_events=[
-            {"timestamp": "2026-04-06T10:00:00Z", "event_type": "execution_failed", "task_id": "TASK-1"},
-            {"timestamp": "2026-04-06T10:01:00Z", "event_type": "execution_failed", "task_id": "TASK-1"},
-            {"timestamp": "2026-04-06T10:02:00Z", "event_type": "execution_deferred", "task_id": "TASK-2", "payload": {"delay_seconds": 420}},
+            {
+                "timestamp": "2026-04-06T10:00:00Z",
+                "event_type": "execution_failed",
+                "task_id": "TASK-1",
+            },
+            {
+                "timestamp": "2026-04-06T10:01:00Z",
+                "event_type": "execution_failed",
+                "task_id": "TASK-1",
+            },
+            {
+                "timestamp": "2026-04-06T10:02:00Z",
+                "event_type": "execution_deferred",
+                "task_id": "TASK-2",
+                "payload": {"delay_seconds": 420},
+            },
         ],
     )
 
     problems = {gap["problem"] for gap in gaps}
     assert any("Repeated failures detected" in problem for problem in problems)
     assert any("Repeated delays detected" in problem for problem in problems)
-    failure_gap = next(gap for gap in gaps if "Repeated failures detected" in gap["problem"])
-    delay_gap = next(gap for gap in gaps if "Repeated delays detected" in gap["problem"])
+    failure_gap = next(
+        gap for gap in gaps if "Repeated failures detected" in gap["problem"]
+    )
+    delay_gap = next(
+        gap for gap in gaps if "Repeated delays detected" in gap["problem"]
+    )
     assert failure_gap["impact_score"] == "high"
     assert failure_gap["frequency"] == 3
     assert failure_gap["priority_level"] == "high"
@@ -100,26 +123,50 @@ def test_analyzer_detects_missing_execution_path() -> None:
 def test_analyzer_detects_incomplete_flow() -> None:
     gaps = analyze_system_gap_inputs(
         task_contexts=[
-            _task_context(task_id="TASK-FLOW", status="EXECUTING", summary="Partial workflow"),
+            _task_context(
+                task_id="TASK-FLOW", status="EXECUTING", summary="Partial workflow"
+            ),
         ],
         audit_events=[
-            {"timestamp": "2026-04-06T10:00:00Z", "event_type": "execution_started", "task_id": "TASK-FLOW"},
-            {"timestamp": "2026-04-06T10:20:00Z", "event_type": "context_set", "task_id": "OTHER-TASK"},
+            {
+                "timestamp": "2026-04-06T10:00:00Z",
+                "event_type": "execution_started",
+                "task_id": "TASK-FLOW",
+            },
+            {
+                "timestamp": "2026-04-06T10:20:00Z",
+                "event_type": "context_set",
+                "task_id": "OTHER-TASK",
+            },
         ],
     )
 
-    assert any(gap["problem"] == "Incomplete flow detected for task `Partial workflow` (TASK-FLOW)." for gap in gaps)
+    assert any(
+        gap["problem"]
+        == "Incomplete flow detected for task `Partial workflow` (TASK-FLOW)."
+        for gap in gaps
+    )
 
 
-def test_analyzer_reads_shared_context_and_runtime_files(tmp_path: Path, monkeypatch) -> None:
-    env = {"ENV_ROLE": "local_dev", "DF_STORAGE_ROOT": str(tmp_path / "runtime" / "local_dev")}
+def test_analyzer_reads_shared_context_and_runtime_files(
+    tmp_path: Path, monkeypatch
+) -> None:
+    env = {
+        "ENV_ROLE": "local_dev",
+        "DF_STORAGE_ROOT": str(tmp_path / "runtime" / "local_dev"),
+    }
     storage_root = Path(env["DF_STORAGE_ROOT"])
     shared_context_dir = storage_root / "shared_context"
     active_threads_dir = shared_context_dir / "active_threads"
 
     _write_json(
         shared_context_dir / "system_context.json",
-        {"schema_version": "v1", "scope": "system", "updated_at": "", "value": {"known_gap": "No remediation task generator"}},
+        {
+            "schema_version": "v1",
+            "scope": "system",
+            "updated_at": "",
+            "value": {"known_gap": "No remediation task generator"},
+        },
     )
     _write_json(
         shared_context_dir / "global_context.json",
@@ -140,5 +187,9 @@ def test_analyzer_reads_shared_context_and_runtime_files(tmp_path: Path, monkeyp
 
     gaps = analyze_system(root_dir=tmp_path, environ=env)
 
-    assert any(gap["problem"] == "Shared context reports a known gap: No remediation task generator" for gap in gaps)
+    assert any(
+        gap["problem"]
+        == "Shared context reports a known gap: No remediation task generator"
+        for gap in gaps
+    )
     assert any("Missing execution path detected" in gap["problem"] for gap in gaps)

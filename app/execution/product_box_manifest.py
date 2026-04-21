@@ -9,7 +9,9 @@ from app.execution.paths import DATA_DIR, LOGS_DIR, STATE_DIR
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_PRODUCT_BOX_MANIFEST_PATH = PROJECT_ROOT / "config" / "product_box_manifest.json"
+DEFAULT_PRODUCT_BOX_MANIFEST_PATH = (
+    PROJECT_ROOT / "config" / "product_box_manifest.json"
+)
 
 
 class ProductBoxManifestError(ValueError):
@@ -48,9 +50,13 @@ def _read_manifest(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
-        raise ProductBoxManifestError(f"product box manifest is missing: {path}") from exc
+        raise ProductBoxManifestError(
+            f"product box manifest is missing: {path}"
+        ) from exc
     except json.JSONDecodeError as exc:
-        raise ProductBoxManifestError(f"product box manifest is invalid JSON: {exc}") from exc
+        raise ProductBoxManifestError(
+            f"product box manifest is invalid JSON: {exc}"
+        ) from exc
     if not isinstance(payload, dict):
         raise ProductBoxManifestError("product box manifest root must be an object")
     return payload
@@ -64,10 +70,14 @@ def _require_string_list(manifest: dict[str, Any], key: str) -> list[str]:
     for item in value:
         text = str(item or "").strip()
         if not text:
-            raise ProductBoxManifestError(f"manifest field `{key}` contains an empty entry")
+            raise ProductBoxManifestError(
+                f"manifest field `{key}` contains an empty entry"
+            )
         normalized.append(text)
     if len(normalized) != len(set(normalized)):
-        raise ProductBoxManifestError(f"manifest field `{key}` contains duplicate entries")
+        raise ProductBoxManifestError(
+            f"manifest field `{key}` contains duplicate entries"
+        )
     return normalized
 
 
@@ -90,7 +100,9 @@ def _matches_prefix(module_name: str, prefix: str) -> bool:
     return module_name == prefix or module_name.startswith(prefix + ".")
 
 
-def _validate_module_entries(root_dir: Path, entries: list[str], *, field_name: str) -> None:
+def _validate_module_entries(
+    root_dir: Path, entries: list[str], *, field_name: str
+) -> None:
     for entry in entries:
         if not _module_exists(root_dir, entry):
             raise ProductBoxManifestError(
@@ -98,13 +110,19 @@ def _validate_module_entries(root_dir: Path, entries: list[str], *, field_name: 
             )
 
 
-def _validate_path_entries(root_dir: Path, entries: list[str], *, field_name: str) -> list[str]:
+def _validate_path_entries(
+    root_dir: Path, entries: list[str], *, field_name: str
+) -> list[str]:
     normalized_entries = [_normalize_relative_path(entry) for entry in entries]
     if len(normalized_entries) != len(set(normalized_entries)):
-        raise ProductBoxManifestError(f"manifest field `{field_name}` contains duplicate entries")
+        raise ProductBoxManifestError(
+            f"manifest field `{field_name}` contains duplicate entries"
+        )
     for entry in normalized_entries:
         if not entry:
-            raise ProductBoxManifestError(f"manifest field `{field_name}` contains an empty path")
+            raise ProductBoxManifestError(
+                f"manifest field `{field_name}` contains an empty path"
+            )
         if not _path_exists(root_dir, entry):
             raise ProductBoxManifestError(
                 f"manifest field `{field_name}` references missing path `{entry}`"
@@ -115,10 +133,14 @@ def _validate_path_entries(root_dir: Path, entries: list[str], *, field_name: st
 def _normalize_path_entries(entries: list[str], *, field_name: str) -> list[str]:
     normalized_entries = [_normalize_relative_path(entry) for entry in entries]
     if len(normalized_entries) != len(set(normalized_entries)):
-        raise ProductBoxManifestError(f"manifest field `{field_name}` contains duplicate entries")
+        raise ProductBoxManifestError(
+            f"manifest field `{field_name}` contains duplicate entries"
+        )
     for entry in normalized_entries:
         if not entry:
-            raise ProductBoxManifestError(f"manifest field `{field_name}` contains an empty path")
+            raise ProductBoxManifestError(
+                f"manifest field `{field_name}` contains an empty path"
+            )
     return normalized_entries
 
 
@@ -159,14 +181,22 @@ def validate_product_box_manifest(
         field_name="optional_paths",
     )
 
-    _validate_module_entries(resolved_root, product_entrypoints, field_name="product_entrypoints")
-    _validate_module_entries(resolved_root, allowlist, field_name="product_runtime_allowlist")
+    _validate_module_entries(
+        resolved_root, product_entrypoints, field_name="product_entrypoints"
+    )
+    _validate_module_entries(
+        resolved_root, allowlist, field_name="product_runtime_allowlist"
+    )
     normalized_allowlist = [_normalize_module_pattern(entry) for entry in allowlist]
     normalized_blocked = [_normalize_module_pattern(entry) for entry in blocked_modules]
-    normalized_entrypoints = [_normalize_module_pattern(entry) for entry in product_entrypoints]
+    normalized_entrypoints = [
+        _normalize_module_pattern(entry) for entry in product_entrypoints
+    ]
 
     for entrypoint in normalized_entrypoints:
-        if not any(_matches_prefix(entrypoint, allowed) for allowed in normalized_allowlist):
+        if not any(
+            _matches_prefix(entrypoint, allowed) for allowed in normalized_allowlist
+        ):
             raise ProductBoxManifestError(
                 f"product entrypoint `{entrypoint}` must be covered by product_runtime_allowlist"
             )
@@ -181,17 +211,27 @@ def validate_product_box_manifest(
                 f"allowlisted module `{allowed}` conflicts with blocked_modules"
             )
 
-    if set(action.upper() for action in allowed_actions) & set(action.upper() for action in blocked_actions):
-        raise ProductBoxManifestError("allowed_actions and blocked_actions must not overlap")
+    if set(action.upper() for action in allowed_actions) & set(
+        action.upper() for action in blocked_actions
+    ):
+        raise ProductBoxManifestError(
+            "allowed_actions and blocked_actions must not overlap"
+        )
 
-    approved_writable_paths = {_normalize_relative_path(entry) for entry in APPROVED_WRITABLE_PATHS}
-    normalized_writable_paths = {_normalize_relative_path(entry) for entry in writable_paths}
+    approved_writable_paths = {
+        _normalize_relative_path(entry) for entry in APPROVED_WRITABLE_PATHS
+    }
+    normalized_writable_paths = {
+        _normalize_relative_path(entry) for entry in writable_paths
+    }
     if normalized_writable_paths != approved_writable_paths:
         raise ProductBoxManifestError(
             "writable_paths must be limited to the approved runtime storage paths"
         )
     if not normalized_writable_paths.issubset(set(required_runtime_paths)):
-        raise ProductBoxManifestError("writable_paths must also appear in required_runtime_paths")
+        raise ProductBoxManifestError(
+            "writable_paths must also appear in required_runtime_paths"
+        )
 
     path_sets = {
         "required_runtime_paths": set(required_runtime_paths),

@@ -74,8 +74,7 @@ class PrinterRuntime(Protocol):
         document_title: str,
         artifact_path: Path,
         timeout_seconds: int,
-    ) -> PrinterExecution:
-        ...
+    ) -> PrinterExecution: ...
 
 
 def _normalize_text(value: object) -> str:
@@ -116,11 +115,15 @@ def _validate_copies(value: object) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise ActionContractViolation("parameters.copies must be an integer")
     if value != 1:
-        raise ActionContractViolation("parameters.copies must equal 1 for printer adapter v1")
+        raise ActionContractViolation(
+            "parameters.copies must equal 1 for printer adapter v1"
+        )
     return value
 
 
-def validate_printer_action_parameters(parameters: Mapping[str, object]) -> dict[str, object]:
+def validate_printer_action_parameters(
+    parameters: Mapping[str, object],
+) -> dict[str, object]:
     normalized = dict(parameters)
     unexpected_fields = sorted(set(normalized) - SUPPORTED_PARAMETER_FIELDS)
     if unexpected_fields:
@@ -149,7 +152,9 @@ def validate_printer_action_parameters(parameters: Mapping[str, object]) -> dict
             max_length=MAX_DOCUMENT_TEXT_LENGTH,
         ),
         "copies": _validate_copies(normalized.get("copies")),
-        "printer_name": _normalize_optional_printer_name(normalized.get("printer_name")),
+        "printer_name": _normalize_optional_printer_name(
+            normalized.get("printer_name")
+        ),
     }
 
 
@@ -216,7 +221,10 @@ class PowerShellPrinterRuntime:
             raise PrinterAdapterError(
                 "timeout",
                 "printer action timed out",
-                diagnostic={"timeout_seconds": timeout_seconds, "reason": _normalize_text(exc)},
+                diagnostic={
+                    "timeout_seconds": timeout_seconds,
+                    "reason": _normalize_text(exc),
+                },
             ) from exc
         if completed.returncode != 0:
             stderr = _normalize_text(completed.stderr or completed.stdout)
@@ -233,13 +241,19 @@ class PowerShellPrinterRuntime:
                 )
                 else "provider_error"
             )
-            message = "printer is not available" if error_code == "device_not_available" else "printer backend failed"
+            message = (
+                "printer is not available"
+                if error_code == "device_not_available"
+                else "printer backend failed"
+            )
             raise PrinterAdapterError(
                 error_code,
                 message,
                 diagnostic={"stderr": stderr[:240], "returncode": completed.returncode},
             )
-        job_id = sha1(f"{action_id}|{printer_name}|{document_title}".encode("utf-8")).hexdigest()[:12]
+        job_id = sha1(
+            f"{action_id}|{printer_name}|{document_title}".encode("utf-8")
+        ).hexdigest()[:12]
         return PrinterExecution(
             result_type="print_document",
             summary=f"Printed '{document_title}' on {printer_name}",
@@ -266,7 +280,9 @@ def _validate_printer_action_contract(action_contract: object) -> dict[str, obje
         )
     return {
         **validated,
-        "parameters": validate_printer_action_parameters(_normalize_mapping(validated.get("parameters"))),
+        "parameters": validate_printer_action_parameters(
+            _normalize_mapping(validated.get("parameters"))
+        ),
     }
 
 
@@ -293,7 +309,9 @@ def _env_timeout_seconds() -> int | None:
 def _resolve_timeout_seconds(value: object | None) -> int:
     candidate = DEFAULT_TIMEOUT_SECONDS if value in (None, "") else value
     if isinstance(candidate, bool) or not isinstance(candidate, int):
-        raise PrinterAdapterError("validation_error", "printer timeout_seconds must be an integer")
+        raise PrinterAdapterError(
+            "validation_error", "printer timeout_seconds must be an integer"
+        )
     if candidate <= 0 or candidate > MAX_TIMEOUT_SECONDS:
         raise PrinterAdapterError(
             "validation_error",
@@ -310,25 +328,36 @@ def _resolve_printer_adapter_config(
     if isinstance(config, PrinterAdapterConfig):
         return config
     if not isinstance(config, Mapping):
-        raise PrinterAdapterError("validation_error", "printer adapter config must be a mapping")
+        raise PrinterAdapterError(
+            "validation_error", "printer adapter config must be a mapping"
+        )
     payload = dict(config)
-    unexpected_fields = sorted(set(payload) - {"enabled", "printer_name", "timeout_seconds"})
+    unexpected_fields = sorted(
+        set(payload) - {"enabled", "printer_name", "timeout_seconds"}
+    )
     if unexpected_fields:
         raise PrinterAdapterError(
             "validation_error",
-            "printer adapter config contains unsupported fields: " + ", ".join(unexpected_fields),
+            "printer adapter config contains unsupported fields: "
+            + ", ".join(unexpected_fields),
         )
     enabled = payload.get("enabled")
     if enabled is not None and not isinstance(enabled, bool):
-        raise PrinterAdapterError("validation_error", "printer adapter enabled must be a boolean")
+        raise PrinterAdapterError(
+            "validation_error", "printer adapter enabled must be a boolean"
+        )
     printer_name = payload.get("printer_name")
     if printer_name is not None and not isinstance(printer_name, str):
-        raise PrinterAdapterError("validation_error", "printer adapter printer_name must be a string")
+        raise PrinterAdapterError(
+            "validation_error", "printer adapter printer_name must be a string"
+        )
     timeout_seconds = payload.get("timeout_seconds")
     if timeout_seconds is not None and (
         isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, int)
     ):
-        raise PrinterAdapterError("validation_error", "printer adapter timeout_seconds must be an integer")
+        raise PrinterAdapterError(
+            "validation_error", "printer adapter timeout_seconds must be an integer"
+        )
     return PrinterAdapterConfig(
         enabled=enabled,
         printer_name=_normalize_text(printer_name) or None,
@@ -347,7 +376,9 @@ def _effective_printer_settings(
             "provider_not_configured",
             "printer adapter is not enabled",
         )
-    printer_name = _normalize_text(parameters.get("printer_name")) or _normalize_text(config.printer_name)
+    printer_name = _normalize_text(parameters.get("printer_name")) or _normalize_text(
+        config.printer_name
+    )
     if not printer_name:
         printer_name = _normalize_text(os.getenv(PRINTER_NAME_ENV_VAR))
     if not printer_name:
@@ -356,7 +387,9 @@ def _effective_printer_settings(
             "printer name is not configured",
         )
     timeout_seconds = _resolve_timeout_seconds(
-        config.timeout_seconds if config.timeout_seconds is not None else _env_timeout_seconds()
+        config.timeout_seconds
+        if config.timeout_seconds is not None
+        else _env_timeout_seconds()
     )
     return printer_name, timeout_seconds
 
@@ -430,7 +463,10 @@ def _failure_result(
 
 
 def _printable_artifact_path(action_id: str) -> Path:
-    safe_action_id = "".join(character if character.isalnum() or character in "._-" else "_" for character in action_id)
+    safe_action_id = "".join(
+        character if character.isalnum() or character in "._-" else "_"
+        for character in action_id
+    )
     return ROOT_DIR / PRINT_ARTIFACT_DIR / f"{safe_action_id}.txt"
 
 
@@ -442,7 +478,9 @@ def _write_printable_artifact(
 ) -> Path:
     artifact_path = _printable_artifact_path(action_id)
     artifact_path.parent.mkdir(parents=True, exist_ok=True)
-    rendered_document = f"{document_title}\n{'=' * len(document_title)}\n\n{document_text}\n"
+    rendered_document = (
+        f"{document_title}\n{'=' * len(document_title)}\n\n{document_text}\n"
+    )
     artifact_path.write_text(rendered_document, encoding="utf-8")
     return artifact_path
 
@@ -454,7 +492,10 @@ def execute_printer_action(
     config: PrinterAdapterConfig | Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     started_at = time.monotonic()
-    action_id = _normalize_text(_normalize_mapping(action_contract).get("action_id")) or "unknown_action"
+    action_id = (
+        _normalize_text(_normalize_mapping(action_contract).get("action_id"))
+        or "unknown_action"
+    )
     backend_used = _runtime_backend_name(runtime)
     printer_name: str | None = None
     try:

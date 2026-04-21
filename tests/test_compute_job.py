@@ -80,7 +80,9 @@ def test_create_compute_job_persists_queued_job_and_trace(
 
     output = capsys.readouterr().out
     job_path = tmp_path / "df-dev" / "compute" / "jobs" / "job-dev-queued.json"
-    trace_path = tmp_path / "df-dev" / "compute" / "traces" / "job-dev-queued" / "queued.json"
+    trace_path = (
+        tmp_path / "df-dev" / "compute" / "traces" / "job-dev-queued" / "queued.json"
+    )
     state = get_state("compute_job", "job-dev-queued", domain="dev")
     record = _read_json(job_path)
     trace_record = _read_json(trace_path)
@@ -99,7 +101,10 @@ def test_create_compute_job_persists_queued_job_and_trace(
     assert trace_record["memory_class"] == "trace"
     assert trace_record["payload"]["job_id"] == "job-dev-queued"
     assert trace_record["payload"]["source_task_id"] == "TASK-101"
-    assert trace_record["payload"]["storage_path"] == "DF/dev/compute/jobs/job-dev-queued.json"
+    assert (
+        trace_record["payload"]["storage_path"]
+        == "DF/dev/compute/jobs/job-dev-queued.json"
+    )
     assert trace_record["refs"] == [str(job_path), "task:TASK-101"]
     assert state is not None
     assert state["state"] == "queued"
@@ -107,7 +112,10 @@ def test_create_compute_job_persists_queued_job_and_trace(
     assert registry_entry is not None
     assert registry_entry["local_path"] == str(job_path)
     assert get_compute_job("job-dev-queued") == job
-    assert compute_job_contract_path("dev", "job-dev-queued") == "DF/dev/compute/jobs/job-dev-queued.json"
+    assert (
+        compute_job_contract_path("dev", "job-dev-queued")
+        == "DF/dev/compute/jobs/job-dev-queued.json"
+    )
     assert "[COMPUTE] queued job=job-dev-queued mode=local_gpu" in output
 
 
@@ -124,7 +132,9 @@ def test_start_and_complete_compute_job_preserve_state_history_and_result_artifa
             "2026-04-14T10:00:02Z",
         ]
     )
-    monkeypatch.setattr(state_store_module, "_utc_timestamp", lambda: next(state_timestamps))
+    monkeypatch.setattr(
+        state_store_module, "_utc_timestamp", lambda: next(state_timestamps)
+    )
 
     create_compute_job(
         job_id="job-owner-complete",
@@ -151,9 +161,16 @@ def test_start_and_complete_compute_job_preserve_state_history_and_result_artifa
 
     output = capsys.readouterr().out
     job_path = tmp_path / "ownerbox" / "compute" / "jobs" / "job-owner-complete.json"
-    result_path = tmp_path / "ownerbox" / "compute" / "results" / "job-owner-complete.json"
+    result_path = (
+        tmp_path / "ownerbox" / "compute" / "results" / "job-owner-complete.json"
+    )
     completed_trace_path = (
-        tmp_path / "ownerbox" / "compute" / "traces" / "job-owner-complete" / "completed.json"
+        tmp_path
+        / "ownerbox"
+        / "compute"
+        / "traces"
+        / "job-owner-complete"
+        / "completed.json"
     )
     state = get_state("compute_job", "job-owner-complete", domain="ownerbox")
     history_dir = tmp_path / "ownerbox" / "state" / "compute_job" / "history"
@@ -164,7 +181,9 @@ def test_start_and_complete_compute_job_preserve_state_history_and_result_artifa
     result_record = _read_json(result_path)
     completed_trace_record = _read_json(completed_trace_path)
     result_entry = memory_registry.get_artifact_by_logical_key(
-        memory_registry.compute_artifact_key("ownerbox", "compute_result", "job-owner-complete")
+        memory_registry.compute_artifact_key(
+            "ownerbox", "compute_result", "job-owner-complete"
+        )
     )
 
     assert running_job["status"] == "running"
@@ -239,7 +258,9 @@ def test_fail_compute_job_creates_failed_result_artifact_and_failed_state(
 
     output = capsys.readouterr().out
     result_path = tmp_path / "df-dev" / "compute" / "results" / "job-dev-fail.json"
-    failed_trace_path = tmp_path / "df-dev" / "compute" / "traces" / "job-dev-fail" / "failed.json"
+    failed_trace_path = (
+        tmp_path / "df-dev" / "compute" / "traces" / "job-dev-fail" / "failed.json"
+    )
     state = get_state("compute_job", "job-dev-fail", domain="dev")
     result_record = _read_json(result_path)
     failed_trace_record = _read_json(failed_trace_path)
@@ -308,7 +329,9 @@ def test_compute_job_domain_isolation_is_preserved(
         memory_registry.compute_artifact_key("dev", "compute_job", dev_job["job_id"])
     )
     owner_entry = memory_registry.get_artifact_by_logical_key(
-        memory_registry.compute_artifact_key("ownerbox", "compute_job", owner_job["job_id"])
+        memory_registry.compute_artifact_key(
+            "ownerbox", "compute_job", owner_job["job_id"]
+        )
     )
 
     assert dev_entry is not None
@@ -321,7 +344,11 @@ def test_compute_job_domain_isolation_is_preserved(
     )
     assert get_state("compute_job", "job-dev-isolated", domain="dev") is not None
     assert get_state("compute_job", "job-owner-isolated", domain="ownerbox") is not None
-    assert [state["entity_id"] for state in list_active_states("dev")] == ["job-dev-isolated"]
-    assert [state["entity_id"] for state in list_active_states("ownerbox")] == ["job-owner-isolated"]
+    assert [state["entity_id"] for state in list_active_states("dev")] == [
+        "job-dev-isolated"
+    ]
+    assert [state["entity_id"] for state in list_active_states("ownerbox")] == [
+        "job-owner-isolated"
+    ]
     assert get_compute_job("job-dev-isolated") == dev_job
     assert get_compute_job("job-owner-isolated") == owner_job

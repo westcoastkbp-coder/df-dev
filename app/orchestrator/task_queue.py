@@ -49,7 +49,9 @@ class InMemoryTaskQueue:
 
     def _write_queue(self, queue_entries: list[dict[str, str]]) -> None:
         self._ensure_files()
-        TASK_QUEUE_FILE.write_text(json.dumps(queue_entries, indent=2), encoding="utf-8")
+        TASK_QUEUE_FILE.write_text(
+            json.dumps(queue_entries, indent=2), encoding="utf-8"
+        )
 
     def _log(self, action: str, task_id: str) -> None:
         self._ensure_files()
@@ -126,7 +128,9 @@ class InMemoryTaskQueue:
             for index, entry in enumerate(queue_entries):
                 if entry["task_id"] != normalized_task_id:
                     continue
-                updated_entries = list(queue_entries[:index]) + list(queue_entries[index + 1 :])
+                updated_entries = list(queue_entries[:index]) + list(
+                    queue_entries[index + 1 :]
+                )
                 self._write_queue(updated_entries)
                 self._in_flight_task_ids.discard(normalized_task_id)
                 self._log("dequeue", normalized_task_id)

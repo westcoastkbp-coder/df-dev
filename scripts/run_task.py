@@ -78,7 +78,9 @@ def _normalize_retry_count(value: Any, *, default: int) -> int:
 
 def run_task(task_path: Path = TASK_PATH) -> dict[str, Any]:
     task = _load_task(task_path)
-    task["retries"] = _normalize_retry_count(task.get("retries"), default=DEFAULT_RETRIES)
+    task["retries"] = _normalize_retry_count(
+        task.get("retries"), default=DEFAULT_RETRIES
+    )
     task["max_retries"] = _normalize_retry_count(
         task.get("max_retries"),
         default=DEFAULT_MAX_RETRIES,
@@ -95,7 +97,9 @@ def run_task(task_path: Path = TASK_PATH) -> dict[str, Any]:
         or ("success" if result["status"] == "success" else "failed")
     )
 
-    task["result"]["status"] = "success" if verification_status == "success" else "failed"
+    task["result"]["status"] = (
+        "success" if verification_status == "success" else "failed"
+    )
     task["result"]["output"] = result
     task["verification"]["status"] = verification_status
 

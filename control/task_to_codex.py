@@ -63,7 +63,9 @@ def _has_explicit_scope(task_packet: dict[str, Any]) -> bool:
             return True
         if isinstance(value, dict) and value:
             return True
-        if isinstance(value, (list, tuple)) and any(str(item or "").strip() for item in value):
+        if isinstance(value, (list, tuple)) and any(
+            str(item or "").strip() for item in value
+        ):
             return True
     return False
 
@@ -125,7 +127,9 @@ def build_codex_task(task_packet: dict[str, Any]) -> dict[str, Any]:
     if isinstance(task_packet.get("personal_context_update"), dict):
         provided_file_paths = task_packet.get("file_paths")
         codex_task["task_type"] = PERSONAL_CONTEXT_TASK_TYPE
-        codex_task["personal_context_update"] = copy.deepcopy(task_packet["personal_context_update"])
+        codex_task["personal_context_update"] = copy.deepcopy(
+            task_packet["personal_context_update"]
+        )
         if provided_file_paths is None:
             codex_task["file_paths"] = list(PERSONAL_CONTEXT_FILE_PATHS)
         elif isinstance(provided_file_paths, (list, tuple)):

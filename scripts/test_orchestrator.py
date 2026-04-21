@@ -38,7 +38,9 @@ def test_orchestrate_derives_state_after_pending_task(monkeypatch, tmp_path) -> 
     assert calls == ["run:task_write_file.json", "derive"]
 
 
-def test_orchestrate_skips_completed_and_logs_failed(monkeypatch, tmp_path, capsys) -> None:
+def test_orchestrate_skips_completed_and_logs_failed(
+    monkeypatch, tmp_path, capsys
+) -> None:
     tasks_dir = tmp_path / "tasks"
     tasks_dir.mkdir()
     queue_path = tasks_dir / "task_queue.json"
@@ -135,7 +137,9 @@ def test_orchestrate_logs_newly_failed_execution(monkeypatch, tmp_path, capsys) 
     assert "FAILED_TASK: task_pending retries=2 max_retries=3" in output
 
 
-def test_derive_state_rewrites_current_state_from_event_log(monkeypatch, tmp_path) -> None:
+def test_derive_state_rewrites_current_state_from_event_log(
+    monkeypatch, tmp_path
+) -> None:
     event_log_path = tmp_path / "event_log.jsonl"
     state_path = tmp_path / "current_state.json"
     event_log_path.write_text(

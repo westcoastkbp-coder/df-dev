@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import uuid
@@ -250,4 +250,3 @@ def update_session(
     records.append(updated)
     save_sessions(records)
     return updated
-

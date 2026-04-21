@@ -19,9 +19,7 @@ def test_build_execution_comment_is_traceable() -> None:
     )
 
     assert comment == (
-        "Execution completed.\n"
-        "Artifact: artifacts/task-9.txt\n"
-        "Commit: abc123def456"
+        "Execution completed.\nArtifact: artifacts/task-9.txt\nCommit: abc123def456"
     )
 
 
@@ -31,10 +29,7 @@ def test_build_execution_comment_omits_commit_when_unavailable() -> None:
         commit_hash=None,
     )
 
-    assert comment == (
-        "Execution completed.\n"
-        "Artifact: artifacts/task-9.txt"
-    )
+    assert comment == ("Execution completed.\nArtifact: artifacts/task-9.txt")
 
 
 def test_build_done_label_names_replaces_in_progress_status() -> None:
@@ -78,7 +73,9 @@ def test_build_validation_failed_comment_is_traceable() -> None:
     )
 
 
-def test_update_issue_execution_status_comments_and_sets_done_labels(monkeypatch) -> None:
+def test_update_issue_execution_status_comments_and_sets_done_labels(
+    monkeypatch,
+) -> None:
     captured: dict[str, object] = {}
 
     class FakeIssue:
@@ -168,7 +165,9 @@ def test_update_issue_execution_status_allows_missing_commit_hash(monkeypatch) -
     }
 
 
-def test_mark_issue_validation_failed_comments_and_sets_failed_labels(monkeypatch) -> None:
+def test_mark_issue_validation_failed_comments_and_sets_failed_labels(
+    monkeypatch,
+) -> None:
     captured: dict[str, object] = {}
 
     class FakeIssue:

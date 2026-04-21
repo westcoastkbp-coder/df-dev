@@ -6,18 +6,14 @@ LOG_PATH = Path(__file__).resolve().with_name("audit_log.jsonl")
 
 
 def build_audit_entry(
-    module: str,
-    status: str,
-    local_test: str,
-    review: str,
-    git: dict
+    module: str, status: str, local_test: str, review: str, git: dict
 ) -> dict:
     return {
         "module": module,
         "status": status,
         "local_test": local_test,
         "review": review,
-        "git": git
+        "git": git,
     }
 
 

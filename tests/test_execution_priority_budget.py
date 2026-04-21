@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -9,10 +9,14 @@ import app.orchestrator.task_queue as task_queue_module
 import app.orchestrator.task_worker as task_worker_module
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 
 
 def _build_task(
@@ -44,8 +48,14 @@ def _read_priority_log(log_file: Path) -> list[dict[str, object]]:
 
 
 def _configure_queue_runtime(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setattr(task_queue_module, "TASK_QUEUE_FILE", tmp_path / "runtime" / "state" / "task_queue.json")
-    monkeypatch.setattr(task_queue_module, "TASK_LOG_FILE", tmp_path / "runtime" / "logs" / "tasks.log")
+    monkeypatch.setattr(
+        task_queue_module,
+        "TASK_QUEUE_FILE",
+        tmp_path / "runtime" / "state" / "task_queue.json",
+    )
+    monkeypatch.setattr(
+        task_queue_module, "TASK_LOG_FILE", tmp_path / "runtime" / "logs" / "tasks.log"
+    )
 
 
 def test_priority_ordering_correct(monkeypatch, tmp_path: Path) -> None:
@@ -65,11 +75,14 @@ def test_priority_ordering_correct(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(
         task_worker_module,
         "run_execution",
-        lambda task_data, **_: executed_order.append(str(task_data["task_id"])) or {
-            **task_data,
-            "status": "completed",
-            "result": {"summary": "done"},
-        },
+        lambda task_data, **_: (
+            executed_order.append(str(task_data["task_id"]))
+            or {
+                **task_data,
+                "status": "completed",
+                "result": {"summary": "done"},
+            }
+        ),
     )
 
     for task_id in ("task-low", "task-critical", "task-high"):
@@ -79,7 +92,9 @@ def test_priority_ordering_correct(monkeypatch, tmp_path: Path) -> None:
         process_next_queued_task(
             queue=queue,
             fetch_task=lambda task_id: tasks.get(task_id),
-            persist=lambda task_data: tasks[str(task_data["task_id"])].update(task_data),
+            persist=lambda task_data: tasks[str(task_data["task_id"])].update(
+                task_data
+            ),
             timeout=0.0,
             decision_resolver=lambda *args, **kwargs: {"execution_mode": "LOCAL"},
             telemetry_collector=lambda: {},
@@ -105,11 +120,14 @@ def test_fifo_preserved_within_same_priority(monkeypatch, tmp_path: Path) -> Non
     monkeypatch.setattr(
         task_worker_module,
         "run_execution",
-        lambda task_data, **_: executed_order.append(str(task_data["task_id"])) or {
-            **task_data,
-            "status": "completed",
-            "result": {"summary": "done"},
-        },
+        lambda task_data, **_: (
+            executed_order.append(str(task_data["task_id"]))
+            or {
+                **task_data,
+                "status": "completed",
+                "result": {"summary": "done"},
+            }
+        ),
     )
 
     assert queue.enqueue_task("task-high-1") is True
@@ -144,8 +162,12 @@ def test_budget_skip_triggers_structured_signal(monkeypatch, tmp_path: Path) -> 
 
     queue = InMemoryTaskQueue()
     tasks = {
-        "task-critical-heavy": _build_task("task-critical-heavy", priority="CRITICAL", intent="estimate"),
-        "task-high-heavy": _build_task("task-high-heavy", priority="HIGH", intent="follow_up"),
+        "task-critical-heavy": _build_task(
+            "task-critical-heavy", priority="CRITICAL", intent="estimate"
+        ),
+        "task-high-heavy": _build_task(
+            "task-high-heavy", priority="HIGH", intent="follow_up"
+        ),
     }
     assert queue.enqueue_task("task-critical-heavy") is True
     assert queue.enqueue_task("task-high-heavy") is True
@@ -178,7 +200,9 @@ def test_budget_skip_triggers_structured_signal(monkeypatch, tmp_path: Path) -> 
     assert log_entries[-1]["skipped_tasks"][0]["task_id"] == "task-critical-heavy"
 
 
-def test_system_continues_with_next_budget_eligible_task(monkeypatch, tmp_path: Path) -> None:
+def test_system_continues_with_next_budget_eligible_task(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_queue_runtime(monkeypatch, tmp_path)
     log_file = tmp_path / "runtime" / "logs" / "execution_priority.jsonl"
     monkeypatch.setattr(task_worker_module, "EXECUTION_PRIORITY_LOG_FILE", log_file)
@@ -186,19 +210,26 @@ def test_system_continues_with_next_budget_eligible_task(monkeypatch, tmp_path: 
 
     queue = InMemoryTaskQueue()
     tasks = {
-        "task-critical-heavy": _build_task("task-critical-heavy", priority="CRITICAL", intent="estimate"),
-        "task-normal-cheap": _build_task("task-normal-cheap", priority="NORMAL", intent="generic_task"),
+        "task-critical-heavy": _build_task(
+            "task-critical-heavy", priority="CRITICAL", intent="estimate"
+        ),
+        "task-normal-cheap": _build_task(
+            "task-normal-cheap", priority="NORMAL", intent="generic_task"
+        ),
     }
     executed_order: list[str] = []
 
     monkeypatch.setattr(
         task_worker_module,
         "run_execution",
-        lambda task_data, **_: executed_order.append(str(task_data["task_id"])) or {
-            **task_data,
-            "status": "completed",
-            "result": {"summary": "done"},
-        },
+        lambda task_data, **_: (
+            executed_order.append(str(task_data["task_id"]))
+            or {
+                **task_data,
+                "status": "completed",
+                "result": {"summary": "done"},
+            }
+        ),
     )
 
     assert queue.enqueue_task("task-critical-heavy") is True
@@ -253,11 +284,14 @@ def test_no_execution_behavior_change_otherwise(monkeypatch, tmp_path: Path) -> 
     monkeypatch.setattr(
         task_worker_module,
         "run_execution",
-        lambda task_data, **_: executed_order.append(str(task_data["task_id"])) or {
-            **task_data,
-            "status": "completed",
-            "result": {"summary": "done"},
-        },
+        lambda task_data, **_: (
+            executed_order.append(str(task_data["task_id"]))
+            or {
+                **task_data,
+                "status": "completed",
+                "result": {"summary": "done"},
+            }
+        ),
     )
 
     assert queue.enqueue_task("task-default") is True
@@ -278,4 +312,3 @@ def test_no_execution_behavior_change_otherwise(monkeypatch, tmp_path: Path) -> 
     log_entries = _read_priority_log(log_file)
     assert log_entries[-1]["selected_task"] == "task-default"
     assert log_entries[-1]["reason"] == "selected_for_execution"
-

@@ -29,7 +29,11 @@ def load_batch_leads(input_path: Path) -> list[dict[str, object]]:
 
 
 def load_real_lead_input_from_payload(payload: object) -> dict[str, object]:
-    return load_real_lead_input(None) if payload is None else _normalize_batch_item(payload)
+    return (
+        load_real_lead_input(None)
+        if payload is None
+        else _normalize_batch_item(payload)
+    )
 
 
 def _normalize_batch_item(payload: object) -> dict[str, object]:
@@ -55,7 +59,11 @@ def run_real_lead_batch(
     output_dir: Path | None = None,
 ) -> dict[str, object]:
     target_store = Path(store_path) if store_path is not None else TASKS_FILE
-    reports_dir = Path(output_dir) if output_dir is not None else ROOT_DIR / INDIVIDUAL_REPORTS_DIR
+    reports_dir = (
+        Path(output_dir)
+        if output_dir is not None
+        else ROOT_DIR / INDIVIDUAL_REPORTS_DIR
+    )
     reports_dir.mkdir(parents=True, exist_ok=True)
     batch_id = _batch_id(leads)
 
@@ -83,10 +91,14 @@ def run_real_lead_batch(
             failure_distribution[failure_class] += 1
 
     total_runs = len(individual_reports)
-    passed_runs = sum(1 for item in individual_reports if item["report"].get("pass_fail") == "pass")
+    passed_runs = sum(
+        1 for item in individual_reports if item["report"].get("pass_fail") == "pass"
+    )
     failed_runs = total_runs - passed_runs
     manual_review_count = sum(
-        1 for item in individual_reports if item["report"].get("next_action") == "manual_review"
+        1
+        for item in individual_reports
+        if item["report"].get("next_action") == "manual_review"
     )
     most_common_failure = "none"
     max_count = 0
@@ -121,7 +133,9 @@ def write_batch_report(
         store_path=store_path,
         output_dir=reports_dir,
     )
-    target = Path(output_path) if output_path is not None else ROOT_DIR / BATCH_REPORT_FILE
+    target = (
+        Path(output_path) if output_path is not None else ROOT_DIR / BATCH_REPORT_FILE
+    )
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return target

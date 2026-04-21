@@ -19,7 +19,9 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
     if config.getoption("--run-longrun"):
         return
     selected: list[pytest.Item] = []
@@ -50,4 +52,6 @@ def _allow_feature_branch_codex_loop_tests(monkeypatch: pytest.MonkeyPatch) -> N
         "build_codex_execution_prompt",
         lambda prompt, **kwargs: prompt,
     )
-    monkeypatch.setattr(codex_loop, "extract_last_failing_test", lambda *args, **kwargs: "")
+    monkeypatch.setattr(
+        codex_loop, "extract_last_failing_test", lambda *args, **kwargs: ""
+    )

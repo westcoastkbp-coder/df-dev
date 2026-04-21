@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -20,10 +20,14 @@ from app.execution.lead_estimate_decision import (
 )
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 
 
 def _read_jsonl(path: Path) -> list[dict[str, object]]:
@@ -39,9 +43,15 @@ def _read_jsonl(path: Path) -> list[dict[str, object]]:
 def _configure_task_runtime(monkeypatch, tmp_path: Path) -> Path:
     task_store_path = tmp_path / "data" / "tasks.json"
     monkeypatch.setattr(task_memory_module, "ROOT_DIR", tmp_path)
-    monkeypatch.setattr(task_memory_module, "TASK_MEMORY_FILE", Path("runtime/state/task_memory.json"))
+    monkeypatch.setattr(
+        task_memory_module, "TASK_MEMORY_FILE", Path("runtime/state/task_memory.json")
+    )
     monkeypatch.setattr(task_state_store_module, "ROOT_DIR", tmp_path)
-    monkeypatch.setattr(task_state_store_module, "TASK_STATE_DB_FILE", Path("runtime/state/task_state.sqlite3"))
+    monkeypatch.setattr(
+        task_state_store_module,
+        "TASK_STATE_DB_FILE",
+        Path("runtime/state/task_state.sqlite3"),
+    )
     monkeypatch.setattr(paths_module, "TASKS_FILE", task_store_path)
     monkeypatch.setattr(lead_estimate_decision_module, "TASKS_FILE", task_store_path)
     task_factory_module.clear_task_runtime_store()
@@ -201,7 +211,9 @@ def test_resolve_estimate_decision_is_deterministic() -> None:
     assert first == second
 
 
-def test_lead_estimate_execution_logs_decision_and_policy(monkeypatch, tmp_path: Path) -> None:
+def test_lead_estimate_execution_logs_decision_and_policy(
+    monkeypatch, tmp_path: Path
+) -> None:
     logs_dir = tmp_path / "runtime" / "logs"
     queue_file = tmp_path / "runtime" / "state" / "task_queue.json"
     task_log_file = logs_dir / "tasks.log"
@@ -262,7 +274,9 @@ def test_lead_estimate_execution_logs_decision_and_policy(monkeypatch, tmp_path:
     }
     assert binding["binding_action"] == "create_estimate_task"
     assert binding["child_task_created"] is True
-    child_task = task_factory_module.get_task(str(binding["child_task_id"]), store_path=task_store_path)
+    child_task = task_factory_module.get_task(
+        str(binding["child_task_id"]), store_path=task_store_path
+    )
     assert child_task is not None
     assert child_task["intent"] == "estimate_task"
     assert child_task["payload"]["parent_task_id"] == "DF-LEAD-ESTIMATE-DECISION-V1"
@@ -290,7 +304,8 @@ def test_lead_estimate_execution_logs_decision_and_policy(monkeypatch, tmp_path:
     assert any(
         entry["event_type"] == "workflow"
         and entry["details"].get("message", "").find("decision=create_estimate") >= 0
-        and entry["details"].get("message", "").find("next_step=create_estimate_task") >= 0
+        and entry["details"].get("message", "").find("next_step=create_estimate_task")
+        >= 0
         for entry in system_log
     )
     assert any(
@@ -340,7 +355,9 @@ def test_lead_estimate_binding_shape_is_stable(monkeypatch, tmp_path: Path) -> N
     }
 
 
-def test_lead_estimate_execution_invalid_payload_blocked(monkeypatch, tmp_path: Path) -> None:
+def test_lead_estimate_execution_invalid_payload_blocked(
+    monkeypatch, tmp_path: Path
+) -> None:
     logs_dir = tmp_path / "runtime" / "logs"
     queue_file = tmp_path / "runtime" / "state" / "task_queue.json"
     task_log_file = logs_dir / "tasks.log"
@@ -400,7 +417,9 @@ def test_lead_estimate_execution_invalid_payload_blocked(monkeypatch, tmp_path: 
     )
 
 
-def test_decision_request_missing_scope_creates_child_task(monkeypatch, tmp_path: Path) -> None:
+def test_decision_request_missing_scope_creates_child_task(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_task_runtime(monkeypatch, tmp_path)
     decision = resolve_estimate_decision(
         task_id="DF-LEAD-ESTIMATE-DECISION-V1",
@@ -439,13 +458,17 @@ def test_decision_request_missing_scope_creates_child_task(monkeypatch, tmp_path
 
     assert binding["binding_action"] == "request_missing_scope"
     assert binding["child_task_created"] is True
-    child_task = task_factory_module.get_task(str(binding["child_task_id"]), store_path=task_store_path)
+    child_task = task_factory_module.get_task(
+        str(binding["child_task_id"]), store_path=task_store_path
+    )
     assert child_task is not None
     assert child_task["intent"] == "missing_scope_followup"
     assert child_task["payload"]["reason_code"] == "insufficient_scope"
 
 
-def test_decision_archive_lead_updates_result_without_child(monkeypatch, tmp_path: Path) -> None:
+def test_decision_archive_lead_updates_result_without_child(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_task_runtime(monkeypatch, tmp_path)
     decision = resolve_estimate_decision(
         task_id="DF-LEAD-ESTIMATE-DECISION-V1",
@@ -528,13 +551,17 @@ def test_decision_manual_review_creates_child_task(monkeypatch, tmp_path: Path) 
 
     assert binding["binding_action"] == "manual_review"
     assert binding["child_task_created"] is True
-    child_task = task_factory_module.get_task(str(binding["child_task_id"]), store_path=task_store_path)
+    child_task = task_factory_module.get_task(
+        str(binding["child_task_id"]), store_path=task_store_path
+    )
     assert child_task is not None
     assert child_task["intent"] == "manual_review_task"
     assert child_task["payload"]["action_source"] == WORKFLOW_TYPE
 
 
-def test_invalid_decision_payload_blocked_before_binding(monkeypatch, tmp_path: Path) -> None:
+def test_invalid_decision_payload_blocked_before_binding(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_task_runtime(monkeypatch, tmp_path)
     try:
         lead_estimate_decision_module.bind_decision_action(
@@ -600,7 +627,9 @@ def test_decision_binding_result_has_minimal_decision_and_expected_action(
     assert binding["reason_code"] == "project_defined"
 
 
-def test_invalid_decision_contract_blocks_execution_binding(monkeypatch, tmp_path: Path) -> None:
+def test_invalid_decision_contract_blocks_execution_binding(
+    monkeypatch, tmp_path: Path
+) -> None:
     logs_dir = tmp_path / "runtime" / "logs"
     queue_file = tmp_path / "runtime" / "state" / "task_queue.json"
     task_log_file = logs_dir / "tasks.log"
@@ -633,7 +662,11 @@ def test_invalid_decision_contract_blocks_execution_binding(monkeypatch, tmp_pat
     )
 
     def fetch_task(task_id: str) -> dict[str, object] | None:
-        return task_data if task_id == "DF-LEAD-ESTIMATE-DECISION-CONTRACT-BLOCK-V1" else None
+        return (
+            task_data
+            if task_id == "DF-LEAD-ESTIMATE-DECISION-CONTRACT-BLOCK-V1"
+            else None
+        )
 
     def persist(updated_task: dict[str, object]) -> None:
         task_data.update(updated_task)
@@ -672,4 +705,3 @@ def test_invalid_decision_contract_blocks_execution_binding(monkeypatch, tmp_pat
     assert executed_task is not None
     assert executed_task["status"] == "FAILED"
     assert "invalid next_step" in str(executed_task.get("error", ""))
-

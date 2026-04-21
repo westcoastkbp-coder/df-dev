@@ -33,7 +33,9 @@ def _configure_runner_runtime(monkeypatch, tmp_path: Path) -> Path:
     )
     monkeypatch.setattr(paths_module, "TASKS_FILE", task_store_path)
     monkeypatch.setattr(lead_estimate_decision_module, "TASKS_FILE", task_store_path)
-    monkeypatch.setattr(system_log_module, "TASK_LOG_FILE", tmp_path / "runtime" / "logs" / "tasks.log")
+    monkeypatch.setattr(
+        system_log_module, "TASK_LOG_FILE", tmp_path / "runtime" / "logs" / "tasks.log"
+    )
     task_factory_module.clear_task_runtime_store()
     return task_store_path
 
@@ -65,11 +67,18 @@ def test_real_lead_runner_qualified_lead(monkeypatch, tmp_path: Path) -> None:
     assert report["failure_class"] == "none"
     policy_entries = _read_jsonl(policy_log_file)
     system_entries = _read_jsonl(system_log_file)
-    assert any("input contract valid" in entry["details"]["reason"] for entry in policy_entries)
-    assert any("real lead input allowed" in entry["details"].get("message", "") for entry in system_entries)
+    assert any(
+        "input contract valid" in entry["details"]["reason"] for entry in policy_entries
+    )
+    assert any(
+        "real lead input allowed" in entry["details"].get("message", "")
+        for entry in system_entries
+    )
 
 
-def test_real_lead_runner_missing_contact_info_blocked(monkeypatch, tmp_path: Path) -> None:
+def test_real_lead_runner_missing_contact_info_blocked(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runner_runtime(monkeypatch, tmp_path)
     policy_log_file = tmp_path / "runtime" / "logs" / "policy.log"
     system_log_file = tmp_path / "runtime" / "logs" / "system.log"
@@ -95,7 +104,9 @@ def test_real_lead_runner_missing_contact_info_blocked(monkeypatch, tmp_path: Pa
     assert "contact_info" in report["notes"]
     tasks = task_factory_module.load_tasks(task_store_path)
     assert len(tasks) == 1
-    followup_task = task_factory_module.get_task(report["created_child_task_ids"][0], store_path=task_store_path)
+    followup_task = task_factory_module.get_task(
+        report["created_child_task_ids"][0], store_path=task_store_path
+    )
     assert followup_task is not None
     assert followup_task["intent"] == "missing_input_followup"
     assert followup_task["status"] == "VALIDATED"
@@ -109,12 +120,24 @@ def test_real_lead_runner_missing_contact_info_blocked(monkeypatch, tmp_path: Pa
     policy_entries = _read_jsonl(policy_log_file)
     system_entries = _read_jsonl(system_log_file)
     task_entries = _read_jsonl(tmp_path / "runtime" / "logs" / "tasks.log")
-    assert any("missing required fields: contact_info" in entry["details"]["reason"] for entry in policy_entries)
-    assert any("real lead input blocked" in entry["details"].get("message", "") for entry in system_entries)
-    assert any(entry["event_type"] == "task_execution" and entry["details"].get("result_type") == "missing_input_followup" for entry in task_entries)
+    assert any(
+        "missing required fields: contact_info" in entry["details"]["reason"]
+        for entry in policy_entries
+    )
+    assert any(
+        "real lead input blocked" in entry["details"].get("message", "")
+        for entry in system_entries
+    )
+    assert any(
+        entry["event_type"] == "task_execution"
+        and entry["details"].get("result_type") == "missing_input_followup"
+        for entry in task_entries
+    )
 
 
-def test_real_lead_runner_missing_scope_summary_blocked(monkeypatch, tmp_path: Path) -> None:
+def test_real_lead_runner_missing_scope_summary_blocked(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runner_runtime(monkeypatch, tmp_path)
 
     report = run_real_lead(
@@ -130,12 +153,16 @@ def test_real_lead_runner_missing_scope_summary_blocked(monkeypatch, tmp_path: P
     assert report["pass_fail"] == "fail"
     assert report["failure_class"] == "missing_required_input"
     assert "scope_summary" in report["notes"]
-    followup_task = task_factory_module.get_task(report["created_child_task_ids"][0], store_path=task_store_path)
+    followup_task = task_factory_module.get_task(
+        report["created_child_task_ids"][0], store_path=task_store_path
+    )
     assert followup_task is not None
     assert followup_task["payload"]["missing_fields"] == ["scope_summary"]
 
 
-def test_real_lead_runner_invalid_project_type_blocked(monkeypatch, tmp_path: Path) -> None:
+def test_real_lead_runner_invalid_project_type_blocked(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runner_runtime(monkeypatch, tmp_path)
 
     report = run_real_lead(
@@ -155,7 +182,9 @@ def test_real_lead_runner_invalid_project_type_blocked(monkeypatch, tmp_path: Pa
     assert task_factory_module.load_tasks(task_store_path) == []
 
 
-def test_real_lead_runner_multiple_missing_fields_followup(monkeypatch, tmp_path: Path) -> None:
+def test_real_lead_runner_multiple_missing_fields_followup(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runner_runtime(monkeypatch, tmp_path)
 
     report = run_real_lead(
@@ -168,12 +197,19 @@ def test_real_lead_runner_multiple_missing_fields_followup(monkeypatch, tmp_path
         store_path=task_store_path,
     )
 
-    followup_task = task_factory_module.get_task(report["created_child_task_ids"][0], store_path=task_store_path)
+    followup_task = task_factory_module.get_task(
+        report["created_child_task_ids"][0], store_path=task_store_path
+    )
     assert followup_task is not None
-    assert followup_task["payload"]["missing_fields"] == ["contact_info", "scope_summary"]
+    assert followup_task["payload"]["missing_fields"] == [
+        "contact_info",
+        "scope_summary",
+    ]
 
 
-def test_real_lead_runner_normalization_is_consistent(monkeypatch, tmp_path: Path) -> None:
+def test_real_lead_runner_normalization_is_consistent(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_runner_runtime(monkeypatch, tmp_path)
 
     normalized = real_lead_runner_module._normalize_input(
@@ -203,7 +239,9 @@ def test_real_lead_runner_normalization_is_consistent(monkeypatch, tmp_path: Pat
     }
 
 
-def test_real_lead_runner_report_output_shape_is_deterministic(monkeypatch, tmp_path: Path) -> None:
+def test_real_lead_runner_report_output_shape_is_deterministic(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runner_runtime(monkeypatch, tmp_path)
     output_path = tmp_path / "runtime" / "out" / "reports" / "run_report.json"
     lead_input = {
@@ -231,8 +269,12 @@ def test_real_lead_runner_report_output_shape_is_deterministic(monkeypatch, tmp_
     assert sorted(first_report.keys()) == sorted(second_report.keys())
     assert first_report["run_id"] == second_report["run_id"]
     assert first_report["workflow_type"] == second_report["workflow_type"]
-    assert sorted(first_report["decision"].keys()) == sorted(second_report["decision"].keys())
-    assert len(first_report["created_child_task_ids"]) == len(second_report["created_child_task_ids"])
+    assert sorted(first_report["decision"].keys()) == sorted(
+        second_report["decision"].keys()
+    )
+    assert len(first_report["created_child_task_ids"]) == len(
+        second_report["created_child_task_ids"]
+    )
 
 
 def test_real_lead_runner_repeated_same_lead_run_does_not_duplicate_child_task(
@@ -252,12 +294,17 @@ def test_real_lead_runner_repeated_same_lead_run_does_not_duplicate_child_task(
     first_report = run_real_lead(lead_input, store_path=task_store_path)
     second_report = run_real_lead(lead_input, store_path=task_store_path)
 
-    assert first_report["created_child_task_ids"] == second_report["created_child_task_ids"]
+    assert (
+        first_report["created_child_task_ids"]
+        == second_report["created_child_task_ids"]
+    )
     tasks = task_factory_module.load_tasks(task_store_path)
     assert len(tasks) == 2
 
 
-def test_repeated_missing_input_run_reuses_existing_followup_task(monkeypatch, tmp_path: Path) -> None:
+def test_repeated_missing_input_run_reuses_existing_followup_task(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runner_runtime(monkeypatch, tmp_path)
     system_log_file = tmp_path / "runtime" / "logs" / "system.log"
     monkeypatch.setattr(system_log_module, "SYSTEM_LOG_FILE", system_log_file)
@@ -271,21 +318,29 @@ def test_repeated_missing_input_run_reuses_existing_followup_task(monkeypatch, t
     first_report = run_real_lead(lead_input, store_path=task_store_path)
     second_report = run_real_lead(lead_input, store_path=task_store_path)
 
-    assert first_report["created_child_task_ids"] == second_report["created_child_task_ids"]
+    assert (
+        first_report["created_child_task_ids"]
+        == second_report["created_child_task_ids"]
+    )
     tasks = task_factory_module.load_tasks(task_store_path)
     assert len(tasks) == 1
-    followup_task = task_factory_module.get_task(first_report["created_child_task_ids"][0], store_path=task_store_path)
+    followup_task = task_factory_module.get_task(
+        first_report["created_child_task_ids"][0], store_path=task_store_path
+    )
     assert followup_task is not None
     assert followup_task["intent"] == "missing_input_followup"
     system_entries = _read_jsonl(system_log_file)
     assert any(
         entry["details"].get("message", "").find("idempotent_skip") >= 0
-        and first_report["created_child_task_ids"][0] in entry["details"].get("message", "")
+        and first_report["created_child_task_ids"][0]
+        in entry["details"].get("message", "")
         for entry in system_entries
     )
 
 
-def test_missing_input_followup_completion_triggers_reentry(monkeypatch, tmp_path: Path) -> None:
+def test_missing_input_followup_completion_triggers_reentry(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runner_runtime(monkeypatch, tmp_path)
     policy_log_file = tmp_path / "runtime" / "logs" / "policy.log"
     system_log_file = tmp_path / "runtime" / "logs" / "system.log"
@@ -354,7 +409,10 @@ def test_missing_input_followup_completion_triggers_reentry(monkeypatch, tmp_pat
         and entry["status"] == "created"
         for entry in task_entries
     )
-    assert any("follow-up re-entry created" in entry["details"].get("message", "") for entry in system_entries)
+    assert any(
+        "follow-up re-entry created" in entry["details"].get("message", "")
+        for entry in system_entries
+    )
 
 
 def test_missing_input_followup_completion_without_required_data_skips_reentry(
@@ -393,7 +451,9 @@ def test_missing_input_followup_completion_without_required_data_skips_reentry(
 
     tasks = task_factory_module.load_tasks(task_store_path)
     reentry_tasks = [
-        task for task in tasks if str(task.get("intent", "")).strip() == "lead_estimate_decision"
+        task
+        for task in tasks
+        if str(task.get("intent", "")).strip() == "lead_estimate_decision"
     ]
     assert reentry_tasks == []
 
@@ -406,7 +466,9 @@ def test_missing_input_followup_completion_without_required_data_skips_reentry(
     )
 
 
-def test_missing_input_reentry_keeps_decision_and_action_contract(monkeypatch, tmp_path: Path) -> None:
+def test_missing_input_reentry_keeps_decision_and_action_contract(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runner_runtime(monkeypatch, tmp_path)
 
     followup_task = task_factory_module.create_task(
@@ -452,7 +514,9 @@ def test_missing_input_reentry_keeps_decision_and_action_contract(monkeypatch, t
     assert reentry_task["result"]["binding"]["child_task_created"] is True
 
 
-def test_missing_input_reentry_is_created_only_once(monkeypatch, tmp_path: Path) -> None:
+def test_missing_input_reentry_is_created_only_once(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_store_path = _configure_runner_runtime(monkeypatch, tmp_path)
     system_log_file = tmp_path / "runtime" / "logs" / "system.log"
     monkeypatch.setattr(system_log_module, "SYSTEM_LOG_FILE", system_log_file)
@@ -477,7 +541,9 @@ def test_missing_input_reentry_is_created_only_once(monkeypatch, tmp_path: Path)
         store_path=task_store_path,
     )
     followup_task["status"] = "running"
-    persisted_followup = task_factory_module.save_task(followup_task, store_path=task_store_path)
+    persisted_followup = task_factory_module.save_task(
+        followup_task, store_path=task_store_path
+    )
 
     completed_followup = task_factory_module.close_task(
         str(persisted_followup.get("task_id", "")),
@@ -533,7 +599,9 @@ def test_missing_input_reentry_with_different_payload_creates_new_task(
         store_path=task_store_path,
     )
     followup_task["status"] = "completed"
-    persisted_followup = task_factory_module.save_task(followup_task, store_path=task_store_path)
+    persisted_followup = task_factory_module.save_task(
+        followup_task, store_path=task_store_path
+    )
 
     first_result = real_lead_runner_module.reenter_completed_followup(
         persisted_followup,

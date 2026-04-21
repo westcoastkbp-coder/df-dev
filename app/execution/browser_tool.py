@@ -68,7 +68,9 @@ def _manifest() -> dict[str, object]:
 def _allowed_pages() -> dict[str, dict[str, object]]:
     pages = _manifest().get("allowed_pages")
     if not isinstance(pages, dict):
-        raise BrowserToolValidationError("browser tool manifest allowed_pages must be a dict")
+        raise BrowserToolValidationError(
+            "browser tool manifest allowed_pages must be a dict"
+        )
     normalized: dict[str, dict[str, object]] = {}
     for url, config in pages.items():
         normalized[_normalize_text(url)] = _normalize_mapping(
@@ -82,7 +84,9 @@ def _page_config(url: object) -> dict[str, object]:
     normalized_url = _normalize_text(url)
     config = _allowed_pages().get(normalized_url)
     if config is None:
-        raise BrowserToolValidationError(f"url `{normalized_url or '(empty)'}` is not allowlisted")
+        raise BrowserToolValidationError(
+            f"url `{normalized_url or '(empty)'}` is not allowlisted"
+        )
     return config
 
 
@@ -132,7 +136,9 @@ def validate_browser_tool_payload(payload: object) -> dict[str, object]:
         if operation == OPEN_URL_OPERATION:
             url = _normalize_text(raw_step.get("url"))
             if not url:
-                raise BrowserToolValidationError(f"payload.steps[{index}].url must not be empty")
+                raise BrowserToolValidationError(
+                    f"payload.steps[{index}].url must not be empty"
+                )
             _page_config(url)
             normalized_step["url"] = url
         elif operation == GET_PAGE_TEXT_OPERATION:
@@ -141,15 +147,21 @@ def validate_browser_tool_payload(payload: object) -> dict[str, object]:
             selector = _normalize_text(raw_step.get("selector"))
             value = _normalize_text(raw_step.get("value"))
             if not selector:
-                raise BrowserToolValidationError(f"payload.steps[{index}].selector must not be empty")
+                raise BrowserToolValidationError(
+                    f"payload.steps[{index}].selector must not be empty"
+                )
             if not value:
-                raise BrowserToolValidationError(f"payload.steps[{index}].value must not be empty")
+                raise BrowserToolValidationError(
+                    f"payload.steps[{index}].value must not be empty"
+                )
             normalized_step["selector"] = selector
             normalized_step["value"] = value
         elif operation == CLICK_OPERATION:
             selector = _normalize_text(raw_step.get("selector"))
             if not selector:
-                raise BrowserToolValidationError(f"payload.steps[{index}].selector must not be empty")
+                raise BrowserToolValidationError(
+                    f"payload.steps[{index}].selector must not be empty"
+                )
             normalized_step["selector"] = selector
         normalized_steps.append(normalized_step)
 
@@ -196,14 +208,18 @@ def _log_browser_action(
 @dataclass(slots=True)
 class BrowserTool:
     task_id: str
-    client: httpx.Client = field(default_factory=lambda: httpx.Client(timeout=15.0, follow_redirects=False))
+    client: httpx.Client = field(
+        default_factory=lambda: httpx.Client(timeout=15.0, follow_redirects=False)
+    )
     current_url: str = ""
     current_html: str = ""
     form_values: dict[str, str] = field(default_factory=dict)
 
     def _current_page_config(self) -> dict[str, object]:
         if not self.current_url:
-            raise BrowserToolValidationError("open_url must be called before interacting with the page")
+            raise BrowserToolValidationError(
+                "open_url must be called before interacting with the page"
+            )
         return _page_config(self.current_url)
 
     def _set_page(self, *, url: str, html: str, status_code: int) -> dict[str, object]:
@@ -234,7 +250,9 @@ class BrowserTool:
 
     def get_page_text(self) -> dict[str, object]:
         if not self.current_html:
-            raise BrowserToolValidationError("open_url must be called before get_page_text")
+            raise BrowserToolValidationError(
+                "open_url must be called before get_page_text"
+            )
         parser = _HTMLTextExtractor()
         parser.feed(self.current_html)
         text = parser.get_text()
@@ -292,7 +310,9 @@ class BrowserTool:
         method = _normalize_text(target.get("method")).upper() or "GET"
         target_url = _normalize_text(target.get("target_url"))
         if method not in {"GET", "POST"}:
-            raise BrowserToolValidationError(f"unsupported click method: {method or '(empty)'}")
+            raise BrowserToolValidationError(
+                f"unsupported click method: {method or '(empty)'}"
+            )
         _page_config(target_url)
         if method == "GET":
             response = self.client.get(target_url)
@@ -325,7 +345,9 @@ def execute_browser_action(payload: object) -> dict[str, object]:
     )
     request = validate_browser_tool_payload(payload)
     if scope.task_id != request["task_id"]:
-        raise BrowserToolValidationError("payload.task_id must match the active execution scope")
+        raise BrowserToolValidationError(
+            "payload.task_id must match the active execution scope"
+        )
     policy_result = evaluate_policy(
         {
             "action_type": BROWSER_TOOL_ACTION,

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from collections.abc import Callable
 
@@ -74,4 +74,3 @@ async def offload_task(
 
 
 __all__ = ["offload_task"]
-

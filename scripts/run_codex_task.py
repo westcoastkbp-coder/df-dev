@@ -148,7 +148,9 @@ def load_codex_task(
         "task_id": int(task["task_id"]),
         "instruction": str(task["instruction"]),
         "constraints": str(task.get("constraints") or DEFAULT_CONSTRAINTS),
-        "success_criteria": str(task.get("success_criteria") or DEFAULT_SUCCESS_CRITERIA),
+        "success_criteria": str(
+            task.get("success_criteria") or DEFAULT_SUCCESS_CRITERIA
+        ),
         "context_packet_path": str(context_path),
     }
     if task.get("parent_task_id") is not None:
@@ -162,7 +164,9 @@ def load_codex_task(
     if task.get("task_type") is not None:
         loaded_task["task_type"] = str(task["task_type"])
     if task.get("personal_context_update") is not None:
-        loaded_task["personal_context_update"] = copy.deepcopy(task["personal_context_update"])
+        loaded_task["personal_context_update"] = copy.deepcopy(
+            task["personal_context_update"]
+        )
     if task.get("file_paths") is not None:
         loaded_task["file_paths"] = copy.deepcopy(task["file_paths"])
     if task.get("external_context") is not None:
@@ -263,14 +267,17 @@ def write_task_artifact(
 
 
 def _is_personal_context_task(task: dict[str, Any]) -> bool:
-    return (
-        str(task.get("task_type") or "").strip() == PERSONAL_CONTEXT_TASK_TYPE
-        or isinstance(task.get("personal_context_update"), dict)
+    return str(
+        task.get("task_type") or ""
+    ).strip() == PERSONAL_CONTEXT_TASK_TYPE or isinstance(
+        task.get("personal_context_update"), dict
     )
 
 
 def _is_google_doc_write_task(task: dict[str, Any]) -> bool:
-    return str(task.get("task_type") or "").strip() == EXTERNAL_WRITE_GOOGLE_DOC_TASK_TYPE
+    return (
+        str(task.get("task_type") or "").strip() == EXTERNAL_WRITE_GOOGLE_DOC_TASK_TYPE
+    )
 
 
 def _is_drive_to_google_doc_task(task: dict[str, Any]) -> bool:
@@ -348,7 +355,9 @@ def _duration_ms(start_perf: float) -> int:
 
 def _retry_info(step_metrics: Sequence[dict[str, object]]) -> dict[str, Any]:
     return {
-        "total_retry_count": sum(int(step.get("retry_count") or 0) for step in step_metrics),
+        "total_retry_count": sum(
+            int(step.get("retry_count") or 0) for step in step_metrics
+        ),
         "steps": [
             {
                 "step_index": int(step.get("step_index") or 0),
@@ -411,11 +420,7 @@ def _append_execution_log(
         "command": str(task.get("instruction") or "").strip(),
         "status": str(status),
         "duration": int(execution_timeline.get("total_duration_ms") or 0),
-        "steps": [
-            dict(step)
-            for step in step_metrics
-            if isinstance(step, dict)
-        ],
+        "steps": [dict(step) for step in step_metrics if isinstance(step, dict)],
         "execution_timeline": dict(execution_timeline),
         "retry_info": dict(retry_info),
         "artifact_path": str(artifact_path),
@@ -493,13 +498,13 @@ def _decorate_trace_with_observability(
     if isinstance(tool_result, dict):
         execution_timeline = tool_result.get("execution_timeline")
         if isinstance(execution_timeline, dict):
-            enriched_trace["tool_execution_timeline"] = copy.deepcopy(execution_timeline)
+            enriched_trace["tool_execution_timeline"] = copy.deepcopy(
+                execution_timeline
+            )
         tool_step_metrics = tool_result.get("step_metrics")
         if isinstance(tool_step_metrics, list):
             enriched_trace["tool_step_metrics"] = [
-                dict(step)
-                for step in tool_step_metrics
-                if isinstance(step, dict)
+                dict(step) for step in tool_step_metrics if isinstance(step, dict)
             ]
         retry_info = tool_result.get("retry_info")
         if isinstance(retry_info, dict):
@@ -510,7 +515,9 @@ def _decorate_trace_with_observability(
     return enriched_trace
 
 
-def _step_metrics_from_trace(pipeline_trace: Sequence[dict[str, object]]) -> list[dict[str, object]]:
+def _step_metrics_from_trace(
+    pipeline_trace: Sequence[dict[str, object]],
+) -> list[dict[str, object]]:
     return [
         {
             key: copy.deepcopy(value)
@@ -537,7 +544,9 @@ def _step_metrics_from_trace(pipeline_trace: Sequence[dict[str, object]]) -> lis
     ]
 
 
-def _tool_input_summary(tool_name: str, input_payload: dict[str, Any]) -> dict[str, object]:
+def _tool_input_summary(
+    tool_name: str, input_payload: dict[str, Any]
+) -> dict[str, object]:
     if tool_name == CLAUDE_ANALYZE_TOOL:
         return {
             "text_chars": len(str(input_payload.get("text") or "")),
@@ -557,7 +566,9 @@ def _tool_input_summary(tool_name: str, input_payload: dict[str, Any]) -> dict[s
     }
 
 
-def _tool_output_summary(tool_name: str, output_payload: dict[str, Any]) -> dict[str, object]:
+def _tool_output_summary(
+    tool_name: str, output_payload: dict[str, Any]
+) -> dict[str, object]:
     if tool_name == CLAUDE_ANALYZE_TOOL:
         return {
             "analysis_chars": len(str(output_payload.get("analysis") or "")),
@@ -595,7 +606,9 @@ def _build_tool_trace(
     if bool(tool_result.get("ok")):
         output_payload = tool_result.get("output")
         if isinstance(output_payload, dict):
-            trace["tool_output_summary"] = _tool_output_summary(tool_name, output_payload)
+            trace["tool_output_summary"] = _tool_output_summary(
+                tool_name, output_payload
+            )
     else:
         error_payload = tool_result.get("error")
         if isinstance(error_payload, dict):
@@ -613,9 +626,7 @@ def _build_tool_trace(
     step_metrics = tool_result.get("step_metrics")
     if isinstance(step_metrics, list):
         trace["step_metrics"] = [
-            dict(step)
-            for step in step_metrics
-            if isinstance(step, dict)
+            dict(step) for step in step_metrics if isinstance(step, dict)
         ]
     retry_info = tool_result.get("retry_info")
     if isinstance(retry_info, dict):
@@ -694,7 +705,9 @@ def _resolve_pipeline_value(value: Any, context: dict[str, Any]) -> Any:
     return copy.deepcopy(value)
 
 
-def _pipeline_steps_payload(pipeline: Sequence[dict[str, Any]]) -> list[dict[str, object]]:
+def _pipeline_steps_payload(
+    pipeline: Sequence[dict[str, Any]],
+) -> list[dict[str, object]]:
     steps_payload: list[dict[str, object]] = []
     for step_index, step in enumerate(pipeline, start=1):
         step_payload: dict[str, object] = {
@@ -731,9 +744,7 @@ def _pipeline_artifact_payload(
         payload["execution_timeline"] = copy.deepcopy(execution_timeline)
     if isinstance(step_metrics, Sequence):
         payload["step_metrics"] = [
-            dict(step)
-            for step in step_metrics
-            if isinstance(step, dict)
+            dict(step) for step in step_metrics if isinstance(step, dict)
         ]
     if isinstance(retry_info, dict):
         payload["retry_info"] = dict(retry_info)
@@ -781,9 +792,7 @@ def _tool_artifact_payload(
 
         artifact_payload = {
             "file_id": str(
-                output_payload.get("file_id")
-                or input_payload.get("file_id")
-                or ""
+                output_payload.get("file_id") or input_payload.get("file_id") or ""
             ).strip(),
             "name": str(output_payload.get("name") or "").strip(),
             "mime_type": str(output_payload.get("mime_type") or "").strip(),
@@ -860,7 +869,10 @@ def _drive_to_google_doc_title(task: dict[str, Any]) -> str:
 
 
 def _drive_to_google_doc_transform_mode(task: dict[str, Any]) -> str:
-    return str(task.get("transform_mode") or DEFAULT_TRANSFORM_MODE).strip() or DEFAULT_TRANSFORM_MODE
+    return (
+        str(task.get("transform_mode") or DEFAULT_TRANSFORM_MODE).strip()
+        or DEFAULT_TRANSFORM_MODE
+    )
 
 
 def _load_context_packet(context_packet_path: str | Path) -> dict[str, Any]:
@@ -876,7 +888,9 @@ def _load_required_system_context(task: dict[str, Any] | None = None) -> dict[st
 
 def _trace_memory_policy(decision: dict[str, Any]) -> None:
     if bool(decision.get("allowed", True)):
-        print(f"[MEMORY_POLICY] {str(decision.get('reason') or 'no_recent_duplicate').strip()}")
+        print(
+            f"[MEMORY_POLICY] {str(decision.get('reason') or 'no_recent_duplicate').strip()}"
+        )
         return
 
     matched_artifact_id = str(decision.get("matched_artifact_id") or "").strip()
@@ -885,7 +899,9 @@ def _trace_memory_policy(decision: dict[str, Any]) -> None:
 
 
 def _cross_domain_conflict_resource(task: dict[str, Any]) -> str:
-    payload = dict(task.get("payload") or {}) if isinstance(task.get("payload"), dict) else {}
+    payload = (
+        dict(task.get("payload") or {}) if isinstance(task.get("payload"), dict) else {}
+    )
     memory_context = (
         dict(task.get("memory_context") or {})
         if isinstance(task.get("memory_context"), dict)
@@ -906,13 +922,20 @@ def _cross_domain_conflict_resource(task: dict[str, Any]) -> str:
 
 
 def _cross_domain_conflict_domain(task: dict[str, Any]) -> str:
-    payload = dict(task.get("payload") or {}) if isinstance(task.get("payload"), dict) else {}
+    payload = (
+        dict(task.get("payload") or {}) if isinstance(task.get("payload"), dict) else {}
+    )
     memory_context = (
         dict(task.get("memory_context") or {})
         if isinstance(task.get("memory_context"), dict)
         else {}
     )
-    return str(payload.get("domain") or task.get("domain") or memory_context.get("domain") or "").strip()
+    return str(
+        payload.get("domain")
+        or task.get("domain")
+        or memory_context.get("domain")
+        or ""
+    ).strip()
 
 
 def _cross_domain_conflict_artifact(
@@ -952,7 +975,9 @@ def _trace_cross_domain_conflict(
 
 
 def _cross_domain_conflict_type(task: dict[str, Any]) -> str:
-    payload = dict(task.get("payload") or {}) if isinstance(task.get("payload"), dict) else {}
+    payload = (
+        dict(task.get("payload") or {}) if isinstance(task.get("payload"), dict) else {}
+    )
     memory_context = (
         dict(task.get("memory_context") or {})
         if isinstance(task.get("memory_context"), dict)
@@ -1045,7 +1070,9 @@ def _cross_domain_conflict_blocked_artifact_payload(
         "reason": str(decision.get("reason") or "").strip(),
         "action": str(decision.get("action") or "block").strip(),
         "conflict_with": str(decision.get("conflict_with") or "").strip(),
-        "escalation_artifact_id": str(escalation_artifact.get("artifact_id") or "").strip(),
+        "escalation_artifact_id": str(
+            escalation_artifact.get("artifact_id") or ""
+        ).strip(),
         "cross_domain_conflict_decision": copy.deepcopy(decision),
         "execution_timeline": copy.deepcopy(execution_timeline),
         "step_metrics": [dict(step) for step in step_metrics if isinstance(step, dict)],
@@ -1136,7 +1163,9 @@ def _drive_to_google_doc_artifact_payload(
     reason: str = "",
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
-        "source_file_ids": [str(item).strip() for item in source_file_ids if str(item).strip()],
+        "source_file_ids": [
+            str(item).strip() for item in source_file_ids if str(item).strip()
+        ],
         "loaded_source_file_ids": [
             str(item).strip() for item in loaded_source_file_ids if str(item).strip()
         ],
@@ -1324,7 +1353,9 @@ def _trace_replay(decision: dict[str, Any], task: dict[str, Any]) -> None:
     if bool(decision.get("allowed", True)):
         return
 
-    previous_trace_id = str(decision.get("previous_trace_id") or "").strip() or "unknown"
+    previous_trace_id = (
+        str(decision.get("previous_trace_id") or "").strip() or "unknown"
+    )
     print(f"[REPLAY] blocked task={task['task_id']} trace={previous_trace_id}")
 
 
@@ -1345,7 +1376,9 @@ def run_codex_task(
     task = _attach_resolved_memory(task)
     memory_policy_decision = evaluate_memory_policy(
         task,
-        task.get("resolved_memory") if isinstance(task.get("resolved_memory"), list) else [],
+        task.get("resolved_memory")
+        if isinstance(task.get("resolved_memory"), list)
+        else [],
     )
     task["memory_policy_decision"] = copy.deepcopy(memory_policy_decision)
     _trace_memory_policy(memory_policy_decision)
@@ -1407,13 +1440,19 @@ def run_codex_task(
 
     cross_domain_conflict_decision = evaluate_cross_domain_conflict(
         task,
-        task.get("resolved_memory") if isinstance(task.get("resolved_memory"), list) else [],
+        task.get("resolved_memory")
+        if isinstance(task.get("resolved_memory"), list)
+        else [],
     )
-    task["cross_domain_conflict_decision"] = copy.deepcopy(cross_domain_conflict_decision)
+    task["cross_domain_conflict_decision"] = copy.deepcopy(
+        cross_domain_conflict_decision
+    )
     _trace_cross_domain_conflict(
         task,
         cross_domain_conflict_decision,
-        task.get("resolved_memory") if isinstance(task.get("resolved_memory"), list) else [],
+        task.get("resolved_memory")
+        if isinstance(task.get("resolved_memory"), list)
+        else [],
     )
 
     if not bool(cross_domain_conflict_decision.get("allowed", True)):
@@ -1423,7 +1462,9 @@ def run_codex_task(
             step_start_time=run_start_time,
             step_duration_ms=_duration_ms(run_start_perf),
             success=False,
-            failure_reason=str(cross_domain_conflict_decision.get("reason") or "").strip(),
+            failure_reason=str(
+                cross_domain_conflict_decision.get("reason") or ""
+            ).strip(),
         )
         step_metric["status"] = "blocked"
         step_metrics = [step_metric]
@@ -1433,14 +1474,18 @@ def run_codex_task(
             step_metrics=step_metrics,
         )
         retry_info = _retry_info(step_metrics)
-        task["failure_reason"] = str(cross_domain_conflict_decision.get("reason") or "").strip()
+        task["failure_reason"] = str(
+            cross_domain_conflict_decision.get("reason") or ""
+        ).strip()
         task["execution_timeline"] = copy.deepcopy(execution_timeline)
         task["step_metrics"] = copy.deepcopy(step_metrics)
         task["retry_info"] = copy.deepcopy(retry_info)
         escalation_artifact = _record_conflict_escalation_artifact(
             task,
             cross_domain_conflict_decision,
-            task.get("resolved_memory") if isinstance(task.get("resolved_memory"), list) else [],
+            task.get("resolved_memory")
+            if isinstance(task.get("resolved_memory"), list)
+            else [],
         )
         artifact_payload = _cross_domain_conflict_blocked_artifact_payload(
             task,
@@ -1472,7 +1517,9 @@ def run_codex_task(
             final_decision={
                 "action": "block",
                 "gate": "cross_domain_conflict",
-                "reason": str(cross_domain_conflict_decision.get("reason") or "").strip(),
+                "reason": str(
+                    cross_domain_conflict_decision.get("reason") or ""
+                ).strip(),
                 "conflict_with": str(
                     cross_domain_conflict_decision.get("conflict_with") or ""
                 ).strip(),
@@ -1505,7 +1552,9 @@ def run_codex_task(
             step_metrics=step_metrics,
         )
         retry_info = _retry_info(step_metrics)
-        task["failure_reason"] = str(replay_protection_decision.get("reason") or "").strip()
+        task["failure_reason"] = str(
+            replay_protection_decision.get("reason") or ""
+        ).strip()
         task["execution_timeline"] = copy.deepcopy(execution_timeline)
         task["step_metrics"] = copy.deepcopy(step_metrics)
         task["retry_info"] = copy.deepcopy(retry_info)
@@ -1619,7 +1668,9 @@ def run_codex_task(
     if _is_personal_context_task(task):
         update_payload = extract_personal_context_update(task)
         if not update_payload:
-            raise ValueError("personal context task requires personal_context_update data")
+            raise ValueError(
+                "personal context task requires personal_context_update data"
+            )
 
         personal_context_path = (
             Path(repo_root) / "personal" / "personal_context.json"
@@ -1675,7 +1726,9 @@ def run_codex_task(
                 "outcome": "success",
             },
         )
-        _persist_task_state(task, Path(str(task["execution_trace_artifact_path"])), state="completed")
+        _persist_task_state(
+            task, Path(str(task["execution_trace_artifact_path"])), state="completed"
+        )
         return task, artifact_path
 
     if _is_pipeline_task(task):
@@ -1695,9 +1748,13 @@ def run_codex_task(
                     raise ValueError(f"Pipeline step {step_index} must be an object.")
 
                 tool_name = str(raw_step.get("tool_name") or "").strip()
-                resolved_value = _resolve_pipeline_value(raw_step.get("input"), pipeline_context)
+                resolved_value = _resolve_pipeline_value(
+                    raw_step.get("input"), pipeline_context
+                )
                 if not isinstance(resolved_value, dict):
-                    raise ValueError(f"Pipeline step {step_index} input must resolve to an object.")
+                    raise ValueError(
+                        f"Pipeline step {step_index} input must resolve to an object."
+                    )
                 resolved_input = resolved_value
 
                 _debug_print(
@@ -1778,12 +1835,16 @@ def run_codex_task(
                     )
 
                 if not step_success:
-                    failure_reason = step_failure_reason or f"Pipeline step {step_index} failed."
+                    failure_reason = (
+                        step_failure_reason or f"Pipeline step {step_index} failed."
+                    )
                     break
 
                 output_payload = tool_result.get("output")
                 if not isinstance(output_payload, dict):
-                    raise ValueError(f"Pipeline step {step_index} returned invalid output.")
+                    raise ValueError(
+                        f"Pipeline step {step_index} returned invalid output."
+                    )
 
                 output_key = str(raw_step.get("output_key") or "").strip()
                 if output_key:
@@ -1798,7 +1859,9 @@ def run_codex_task(
                             "tool_name": tool_name,
                             "tool_ok": False,
                             "tool_error_code": "PIPELINE_STEP_FAILED",
-                            "tool_input_summary": _tool_input_summary(tool_name, resolved_input),
+                            "tool_input_summary": _tool_input_summary(
+                                tool_name, resolved_input
+                            ),
                         },
                         step_start_time=step_start_time,
                         step_duration_ms=_duration_ms(step_start_perf),
@@ -1918,7 +1981,10 @@ def run_codex_task(
         artifact_payload["step_metrics"] = copy.deepcopy(step_metrics)
         artifact_payload["retry_info"] = copy.deepcopy(retry_info)
 
-        if bool(tool_result.get("ok")) and _tool_name(task) == GOOGLE_DOCS_CREATE_DOCUMENT_TOOL:
+        if (
+            bool(tool_result.get("ok"))
+            and _tool_name(task) == GOOGLE_DOCS_CREATE_DOCUMENT_TOOL
+        ):
             output_payload = tool_result.get("output")
             if isinstance(output_payload, dict):
                 task["doc_id"] = str(output_payload.get("doc_id") or "").strip()
@@ -1968,7 +2034,9 @@ def run_codex_task(
             final_decision={
                 "action": "execute",
                 "result_type": "tool_call",
-                "tool_name": str(tool_trace.get("tool_name") or _tool_name(task)).strip(),
+                "tool_name": str(
+                    tool_trace.get("tool_name") or _tool_name(task)
+                ).strip(),
                 "outcome": "success" if bool(tool_result.get("ok")) else "failed",
                 "reason": _tool_failure_reason(tool_result),
             },
@@ -1995,7 +2063,9 @@ def run_codex_task(
                 system_context=execution_system_context,
             )
             if not bool(tool_result.get("ok")):
-                raise RuntimeError(_tool_failure_reason(tool_result) or "GOOGLE_DOCS_CREATE_FAILED")
+                raise RuntimeError(
+                    _tool_failure_reason(tool_result) or "GOOGLE_DOCS_CREATE_FAILED"
+                )
             result = dict(tool_result.get("output") or {})
             task["doc_id"] = result["doc_id"]
             task["doc_url"] = result["url"]
@@ -2089,13 +2159,16 @@ def run_codex_task(
                 system_context=execution_system_context,
             )
             if not bool(tool_result.get("ok")):
-                raise RuntimeError(_tool_failure_reason(tool_result) or "GOOGLE_DOCS_CREATE_FAILED")
+                raise RuntimeError(
+                    _tool_failure_reason(tool_result) or "GOOGLE_DOCS_CREATE_FAILED"
+                )
             result = dict(tool_result.get("output") or {})
             task["doc_id"] = result["doc_id"]
             task["doc_url"] = result["url"]
             artifact_payload = _drive_to_google_doc_artifact_payload(
                 task,
-                source_file_ids=requested_source_file_ids or transformed_content["source_file_ids"],
+                source_file_ids=requested_source_file_ids
+                or transformed_content["source_file_ids"],
                 loaded_source_file_ids=transformed_content["source_file_ids"],
                 output_doc_id=result["doc_id"],
                 output_doc_url=result["url"],
@@ -2207,7 +2280,9 @@ def run_codex_task(
             "outcome": "success",
         },
     )
-    _persist_task_state(task, Path(str(task["execution_trace_artifact_path"])), state="completed")
+    _persist_task_state(
+        task, Path(str(task["execution_trace_artifact_path"])), state="completed"
+    )
     return task, artifact_path
 
 
@@ -2460,12 +2535,14 @@ def _log_metrics(
         tool_ok=tool_trace.get("tool_ok") if isinstance(tool_trace, dict) else None,
         tool_input_summary=(
             dict(tool_trace["tool_input_summary"])
-            if isinstance(tool_trace, dict) and isinstance(tool_trace.get("tool_input_summary"), dict)
+            if isinstance(tool_trace, dict)
+            and isinstance(tool_trace.get("tool_input_summary"), dict)
             else None
         ),
         tool_output_summary=(
             dict(tool_trace["tool_output_summary"])
-            if isinstance(tool_trace, dict) and isinstance(tool_trace.get("tool_output_summary"), dict)
+            if isinstance(tool_trace, dict)
+            and isinstance(tool_trace.get("tool_output_summary"), dict)
             else None
         ),
         tool_error_code=(
@@ -2500,7 +2577,9 @@ def _build_subtask_task(
     if base_task.get("task_type") is not None:
         task["task_type"] = str(base_task["task_type"])
     if base_task.get("personal_context_update") is not None:
-        task["personal_context_update"] = copy.deepcopy(base_task["personal_context_update"])
+        task["personal_context_update"] = copy.deepcopy(
+            base_task["personal_context_update"]
+        )
     if base_task.get("file_paths") is not None:
         task["file_paths"] = copy.deepcopy(base_task["file_paths"])
     if base_task.get("external_context") is not None:
@@ -2618,8 +2697,14 @@ def main() -> int:
         allow_existing_artifact=force_execution_requested,
     )
     force_execution_used = bool(guard.get("force_execution_used"))
-    force_execution_reason = str(guard.get("force_execution_reason") or "").strip() or None
-    if not force_execution_used and prior_artifact_path is not None and bool(guard["should_execute"]):
+    force_execution_reason = (
+        str(guard.get("force_execution_reason") or "").strip() or None
+    )
+    if (
+        not force_execution_used
+        and prior_artifact_path is not None
+        and bool(guard["should_execute"])
+    ):
         force_execution_used = True
         force_execution_reason = "artifact_override"
     if not bool(guard["should_execute"]):
@@ -2749,7 +2834,9 @@ def main() -> int:
             force_execution_used=force_execution_used,
             force_execution_reason=force_execution_reason,
             prior_artifact_path=prior_artifact_path,
-            tool_trace=task.get("tool_trace") if isinstance(task.get("tool_trace"), dict) else None,
+            tool_trace=task.get("tool_trace")
+            if isinstance(task.get("tool_trace"), dict)
+            else None,
             pipeline_trace=(
                 task.get("pipeline_trace")
                 if isinstance(task.get("pipeline_trace"), list)
@@ -2777,7 +2864,9 @@ def main() -> int:
     git_sync_result = best_effort_post_execution_git_sync(
         task_id=task_id,
         artifact_path=final_artifact_path,
-        subtask_id=str(final_task.get("subtask_id")) if final_task.get("subtask_id") else None,
+        subtask_id=str(final_task.get("subtask_id"))
+        if final_task.get("subtask_id")
+        else None,
         additional_paths=git_sync_paths,
     )
     _print_git_sync_summary(git_sync_result)

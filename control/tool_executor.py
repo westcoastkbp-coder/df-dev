@@ -80,12 +80,18 @@ def _unwrap_execution_payload(payload: dict[str, Any] | Any) -> dict[str, Any]:
 
     input_payload = payload.get("input")
     if not isinstance(input_payload, dict):
-        raise ToolExecutionError("TOOL_INPUT_INVALID", "Tool execution payload input must be an object.")
+        raise ToolExecutionError(
+            "TOOL_INPUT_INVALID", "Tool execution payload input must be an object."
+        )
     return dict(input_payload)
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .isoformat(timespec="milliseconds")
+        .replace("+00:00", "Z")
+    )
 
 
 def _duration_ms(start_perf: float) -> int:
@@ -124,7 +130,9 @@ def _step_metric(
 
 def _retry_info(step_metrics: list[dict[str, Any]]) -> dict[str, Any]:
     return {
-        "total_retry_count": sum(int(step.get("retry_count") or 0) for step in step_metrics),
+        "total_retry_count": sum(
+            int(step.get("retry_count") or 0) for step in step_metrics
+        ),
         "steps": [
             {
                 "step_name": str(step.get("step_name") or "").strip(),
@@ -163,7 +171,10 @@ def _execution_timeline(
 
 def _network_failure_type(code: str, message: str) -> str:
     combined = f"{code} {message}".strip().lower()
-    if any(term in combined for term in ("dns", "getaddrinfo", "name resolution", "name or service")):
+    if any(
+        term in combined
+        for term in ("dns", "getaddrinfo", "name resolution", "name or service")
+    ):
         return "dns_resolution_failed"
     if any(term in combined for term in ("timeout", "timed out", "deadline exceeded")):
         return "timeout"
@@ -176,7 +187,9 @@ def _network_failure_type(code: str, message: str) -> str:
     return "application_error"
 
 
-def _network_diagnostics(tool_name: str, code: str, message: str) -> dict[str, Any] | None:
+def _network_diagnostics(
+    tool_name: str, code: str, message: str
+) -> dict[str, Any] | None:
     hosts = _NETWORK_HOSTS_BY_TOOL.get(str(tool_name or "").strip(), ())
     failure_type = _network_failure_type(code, message)
     if not hosts and failure_type == "application_error":
@@ -266,7 +279,10 @@ def _execute_http_request(payload: dict[str, Any]) -> dict[str, Any]:
         with urlopen(request, timeout=timeout_seconds) as response:
             raw_body = response.read()
     except HTTPError as error:
-        message = str(error.reason or "HTTP request failed.").strip() or "HTTP request failed."
+        message = (
+            str(error.reason or "HTTP request failed.").strip()
+            or "HTTP request failed."
+        )
         raise ToolExecutionError("HTTP_REQUEST_FAILED", message) from error
     except (URLError, OSError, TimeoutError, ValueError) as error:
         raise ToolExecutionError(
@@ -303,9 +319,13 @@ def _fallback_executor(tool_name: str):
     return executors.get(str(tool_name or "").strip())
 
 
-def _error_payload(error: Exception, default_type: str = "TOOL_EXECUTION_FAILED") -> dict[str, str]:
+def _error_payload(
+    error: Exception, default_type: str = "TOOL_EXECUTION_FAILED"
+) -> dict[str, str]:
     error_type = (
-        str(getattr(error, "code", "") or getattr(error, "type", "") or default_type).strip()
+        str(
+            getattr(error, "code", "") or getattr(error, "type", "") or default_type
+        ).strip()
         or default_type
     )
     return {
@@ -413,7 +433,11 @@ def _execute_tool_with_trace(
                 execution_source="fallback",
             )
         )
-        return _success_execution_result(data, source="fallback"), step_metrics, external_error_payload
+        return (
+            _success_execution_result(data, source="fallback"),
+            step_metrics,
+            external_error_payload,
+        )
     except Exception as fallback_error:
         fallback_error_payload = _error_payload(fallback_error)
         step_metrics.append(
@@ -442,7 +466,9 @@ def _execute_tool_with_trace(
 
 
 def execute_tool(tool_name: str, payload: dict[str, Any]) -> dict[str, Any]:
-    result, _step_metrics, _external_error = _execute_tool_with_trace(tool_name, payload)
+    result, _step_metrics, _external_error = _execute_tool_with_trace(
+        tool_name, payload
+    )
     return result
 
 
@@ -597,8 +623,12 @@ def execute_tool_call(tool_call: Any) -> dict[str, Any]:
             error_payload = tool_result.get("error")
             if not isinstance(error_payload, dict):
                 error_payload = {}
-            message = str(error_payload.get("message") or "Tool execution failed.").strip()
-            error_code = str(error_payload.get("type") or "TOOL_EXECUTION_FAILED").strip()
+            message = str(
+                error_payload.get("message") or "Tool execution failed."
+            ).strip()
+            error_code = str(
+                error_payload.get("type") or "TOOL_EXECUTION_FAILED"
+            ).strip()
             if error_code == "TOOL_EXECUTION_FAILED" and tool_name in {
                 GOOGLE_DRIVE_READ_FILE_TOOL,
                 GOOGLE_DRIVE_READ_FILE_LAYER_TOOL,
@@ -630,7 +660,9 @@ def execute_tool_call(tool_call: Any) -> dict[str, Any]:
         output = tool_result.get("data")
     except Exception as error:
         message = str(error).strip() or "Tool execution failed."
-        error_code = str(getattr(error, "code", "") or "").strip() or "TOOL_EXECUTION_FAILED"
+        error_code = (
+            str(getattr(error, "code", "") or "").strip() or "TOOL_EXECUTION_FAILED"
+        )
         if error_code == "TOOL_EXECUTION_FAILED" and tool_name in {
             GOOGLE_DRIVE_READ_FILE_TOOL,
             GOOGLE_DRIVE_READ_FILE_LAYER_TOOL,

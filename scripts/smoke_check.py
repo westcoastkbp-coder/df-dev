@@ -22,7 +22,9 @@ def main() -> int:
         _check_path("runtime_logs", ROOT_DIR / LOGS_DIR),
         _check_path("runtime_state", ROOT_DIR / STATE_DIR),
         _check_path("runtime_out", ROOT_DIR / OUTPUT_DIR),
-        _check_path("task_state", ROOT_DIR / STATE_DIR / "task_state.sqlite3", expect_file=True),
+        _check_path(
+            "task_state", ROOT_DIR / STATE_DIR / "task_state.sqlite3", expect_file=True
+        ),
     ]
     status = "ok" if all(item["status"] == "ok" for item in checks) else "error"
     print(json.dumps({"status": status, "checks": checks}, indent=2))

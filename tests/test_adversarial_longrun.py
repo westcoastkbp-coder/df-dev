@@ -103,7 +103,9 @@ def _run_with_timeout(
             result = run_execution(
                 json.loads(json.dumps(task_data)),
                 now=lambda: "2026-04-06T02:00:00Z",
-                persist=lambda updated_task: _persist(updated_task, store_path=store_path),
+                persist=lambda updated_task: _persist(
+                    updated_task, store_path=store_path
+                ),
                 executor=executor,
             )
         except Exception as exc:  # pragma: no cover - surfaced in parent thread
@@ -181,7 +183,9 @@ def test_longrun_execution_is_bounded_and_observable(
         executor=success_executor,
         timeout_seconds=PER_EXECUTION_TIMEOUT_SECONDS,
     )
-    expected_results[replay_task_id] = json.loads(json.dumps(first_replay.get("result", {})))
+    expected_results[replay_task_id] = json.loads(
+        json.dumps(first_replay.get("result", {}))
+    )
     expected_statuses[replay_task_id] = "COMPLETED"
     last_progress_at = time.monotonic()
 
@@ -299,7 +303,8 @@ def test_longrun_execution_is_bounded_and_observable(
         if task_id == replay_task_id and count > 1
     }
     memory_growth_bytes = (
-        int(memory_samples[-1]["current_bytes"]) - int(memory_samples[0]["current_bytes"])
+        int(memory_samples[-1]["current_bytes"])
+        - int(memory_samples[0]["current_bytes"])
         if len(memory_samples) > 1
         else 0
     )

@@ -47,14 +47,17 @@ def _lead_output_content(*, request: str, project_type: str, lot_size: str) -> s
         .isoformat()
         .replace("+00:00", "Z")
     )
-    return "\n".join(
-        [
-            f"request: {request}",
-            f"type: {project_type}",
-            f"lot_size: {lot_size}",
-            f"timestamp: {timestamp}",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                f"request: {request}",
+                f"type: {project_type}",
+                f"lot_size: {lot_size}",
+                f"timestamp: {timestamp}",
+            ]
+        )
+        + "\n"
+    )
 
 
 def _followup_output_content(
@@ -63,13 +66,16 @@ def _followup_output_content(
     next_step: str,
     short_message: str,
 ) -> str:
-    return "\n".join(
-        [
-            f"summary: {summary}",
-            f"recommended_next_action: {next_step}",
-            f"short_message: {short_message}",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                f"summary: {summary}",
+                f"recommended_next_action: {next_step}",
+                f"short_message: {short_message}",
+            ]
+        )
+        + "\n"
+    )
 
 
 def _client_intake_flow_definition() -> dict[str, object]:
@@ -84,12 +90,15 @@ def _client_intake_flow_definition() -> dict[str, object]:
 
 
 def _client_intake_flow_content() -> str:
-    return json.dumps(
-        _client_intake_flow_definition(),
-        ensure_ascii=True,
-        indent=2,
-        sort_keys=True,
-    ) + "\n"
+    return (
+        json.dumps(
+            _client_intake_flow_definition(),
+            ensure_ascii=True,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
 
 
 def _load_existing_lead(task_data: dict[str, object]) -> dict[str, str]:
@@ -282,7 +291,9 @@ def execute_product_task(task_data: dict[str, object]) -> dict[str, object]:
         request = str(existing_lead.get("request", "")).strip()
         project_type = str(existing_lead.get("type", "")).strip() or "unknown"
         lot_size = str(existing_lead.get("lot_size", "")).strip() or "unknown"
-        summary = f"Lead for {project_type} project on {lot_size} lot requesting pricing."
+        summary = (
+            f"Lead for {project_type} project on {lot_size} lot requesting pricing."
+        )
         next_step = "Prepare preliminary pricing range and schedule qualification call."
         short_message = (
             "Thanks for reaching out about your ADU project. "
@@ -354,5 +365,7 @@ def execute_product_task(task_data: dict[str, object]) -> dict[str, object]:
         error_code="",
         error_message="",
         source="product_executor",
-        diagnostic_message=str(payload.get("summary") or task_data.get("goal") or "Execution completed.").strip(),
+        diagnostic_message=str(
+            payload.get("summary") or task_data.get("goal") or "Execution completed."
+        ).strip(),
     )

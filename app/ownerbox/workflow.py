@@ -8,10 +8,26 @@ from typing import Any, Mapping
 
 
 OWNER_WORKFLOW_STATUSES = frozenset(
-    {"pending", "running", "completed", "blocked", "failed", "rejected", "partial_failure"}
+    {
+        "pending",
+        "running",
+        "completed",
+        "blocked",
+        "failed",
+        "rejected",
+        "partial_failure",
+    }
 )
 OWNER_WORKFLOW_STEP_STATUSES = frozenset(
-    {"pending", "running", "awaiting_approval", "completed", "blocked", "failed", "rejected"}
+    {
+        "pending",
+        "running",
+        "awaiting_approval",
+        "completed",
+        "blocked",
+        "failed",
+        "rejected",
+    }
 )
 OWNER_WORKFLOW_STEP_OUTCOMES = frozenset(
     {"success", "retryable_failure", "non_retryable_failure", "approval_rejected"}
@@ -110,7 +126,9 @@ def _stable_identifier(value: object, *, field_name: str) -> str:
 def _normalize_workflow_type(value: object) -> str:
     normalized = _normalize_text(value).lower()
     if normalized not in OWNER_WORKFLOW_TYPES:
-        raise ValueError("workflow_type must be one of: " + ", ".join(sorted(OWNER_WORKFLOW_TYPES)))
+        raise ValueError(
+            "workflow_type must be one of: " + ", ".join(sorted(OWNER_WORKFLOW_TYPES))
+        )
     return normalized
 
 
@@ -118,7 +136,8 @@ def _normalize_workflow_status(value: object) -> str:
     normalized = _normalize_text(value).lower()
     if normalized not in OWNER_WORKFLOW_STATUSES:
         raise ValueError(
-            "workflow status must be one of: " + ", ".join(sorted(OWNER_WORKFLOW_STATUSES))
+            "workflow status must be one of: "
+            + ", ".join(sorted(OWNER_WORKFLOW_STATUSES))
         )
     return normalized
 
@@ -127,7 +146,8 @@ def _normalize_step_status(value: object) -> str:
     normalized = _normalize_text(value).lower()
     if normalized not in OWNER_WORKFLOW_STEP_STATUSES:
         raise ValueError(
-            "step status must be one of: " + ", ".join(sorted(OWNER_WORKFLOW_STEP_STATUSES))
+            "step status must be one of: "
+            + ", ".join(sorted(OWNER_WORKFLOW_STEP_STATUSES))
         )
     return normalized
 
@@ -226,9 +246,7 @@ def _normalize_retry_limit(value: object) -> int:
     except (TypeError, ValueError) as exc:
         raise ValueError("max_retries must be an integer") from exc
     if normalized < 0 or normalized > MAX_STEP_MAX_RETRIES:
-        raise ValueError(
-            f"max_retries must be between 0 and {MAX_STEP_MAX_RETRIES}"
-        )
+        raise ValueError(f"max_retries must be between 0 and {MAX_STEP_MAX_RETRIES}")
     return normalized
 
 
@@ -295,7 +313,10 @@ def _default_step_title(workflow_type: str, step_key: str, action_type: str) -> 
         ("openai_then_print_document", "openai_request"): "Generate Document",
         ("openai_then_print_document", "print_action"): "Print Document",
         ("openai_then_browser_open_fill_submit", "openai_request"): "Draft Content",
-        ("openai_then_browser_open_fill_submit", "open_page_action"): "Open Update Page",
+        (
+            "openai_then_browser_open_fill_submit",
+            "open_page_action",
+        ): "Open Update Page",
         ("openai_then_browser_open_fill_submit", "fill_action"): "Fill Update Form",
         ("openai_then_browser_open_fill_submit", "submit_action"): "Submit Update",
         ("print_document", "print_action"): "Print Document",
@@ -333,17 +354,25 @@ class OwnerWorkflowStep:
     updated_at: str = field(default_factory=_utc_timestamp)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "step_id", _stable_identifier(self.step_id, field_name="step_id"))
+        object.__setattr__(
+            self, "step_id", _stable_identifier(self.step_id, field_name="step_id")
+        )
         object.__setattr__(
             self,
             "workflow_id",
             _stable_identifier(self.workflow_id, field_name="workflow_id"),
         )
-        object.__setattr__(self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id"))
-        object.__setattr__(self, "sequence_index", _normalize_sequence_index(self.sequence_index))
+        object.__setattr__(
+            self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id")
+        )
+        object.__setattr__(
+            self, "sequence_index", _normalize_sequence_index(self.sequence_index)
+        )
         object.__setattr__(self, "title", _normalize_text(self.title))
         object.__setattr__(self, "request_text", _normalize_text(self.request_text))
-        object.__setattr__(self, "action_type", _normalize_action_type(self.action_type))
+        object.__setattr__(
+            self, "action_type", _normalize_action_type(self.action_type)
+        )
         object.__setattr__(
             self,
             "target_type",
@@ -366,21 +395,41 @@ class OwnerWorkflowStep:
             "approval_id",
             _normalize_optional_identifier(self.approval_id, field_name="approval_id"),
         )
-        object.__setattr__(self, "result_status", _normalize_text(self.result_status).lower() or None)
-        object.__setattr__(self, "outcome", _normalize_optional_step_outcome(self.outcome))
-        object.__setattr__(self, "result_summary", _normalize_text(self.result_summary) or None)
+        object.__setattr__(
+            self, "result_status", _normalize_text(self.result_status).lower() or None
+        )
+        object.__setattr__(
+            self, "outcome", _normalize_optional_step_outcome(self.outcome)
+        )
+        object.__setattr__(
+            self, "result_summary", _normalize_text(self.result_summary) or None
+        )
         object.__setattr__(
             self,
             "result_payload",
             _normalize_optional_result_payload(self.result_payload),
         )
-        object.__setattr__(self, "attempt_count", _normalize_attempt_count(self.attempt_count))
-        object.__setattr__(self, "last_error", _normalize_optional_error(self.last_error))
-        object.__setattr__(self, "retry_status", _normalize_retry_status(self.retry_status))
-        object.__setattr__(self, "max_retries", _normalize_retry_limit(self.max_retries))
-        object.__setattr__(self, "timeout_seconds", _normalize_timeout_seconds(self.timeout_seconds))
-        object.__setattr__(self, "created_at", _normalize_text(self.created_at) or _utc_timestamp())
-        object.__setattr__(self, "updated_at", _normalize_text(self.updated_at) or self.created_at)
+        object.__setattr__(
+            self, "attempt_count", _normalize_attempt_count(self.attempt_count)
+        )
+        object.__setattr__(
+            self, "last_error", _normalize_optional_error(self.last_error)
+        )
+        object.__setattr__(
+            self, "retry_status", _normalize_retry_status(self.retry_status)
+        )
+        object.__setattr__(
+            self, "max_retries", _normalize_retry_limit(self.max_retries)
+        )
+        object.__setattr__(
+            self, "timeout_seconds", _normalize_timeout_seconds(self.timeout_seconds)
+        )
+        object.__setattr__(
+            self, "created_at", _normalize_text(self.created_at) or _utc_timestamp()
+        )
+        object.__setattr__(
+            self, "updated_at", _normalize_text(self.updated_at) or self.created_at
+        )
         if not self.title:
             raise ValueError("title must not be empty")
         if not self.request_text:
@@ -406,7 +455,9 @@ class OwnerWorkflowStep:
             "result_status": self.result_status,
             "outcome": self.outcome,
             "result_summary": self.result_summary,
-            "result_payload": None if self.result_payload is None else dict(self.result_payload),
+            "result_payload": None
+            if self.result_payload is None
+            else dict(self.result_payload),
             "attempt_count": self.attempt_count,
             "last_error": None if self.last_error is None else dict(self.last_error),
             "retry_status": self.retry_status,
@@ -439,15 +490,21 @@ class OwnerWorkflow:
             "workflow_id",
             _stable_identifier(self.workflow_id, field_name="workflow_id"),
         )
-        object.__setattr__(self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id"))
-        object.__setattr__(self, "workflow_type", _normalize_workflow_type(self.workflow_type))
+        object.__setattr__(
+            self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id")
+        )
+        object.__setattr__(
+            self, "workflow_type", _normalize_workflow_type(self.workflow_type)
+        )
         object.__setattr__(self, "title", _normalize_text(self.title))
         object.__setattr__(self, "step_ids", _normalize_step_ids(self.step_ids))
         object.__setattr__(self, "status", _normalize_workflow_status(self.status))
         object.__setattr__(
             self,
             "current_step_id",
-            _normalize_optional_identifier(self.current_step_id, field_name="current_step_id"),
+            _normalize_optional_identifier(
+                self.current_step_id, field_name="current_step_id"
+            ),
         )
         try:
             completed_step_count = int(self.completed_step_count)
@@ -459,20 +516,28 @@ class OwnerWorkflow:
         object.__setattr__(
             self,
             "last_action_id",
-            _normalize_optional_identifier(self.last_action_id, field_name="last_action_id"),
+            _normalize_optional_identifier(
+                self.last_action_id, field_name="last_action_id"
+            ),
         )
         object.__setattr__(
             self,
             "last_approval_id",
-            _normalize_optional_identifier(self.last_approval_id, field_name="last_approval_id"),
+            _normalize_optional_identifier(
+                self.last_approval_id, field_name="last_approval_id"
+            ),
         )
         object.__setattr__(
             self,
             "final_result_summary",
             _normalize_text(self.final_result_summary) or None,
         )
-        object.__setattr__(self, "created_at", _normalize_text(self.created_at) or _utc_timestamp())
-        object.__setattr__(self, "updated_at", _normalize_text(self.updated_at) or self.created_at)
+        object.__setattr__(
+            self, "created_at", _normalize_text(self.created_at) or _utc_timestamp()
+        )
+        object.__setattr__(
+            self, "updated_at", _normalize_text(self.updated_at) or self.created_at
+        )
         if not self.title:
             raise ValueError("title must not be empty")
 
@@ -524,7 +589,10 @@ def create_owner_workflow_step(
     timestamp = _normalize_text(created_at) or _utc_timestamp()
     resolved_action_parameters = dict(action_parameters or {})
     resolved_timeout_seconds = timeout_seconds
-    if timeout_seconds == DEFAULT_STEP_TIMEOUT_SECONDS and "timeout_seconds" in resolved_action_parameters:
+    if (
+        timeout_seconds == DEFAULT_STEP_TIMEOUT_SECONDS
+        and "timeout_seconds" in resolved_action_parameters
+    ):
         resolved_timeout_seconds = resolved_action_parameters["timeout_seconds"]
     return OwnerWorkflowStep(
         step_id=_normalize_text(step_id) or _new_identifier("owner-workflow-step"),
@@ -592,7 +660,9 @@ def update_owner_workflow_step(
         approval_id=step.approval_id if approval_id is _UNSET else approval_id,
         result_status=step.result_status if result_status is _UNSET else result_status,
         outcome=step.outcome if outcome is _UNSET else outcome,
-        result_summary=step.result_summary if result_summary is _UNSET else result_summary,
+        result_summary=step.result_summary
+        if result_summary is _UNSET
+        else result_summary,
         result_payload=(
             step.result_payload
             if result_payload is _UNSET
@@ -602,7 +672,9 @@ def update_owner_workflow_step(
         last_error=step.last_error if last_error is _UNSET else last_error,
         retry_status=step.retry_status if retry_status is _UNSET else retry_status,
         max_retries=step.max_retries if max_retries is _UNSET else max_retries,
-        timeout_seconds=step.timeout_seconds if timeout_seconds is _UNSET else timeout_seconds,
+        timeout_seconds=step.timeout_seconds
+        if timeout_seconds is _UNSET
+        else timeout_seconds,
         created_at=step.created_at,
         updated_at=_normalize_text(updated_at) or _utc_timestamp(),
     )
@@ -630,7 +702,8 @@ def create_owner_workflow(
         workflow_id=_normalize_text(workflow_id) or _new_identifier("owner-workflow"),
         owner_id=_normalize_text(owner_id),
         workflow_type=normalized_workflow_type,
-        title=_normalize_text(title) or _default_workflow_title(normalized_workflow_type),
+        title=_normalize_text(title)
+        or _default_workflow_title(normalized_workflow_type),
         step_ids=step_ids,
         status=_normalize_text(status) or "pending",
         current_step_id=current_step_id,
@@ -661,15 +734,21 @@ def update_owner_workflow(
         title=workflow.title,
         step_ids=workflow.step_ids,
         status=_normalize_text(status) or workflow.status,
-        current_step_id=workflow.current_step_id if current_step_id is _UNSET else current_step_id,
+        current_step_id=workflow.current_step_id
+        if current_step_id is _UNSET
+        else current_step_id,
         completed_step_count=(
             workflow.completed_step_count
             if completed_step_count is None
             else completed_step_count
         ),
-        last_action_id=workflow.last_action_id if last_action_id is _UNSET else last_action_id,
+        last_action_id=workflow.last_action_id
+        if last_action_id is _UNSET
+        else last_action_id,
         last_approval_id=(
-            workflow.last_approval_id if last_approval_id is _UNSET else last_approval_id
+            workflow.last_approval_id
+            if last_approval_id is _UNSET
+            else last_approval_id
         ),
         final_result_summary=(
             workflow.final_result_summary
@@ -728,7 +807,9 @@ def _normalize_step_config(
     target_ref = _normalize_text(payload.get("target_ref")) or default_target_ref
     timeout_candidate = payload.get("timeout_seconds")
     if timeout_candidate is None:
-        timeout_candidate = action_parameters.get("timeout_seconds", DEFAULT_STEP_TIMEOUT_SECONDS)
+        timeout_candidate = action_parameters.get(
+            "timeout_seconds", DEFAULT_STEP_TIMEOUT_SECONDS
+        )
     return {
         "title": _normalize_text(payload.get("title"))
         or _default_step_title(workflow_type, step_key, action_type),
@@ -763,15 +844,24 @@ def instantiate_workflow_steps(
     unexpected_keys = sorted(set(payload) - expected_keys)
     if unexpected_keys:
         raise ValueError(
-            "workflow_payload contains unsupported fields: " + ", ".join(unexpected_keys)
+            "workflow_payload contains unsupported fields: "
+            + ", ".join(unexpected_keys)
         )
-    missing_keys = [step_key for step_key, _action_type, _ref in expected_pattern if step_key not in payload]
+    missing_keys = [
+        step_key
+        for step_key, _action_type, _ref in expected_pattern
+        if step_key not in payload
+    ]
     if missing_keys:
-        raise ValueError("workflow_payload missing required fields: " + ", ".join(missing_keys))
+        raise ValueError(
+            "workflow_payload missing required fields: " + ", ".join(missing_keys)
+        )
 
     timestamp = _normalize_text(created_at) or _utc_timestamp()
     steps: list[OwnerWorkflowStep] = []
-    for index, (step_key, action_type, default_target_ref) in enumerate(expected_pattern):
+    for index, (step_key, action_type, default_target_ref) in enumerate(
+        expected_pattern
+    ):
         normalized_config = _normalize_step_config(
             payload[step_key],
             workflow_type=normalized_workflow_type,

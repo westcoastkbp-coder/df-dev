@@ -28,7 +28,9 @@ def _configure_runtime(monkeypatch, tmp_path: Path) -> Path:
     return task_system_path
 
 
-def test_lead_processing_flow_runs_end_to_end_for_email_branch(monkeypatch, tmp_path: Path) -> None:
+def test_lead_processing_flow_runs_end_to_end_for_email_branch(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_system_path = _configure_runtime(monkeypatch, tmp_path)
     captured_email: dict[str, object] = {}
 
@@ -80,7 +82,10 @@ def test_lead_processing_flow_runs_end_to_end_for_email_branch(monkeypatch, tmp_
         "vendor",
     }
     assert result["action_result"]["decision_trace"]["vendor"] == "google"
-    assert captured_email["to"] == lead_processing_flow_module.DEFAULT_LEAD_NOTIFICATION_EMAIL
+    assert (
+        captured_email["to"]
+        == lead_processing_flow_module.DEFAULT_LEAD_NOTIFICATION_EMAIL
+    )
     assert "Jamie Client" in str(captured_email["subject"])
     assert task["result"]["decision"]["adapter"] == "gmail"
     assert task["result"]["action"]["result_payload"]["adapter"] == "gmail"
@@ -89,7 +94,9 @@ def test_lead_processing_flow_runs_end_to_end_for_email_branch(monkeypatch, tmp_
     assert task["history"][-1]["event"] == "task_completed"
 
 
-def test_lead_processing_flow_runs_end_to_end_for_crm_branch(monkeypatch, tmp_path: Path) -> None:
+def test_lead_processing_flow_runs_end_to_end_for_crm_branch(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_system_path = _configure_runtime(monkeypatch, tmp_path)
 
     result = run_lead_processing_flow(

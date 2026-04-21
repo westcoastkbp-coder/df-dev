@@ -16,7 +16,8 @@ def _write_config(tmp_path: Path, *, enabled: bool = True, top_k: int = 10) -> P
     config_path = tmp_path / "config" / "memory_ranking.json"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(
-        json.dumps({"enabled": enabled, "top_k": top_k}, indent=2, sort_keys=True) + "\n",
+        json.dumps({"enabled": enabled, "top_k": top_k}, indent=2, sort_keys=True)
+        + "\n",
         encoding="utf-8",
     )
     return config_path
@@ -79,7 +80,9 @@ def test_rank_memory_applies_domain_boost_when_other_signals_are_equal() -> None
         {"domain": "dev", "type": "task"},
         [
             _artifact("same-domain", domain="dev", timestamp="2026-04-14T11:00:00Z"),
-            _artifact("other-domain", domain="ownerbox", timestamp="2026-04-14T11:00:00Z"),
+            _artifact(
+                "other-domain", domain="ownerbox", timestamp="2026-04-14T11:00:00Z"
+            ),
         ],
     )
 
@@ -92,8 +95,14 @@ def test_resolve_memory_enforces_top_k_and_returns_ranked_order(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    monkeypatch.setattr(memory_registry, "REGISTRY_FILE", tmp_path / "df-system" / "memory_registry.json")
-    monkeypatch.setattr(memory_resolver, "MEMORY_RANKING_CONFIG_FILE", _write_config(tmp_path, top_k=2))
+    monkeypatch.setattr(
+        memory_registry,
+        "REGISTRY_FILE",
+        tmp_path / "df-system" / "memory_registry.json",
+    )
+    monkeypatch.setattr(
+        memory_resolver, "MEMORY_RANKING_CONFIG_FILE", _write_config(tmp_path, top_k=2)
+    )
 
     memory_registry.register_artifact(
         "task-oldest",
@@ -134,8 +143,14 @@ def test_resolver_ranking_keeps_policy_gate_behavior_correct(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    monkeypatch.setattr(memory_registry, "REGISTRY_FILE", tmp_path / "df-system" / "memory_registry.json")
-    monkeypatch.setattr(memory_resolver, "MEMORY_RANKING_CONFIG_FILE", _write_config(tmp_path, top_k=2))
+    monkeypatch.setattr(
+        memory_registry,
+        "REGISTRY_FILE",
+        tmp_path / "df-system" / "memory_registry.json",
+    )
+    monkeypatch.setattr(
+        memory_resolver, "MEMORY_RANKING_CONFIG_FILE", _write_config(tmp_path, top_k=2)
+    )
     monkeypatch.setattr(
         memory_policy_gate_module,
         "_utc_now",

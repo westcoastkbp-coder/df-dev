@@ -47,10 +47,14 @@ def _validate_top_level_keys(payload: dict[str, Any]) -> None:
     missing_keys = _REQUIRED_TOP_LEVEL_KEYS - set(payload)
     if missing_keys:
         missing = ", ".join(sorted(missing_keys))
-        raise ModelOutputContractError(f"model_output missing required fields: {missing}")
+        raise ModelOutputContractError(
+            f"model_output missing required fields: {missing}"
+        )
     if extra_keys:
         extras = ", ".join(sorted(extra_keys))
-        raise ModelOutputContractError(f"model_output contains unsupported fields: {extras}")
+        raise ModelOutputContractError(
+            f"model_output contains unsupported fields: {extras}"
+        )
 
 
 def _validate_item_keys(item: dict[str, Any]) -> None:
@@ -58,10 +62,14 @@ def _validate_item_keys(item: dict[str, Any]) -> None:
     missing_keys = _REQUIRED_ITEM_KEYS - set(item)
     if missing_keys:
         missing = ", ".join(sorted(missing_keys))
-        raise ModelOutputContractError(f"model_output item missing required fields: {missing}")
+        raise ModelOutputContractError(
+            f"model_output item missing required fields: {missing}"
+        )
     if extra_keys:
         extras = ", ".join(sorted(extra_keys))
-        raise ModelOutputContractError(f"model_output item contains unsupported fields: {extras}")
+        raise ModelOutputContractError(
+            f"model_output item contains unsupported fields: {extras}"
+        )
 
 
 def normalize_model_output(
@@ -83,13 +91,19 @@ def normalize_model_output(
     model_id = _stable_identifier(payload.get("model_id"), field_name="model_id")
     expected = _normalize_text(expected_model_id)
     if expected and model_id != expected:
-        raise ModelOutputContractError("model_output model_id does not match expected model.")
+        raise ModelOutputContractError(
+            "model_output model_id does not match expected model."
+        )
 
     output_type = _normalize_text(payload.get("output_type")).lower()
     if output_type not in SUPPORTED_OUTPUT_TYPES:
-        raise ModelOutputContractError(f"unsupported output_type: {output_type or '<empty>'}")
+        raise ModelOutputContractError(
+            f"unsupported output_type: {output_type or '<empty>'}"
+        )
     if allowed_output_types is not None and output_type not in allowed_output_types:
-        raise ModelOutputContractError(f"output_type is not allowed here: {output_type}")
+        raise ModelOutputContractError(
+            f"output_type is not allowed here: {output_type}"
+        )
 
     raw_items = payload.get("items")
     if not isinstance(raw_items, list):
@@ -100,11 +114,15 @@ def normalize_model_output(
         if not isinstance(raw_item, dict):
             raise ModelOutputContractError("items must contain JSON objects.")
         _validate_item_keys(raw_item)
-        entity_id = _stable_identifier(raw_item.get("entity_id"), field_name="entity_id")
+        entity_id = _stable_identifier(
+            raw_item.get("entity_id"), field_name="entity_id"
+        )
         normalized_item = {
             "entity_id": entity_id,
             "score": _bounded_float(raw_item.get("score"), field_name="score"),
-            "confidence": _bounded_float(raw_item.get("confidence"), field_name="confidence"),
+            "confidence": _bounded_float(
+                raw_item.get("confidence"), field_name="confidence"
+            ),
         }
         current_item = deduplicated.get(entity_id)
         if current_item is None:
@@ -161,4 +179,3 @@ def build_model_output(
 def model_output_json(payload: dict[str, Any]) -> str:
     normalized = normalize_model_output(payload)
     return json.dumps(normalized, indent=2, sort_keys=True) + "\n"
-

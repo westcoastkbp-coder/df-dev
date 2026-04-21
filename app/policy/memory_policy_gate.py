@@ -19,11 +19,7 @@ def _normalized_tags(raw_tags: Any) -> set[str]:
     else:
         return set()
 
-    return {
-        _normalize_text(item)
-        for item in candidates
-        if _normalize_text(item)
-    }
+    return {_normalize_text(item) for item in candidates if _normalize_text(item)}
 
 
 def _utc_now() -> datetime:
@@ -35,7 +31,9 @@ def _parse_timestamp(value: object) -> datetime | None:
     if not normalized:
         return None
     try:
-        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(timezone.utc)
+        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(
+            timezone.utc
+        )
     except ValueError:
         return None
 
@@ -61,7 +59,10 @@ def evaluate_memory_policy(
             continue
 
         artifact = dict(raw_artifact)
-        if required_domain and _normalize_text(artifact.get("domain")) != required_domain:
+        if (
+            required_domain
+            and _normalize_text(artifact.get("domain")) != required_domain
+        ):
             continue
         if required_type and _normalize_text(artifact.get("type")) != required_type:
             continue
@@ -73,7 +74,10 @@ def evaluate_memory_policy(
         if artifact_timestamp is None:
             continue
 
-        if latest_match_timestamp is None or artifact_timestamp > latest_match_timestamp:
+        if (
+            latest_match_timestamp is None
+            or artifact_timestamp > latest_match_timestamp
+        ):
             latest_match = artifact
             latest_match_timestamp = artifact_timestamp
 

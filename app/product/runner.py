@@ -6,7 +6,10 @@ from pathlib import Path
 from typing import Callable
 
 from app.execution.action_result import build_action_result
-from app.execution.decision_trace import build_decision_trace, summarize_context_reference
+from app.execution.decision_trace import (
+    build_decision_trace,
+    summarize_context_reference,
+)
 from app.execution.vendor_router import route as route_vendor
 from app.execution.browser_tool import (
     BROWSER_TOOL_ACTION,
@@ -177,7 +180,9 @@ def _policy_task_state(task_state: dict[str, object]) -> dict[str, object]:
         "COMPLETED": "completed",
         "FAILED": "failed",
     }
-    normalized_task_state["status"] = status_map.get(raw_status, str(normalized_task_state.get("status", "")).strip())
+    normalized_task_state["status"] = status_map.get(
+        raw_status, str(normalized_task_state.get("status", "")).strip()
+    )
     return normalized_task_state
 
 
@@ -386,7 +391,10 @@ def validate_action_trigger(trigger: object) -> dict[str, object]:
     normalized_trigger["action_type"] = action_type
     normalized_trigger["payload"] = normalized_payload
 
-    if action_type == "WRITE_FILE" and not str(normalized_payload.get("content", "")).strip():
+    if (
+        action_type == "WRITE_FILE"
+        and not str(normalized_payload.get("content", "")).strip()
+    ):
         log_event("validation", "payload.content is required for WRITE_FILE")
         return {
             "valid": False,
@@ -477,7 +485,9 @@ def dispatch_action_trigger(
                 task_id=task_id,
             )
         return execute_browser_action(normalized_browser_payload)
-    target_path = _resolve_runtime_out_path(payload.get("path") or payload.get("filename"))
+    target_path = _resolve_runtime_out_path(
+        payload.get("path") or payload.get("filename")
+    )
     filesystem_path = _runtime_fs_path(target_path)
     display_path = _display_runtime_path(target_path)
     filesystem_path.parent.mkdir(parents=True, exist_ok=True)
@@ -631,8 +641,7 @@ def dispatch_development_action(*, action_type: str, task_id: str) -> dict[str, 
             "preview": preview_path.exists(),
         }
         summary = ", ".join(
-            f"{name}={'ok' if ok else 'missing'}"
-            for name, ok in checks.items()
+            f"{name}={'ok' if ok else 'missing'}" for name, ok in checks.items()
         )
         if all(checks.values()):
             log_event("action", f"completed SYSTEM_STATUS -> {summary}")
@@ -686,7 +695,10 @@ def dispatch_development_action(*, action_type: str, task_id: str) -> dict[str, 
             result_payload={"resource_snapshot": snapshot},
         )
 
-    log_event("validation", f"unsupported development action: {normalized_action or '(empty)'}")
+    log_event(
+        "validation",
+        f"unsupported development action: {normalized_action or '(empty)'}",
+    )
     return build_typed_action_result(
         status="error",
         action_type=normalized_action,
@@ -725,26 +737,28 @@ def _composed_step_result(
     task_id = str(request.get("task_id", "")).strip()
     descriptor_path = str(request.get("descriptor_path", "")).strip()
     descriptor_action = str(request.get("descriptor_action", "")).strip()
-    return _completed_result({
-        "task_id": task_id,
-        "selected_agent": "orchestrated",
-        "acceptance_status": "orchestrated",
-        "validation_status": "orchestrated",
-        "lifecycle_state": "completed",
-        "lifecycle_history": ("created", "running", "completed"),
-        "objective": str(request.get("objective", "")).strip(),
-        "system_status_text": "orchestrated",
-        "user_summary": task_id,
-        "system_report": {
-            "descriptor_path": descriptor_path,
-            "descriptor_action": descriptor_action,
-            "scope_files": list(request.get("scope_files", []) or []),
-            "request_source": str(request_source).strip() or "api",
-            "api_called": True,
+    return _completed_result(
+        {
+            "task_id": task_id,
+            "selected_agent": "orchestrated",
+            "acceptance_status": "orchestrated",
+            "validation_status": "orchestrated",
             "lifecycle_state": "completed",
-            "attempted": descriptor_action == "CONTROL_HEALTH",
-        },
-    })
+            "lifecycle_history": ("created", "running", "completed"),
+            "objective": str(request.get("objective", "")).strip(),
+            "system_status_text": "orchestrated",
+            "user_summary": task_id,
+            "system_report": {
+                "descriptor_path": descriptor_path,
+                "descriptor_action": descriptor_action,
+                "scope_files": list(request.get("scope_files", []) or []),
+                "request_source": str(request_source).strip() or "api",
+                "api_called": True,
+                "lifecycle_state": "completed",
+                "attempted": descriptor_action == "CONTROL_HEALTH",
+            },
+        }
+    )
 
 
 def execute_product_task_request(

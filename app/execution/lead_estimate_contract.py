@@ -85,7 +85,9 @@ EXECUTION_RESULT_FIELDS = {
     "decision",
     "binding",
 }
-EXECUTION_RESULT_OPTIONAL_FIELDS = EXECUTION_RESULT_FIELDS - EXECUTION_RESULT_REQUIRED_FIELDS
+EXECUTION_RESULT_OPTIONAL_FIELDS = (
+    EXECUTION_RESULT_FIELDS - EXECUTION_RESULT_REQUIRED_FIELDS
+)
 
 
 def _is_container(value: object) -> bool:
@@ -155,7 +157,9 @@ def build_input_payload(payload: Mapping[str, object]) -> dict[str, object]:
                 if contact_info:
                     lead_data[field] = contact_info
             elif isinstance(value, (list, tuple, set)):
-                contact_items = [normalize_text(item) for item in value if normalize_text(item)]
+                contact_items = [
+                    normalize_text(item) for item in value if normalize_text(item)
+                ]
                 if contact_items:
                     lead_data[field] = contact_items
             else:
@@ -213,16 +217,26 @@ def validate_input_payload(payload: object) -> tuple[bool, str, dict[str, object
     if not normalized_payload:
         return False, "workflow payload must be a dict", trace
 
-    missing_fields = [field for field in sorted(INPUT_FIELDS) if field not in normalized_payload]
+    missing_fields = [
+        field for field in sorted(INPUT_FIELDS) if field not in normalized_payload
+    ]
     if missing_fields:
-        return False, f"workflow payload missing required fields: {', '.join(missing_fields)}", trace
+        return (
+            False,
+            f"workflow payload missing required fields: {', '.join(missing_fields)}",
+            trace,
+        )
 
     if normalize_text(normalized_payload.get("workflow_type")) != WORKFLOW_TYPE:
         return False, f"workflow_type must equal {WORKFLOW_TYPE}", trace
 
     extra_fields = sorted(set(normalized_payload.keys()) - INPUT_FIELDS)
     if extra_fields:
-        return False, f"workflow payload contains unsupported fields: {', '.join(extra_fields)}", trace
+        return (
+            False,
+            f"workflow payload contains unsupported fields: {', '.join(extra_fields)}",
+            trace,
+        )
 
     if not normalize_text(normalized_payload.get("lead_id")):
         return False, "lead_id must not be empty", trace
@@ -249,12 +263,22 @@ def validate_input_payload(payload: object) -> tuple[bool, str, dict[str, object
 
     extra_lead_fields = sorted(set(lead_data.keys()) - LEAD_DATA_FIELDS)
     if extra_lead_fields:
-        return False, f"lead_data contains unsupported fields: {', '.join(extra_lead_fields)}", trace
+        return (
+            False,
+            f"lead_data contains unsupported fields: {', '.join(extra_lead_fields)}",
+            trace,
+        )
 
     for field, value in lead_data.items():
         if _is_empty_container(value):
             continue
-        if field in {"project_type", "scope_summary", "lead_exists", "lead_invalid", "unsupported_request"}:
+        if field in {
+            "project_type",
+            "scope_summary",
+            "lead_exists",
+            "lead_invalid",
+            "unsupported_request",
+        }:
             nested_error = _reject_nested_value(
                 value,
                 field_name=f"lead_data.{field}",
@@ -276,13 +300,23 @@ def validate_decision_contract(payload: object) -> tuple[bool, str, dict[str, ob
     if not normalized_payload:
         return False, "decision payload must be a dict", trace
 
-    missing_fields = [field for field in sorted(DECISION_FIELDS) if field not in normalized_payload]
+    missing_fields = [
+        field for field in sorted(DECISION_FIELDS) if field not in normalized_payload
+    ]
     if missing_fields:
-        return False, f"decision payload missing required fields: {', '.join(missing_fields)}", trace
+        return (
+            False,
+            f"decision payload missing required fields: {', '.join(missing_fields)}",
+            trace,
+        )
 
     extra_fields = sorted(set(normalized_payload.keys()) - DECISION_FIELDS)
     if extra_fields:
-        return False, f"decision payload contains unsupported fields: {', '.join(extra_fields)}", trace
+        return (
+            False,
+            f"decision payload contains unsupported fields: {', '.join(extra_fields)}",
+            trace,
+        )
 
     for field in DECISION_FIELDS:
         nested_error = _reject_nested_value(
@@ -313,12 +347,22 @@ def validate_decision_shape(payload: object) -> tuple[bool, str, dict[str, objec
     }
     if not normalized_payload:
         return False, "decision payload must be a dict", trace
-    missing_fields = [field for field in sorted(DECISION_FIELDS) if field not in normalized_payload]
+    missing_fields = [
+        field for field in sorted(DECISION_FIELDS) if field not in normalized_payload
+    ]
     if missing_fields:
-        return False, f"decision payload missing required fields: {', '.join(missing_fields)}", trace
+        return (
+            False,
+            f"decision payload missing required fields: {', '.join(missing_fields)}",
+            trace,
+        )
     extra_fields = sorted(set(normalized_payload.keys()) - DECISION_FIELDS)
     if extra_fields:
-        return False, f"decision payload contains unsupported fields: {', '.join(extra_fields)}", trace
+        return (
+            False,
+            f"decision payload contains unsupported fields: {', '.join(extra_fields)}",
+            trace,
+        )
     return True, "decision payload shape valid", trace
 
 
@@ -332,13 +376,25 @@ def validate_action_contract(payload: object) -> tuple[bool, str, dict[str, obje
     if not normalized_payload:
         return False, "action payload must be a dict", trace
 
-    missing_fields = [field for field in sorted(ACTION_REQUIRED_FIELDS) if field not in normalized_payload]
+    missing_fields = [
+        field
+        for field in sorted(ACTION_REQUIRED_FIELDS)
+        if field not in normalized_payload
+    ]
     if missing_fields:
-        return False, f"action payload missing required fields: {', '.join(missing_fields)}", trace
+        return (
+            False,
+            f"action payload missing required fields: {', '.join(missing_fields)}",
+            trace,
+        )
 
     extra_fields = sorted(set(normalized_payload.keys()) - ACTION_FIELDS)
     if extra_fields:
-        return False, f"action payload contains unsupported fields: {', '.join(extra_fields)}", trace
+        return (
+            False,
+            f"action payload contains unsupported fields: {', '.join(extra_fields)}",
+            trace,
+        )
 
     if normalize_text(normalized_payload.get("binding_action")) == "":
         return False, "binding_action must not be empty", trace
@@ -361,7 +417,9 @@ def validate_action_contract(payload: object) -> tuple[bool, str, dict[str, obje
     return True, "action payload valid", trace
 
 
-def validate_execution_result_contract(payload: object) -> tuple[bool, str, dict[str, object]]:
+def validate_execution_result_contract(
+    payload: object,
+) -> tuple[bool, str, dict[str, object]]:
     normalized_payload = normalize_mapping(payload)
     trace = {
         "payload_fields": sorted(normalized_payload.keys()),
@@ -374,11 +432,19 @@ def validate_execution_result_contract(payload: object) -> tuple[bool, str, dict
 
     missing_fields = sorted(EXECUTION_RESULT_REQUIRED_FIELDS - set(normalized_payload))
     if missing_fields:
-        return False, f"execution result missing required fields: {', '.join(missing_fields)}", trace
+        return (
+            False,
+            f"execution result missing required fields: {', '.join(missing_fields)}",
+            trace,
+        )
 
     extra_fields = sorted(set(normalized_payload.keys()) - EXECUTION_RESULT_FIELDS)
     if extra_fields:
-        return False, f"execution result contains unsupported fields: {', '.join(extra_fields)}", trace
+        return (
+            False,
+            f"execution result contains unsupported fields: {', '.join(extra_fields)}",
+            trace,
+        )
 
     for field in EXECUTION_RESULT_OPTIONAL_FIELDS:
         if field not in normalized_payload:
@@ -396,12 +462,16 @@ def validate_execution_result_contract(payload: object) -> tuple[bool, str, dict
         if nested_error is not None:
             return nested_error
 
-    valid_decision, reason, _ = validate_decision_contract(normalized_payload.get("decision"))
+    valid_decision, reason, _ = validate_decision_contract(
+        normalized_payload.get("decision")
+    )
     if not valid_decision:
         return False, reason, trace
 
     if "binding" in normalized_payload:
-        valid_binding, binding_reason, _ = validate_action_contract(normalized_payload.get("binding"))
+        valid_binding, binding_reason, _ = validate_action_contract(
+            normalized_payload.get("binding")
+        )
         if not valid_binding:
             return False, binding_reason, trace
 
@@ -457,10 +527,14 @@ def build_execution_result_payload(payload: Mapping[str, object]) -> dict[str, o
     if not valid_contract:
         raise ValueError(reason)
     execution_result: dict[str, object] = {
-        "decision": build_decision_payload(normalize_mapping(normalized_payload.get("decision"))),
+        "decision": build_decision_payload(
+            normalize_mapping(normalized_payload.get("decision"))
+        ),
     }
     if "binding" in normalized_payload:
-        execution_result["binding"] = build_action_payload(normalize_mapping(normalized_payload.get("binding")))
+        execution_result["binding"] = build_action_payload(
+            normalize_mapping(normalized_payload.get("binding"))
+        )
     for field in ("result", "task_type", "result_type", "result_summary", "summary"):
         if field not in normalized_payload:
             continue
@@ -471,7 +545,9 @@ def build_execution_result_payload(payload: Mapping[str, object]) -> dict[str, o
 
 
 def payload_size_bytes(payload: object) -> int:
-    return len(json.dumps(payload, ensure_ascii=True, separators=(",", ":")).encode("utf-8"))
+    return len(
+        json.dumps(payload, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+    )
 
 
 def build_decision_summary(decision: Mapping[str, object]) -> str:

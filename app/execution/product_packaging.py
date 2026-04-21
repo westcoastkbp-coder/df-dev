@@ -97,7 +97,10 @@ def _iter_imported_modules(
                 target = _literal_string_arg(node)
                 if target:
                     dynamic_imports.append(target)
-            elif isinstance(node.func, ast.Attribute) and node.func.attr == "import_module":
+            elif (
+                isinstance(node.func, ast.Attribute)
+                and node.func.attr == "import_module"
+            ):
                 target = _literal_string_arg(node)
                 if target:
                     dynamic_imports.append(target)
@@ -115,6 +118,7 @@ def _literal_string_arg(node: ast.Call) -> str:
 
 def _normalize_blocked_patterns(entries: list[str]) -> list[str]:
     return [_normalize_module_pattern(entry) for entry in entries]
+
 
 def _collect_modules_from_entrypoints(
     *,
@@ -150,7 +154,9 @@ def _collect_modules_from_entrypoints(
             violations.append(f"missing module file for {module_name}")
             continue
 
-        tree = ast.parse(module_path.read_text(encoding="utf-8-sig"), filename=str(module_path))
+        tree = ast.parse(
+            module_path.read_text(encoding="utf-8-sig"), filename=str(module_path)
+        )
         imported_modules, dynamic_imports = _iter_imported_modules(
             tree,
             module_name,
@@ -160,7 +166,9 @@ def _collect_modules_from_entrypoints(
         for dynamic_import in dynamic_imports:
             normalized_dynamic = _normalize_module_pattern(dynamic_import)
             if any(_matches_prefix(normalized_dynamic, entry) for entry in blocked):
-                detail = f"forbidden dynamic import from {module_name}: {dynamic_import}"
+                detail = (
+                    f"forbidden dynamic import from {module_name}: {dynamic_import}"
+                )
                 violations.append(detail)
                 blocked_references.append(dynamic_import)
 
@@ -168,15 +176,34 @@ def _collect_modules_from_entrypoints(
             normalized_import = _normalize_module_pattern(imported_module)
             if not normalized_import:
                 continue
-            if normalized_import.split(".")[0] in {"typing", "__future__", "dataclasses", "collections", "pathlib", "json", "ast"}:
+            if normalized_import.split(".")[0] in {
+                "typing",
+                "__future__",
+                "dataclasses",
+                "collections",
+                "pathlib",
+                "json",
+                "ast",
+            }:
                 pass
             if any(_matches_prefix(normalized_import, entry) for entry in blocked):
                 detail = f"blocked import from {module_name}: {normalized_import}"
                 violations.append(detail)
                 blocked_references.append(normalized_import)
                 continue
-            if normalized_import.split(".")[0] in {"app", "runtime", "memory", "integrations", "hardware", "agents", "scripts", "tests"}:
-                if not any(_matches_prefix(normalized_import, entry) for entry in allowlist):
+            if normalized_import.split(".")[0] in {
+                "app",
+                "runtime",
+                "memory",
+                "integrations",
+                "hardware",
+                "agents",
+                "scripts",
+                "tests",
+            }:
+                if not any(
+                    _matches_prefix(normalized_import, entry) for entry in allowlist
+                ):
                     violations.append(f"module outside allowlist: {normalized_import}")
                     continue
                 if _module_to_path(root_dir, normalized_import) is not None:
@@ -201,9 +228,13 @@ def _validate_filesystem(root_dir: Path) -> tuple[list[str], list[str]]:
         if not name:
             continue
         if name in FORBIDDEN_ARTIFACT_NAMES:
-            violations.append(f"forbidden artifact present: {path.relative_to(root_dir).as_posix()}")
+            violations.append(
+                f"forbidden artifact present: {path.relative_to(root_dir).as_posix()}"
+            )
         elif any(name.startswith(prefix) for prefix in FORBIDDEN_ARTIFACT_PREFIXES):
-            violations.append(f"temporary artifact present: {path.relative_to(root_dir).as_posix()}")
+            violations.append(
+                f"temporary artifact present: {path.relative_to(root_dir).as_posix()}"
+            )
 
     return sorted(set(violations)), sorted(set(blocked_references))
 
@@ -211,12 +242,13 @@ def _validate_filesystem(root_dir: Path) -> tuple[list[str], list[str]]:
 def _validate_writable_paths(manifest: dict[str, Any]) -> list[str]:
     violations: list[str] = []
     approved = {_normalize_relative_path(path) for path in APPROVED_WRITABLE_PATHS}
-    declared = {_normalize_relative_path(path) for path in list(manifest.get("writable_paths", []) or [])}
+    declared = {
+        _normalize_relative_path(path)
+        for path in list(manifest.get("writable_paths", []) or [])
+    }
     invalid = sorted(declared - approved)
     if invalid:
-        violations.append(
-            "invalid writable path(s): " + ", ".join(invalid)
-        )
+        violations.append("invalid writable path(s): " + ", ".join(invalid))
     return violations
 
 
@@ -242,7 +274,9 @@ def validate_product_packaging(
 ) -> dict[str, Any]:
     resolved_root = (root_dir or PROJECT_ROOT).resolve(strict=False)
     raw_manifest = _load_raw_manifest(manifest, manifest_path)
-    raw_writable_path_violations = _validate_writable_paths(raw_manifest) if raw_manifest else []
+    raw_writable_path_violations = (
+        _validate_writable_paths(raw_manifest) if raw_manifest else []
+    )
     try:
         validated_manifest = validate_product_box_manifest(
             manifest,
@@ -257,20 +291,30 @@ def validate_product_packaging(
             "blocked_references_detected": [],
         }
 
-    allowlist = [_normalize_module_pattern(entry) for entry in validated_manifest["product_runtime_allowlist"]]
+    allowlist = [
+        _normalize_module_pattern(entry)
+        for entry in validated_manifest["product_runtime_allowlist"]
+    ]
     blocked = _normalize_blocked_patterns(validated_manifest["blocked_modules"])
-    entrypoints = [_normalize_module_pattern(entry) for entry in validated_manifest["product_entrypoints"]]
+    entrypoints = [
+        _normalize_module_pattern(entry)
+        for entry in validated_manifest["product_entrypoints"]
+    ]
 
-    included_modules, import_violations, import_blocked = _collect_modules_from_entrypoints(
-        root_dir=resolved_root,
-        entrypoints=entrypoints,
-        allowlist=allowlist,
-        blocked=blocked,
+    included_modules, import_violations, import_blocked = (
+        _collect_modules_from_entrypoints(
+            root_dir=resolved_root,
+            entrypoints=entrypoints,
+            allowlist=allowlist,
+            blocked=blocked,
+        )
     )
     filesystem_violations, filesystem_blocked = _validate_filesystem(resolved_root)
     writable_path_violations = _validate_writable_paths(validated_manifest)
 
-    violations = sorted(set(import_violations + filesystem_violations + writable_path_violations))
+    violations = sorted(
+        set(import_violations + filesystem_violations + writable_path_violations)
+    )
     blocked_references = sorted(set(import_blocked + filesystem_blocked))
     return {
         "packaging_status": "PASS" if not violations else "FAIL",

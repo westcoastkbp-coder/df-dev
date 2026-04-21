@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from app.execution.execution_boundary import ExecutionBoundaryViolationError, execution_boundary
+from app.execution.execution_boundary import (
+    ExecutionBoundaryViolationError,
+    execution_boundary,
+)
 from app.execution.external_modules import (
     ExternalModuleRequest,
     ExternalModuleResult,
@@ -19,14 +22,20 @@ from app.execution.external_modules import (
 class EstimateModuleAdapter:
     module_type = "estimate_service"
 
-    def __init__(self, *, raw_result: object | None = None, error: Exception | None = None) -> None:
+    def __init__(
+        self, *, raw_result: object | None = None, error: Exception | None = None
+    ) -> None:
         self.raw_result = raw_result
         self.error = error
         self.last_request: ExternalModuleRequest | None = None
 
-    def validate_request_payload(self, operation: str, payload: dict[str, object]) -> None:
+    def validate_request_payload(
+        self, operation: str, payload: dict[str, object]
+    ) -> None:
         if operation != "generate_estimate":
-            raise ExternalModuleValidationError("unsupported operation for estimate_service")
+            raise ExternalModuleValidationError(
+                "unsupported operation for estimate_service"
+            )
         required_fields = {"estimate_scope", "address"}
         missing_fields = sorted(required_fields - set(payload))
         if missing_fields:
@@ -34,9 +43,13 @@ class EstimateModuleAdapter:
                 "payload missing required fields: " + ", ".join(missing_fields)
             )
 
-    def validate_result_payload(self, operation: str, payload: dict[str, object]) -> None:
+    def validate_result_payload(
+        self, operation: str, payload: dict[str, object]
+    ) -> None:
         if operation != "generate_estimate":
-            raise ExternalModuleValidationError("unsupported operation for estimate_service")
+            raise ExternalModuleValidationError(
+                "unsupported operation for estimate_service"
+            )
         required_fields = {"estimate_id", "price_band"}
         missing_fields = sorted(required_fields - set(payload))
         if missing_fields:
@@ -168,7 +181,9 @@ def test_malformed_result_is_rejected_as_signal() -> None:
 
 def test_timeout_and_unavailable_statuses_are_handled_as_signals() -> None:
     timeout_registry = ExternalModuleRegistry()
-    timeout_registry.register(EstimateModuleAdapter(error=TimeoutError("estimate call timed out")))
+    timeout_registry.register(
+        EstimateModuleAdapter(error=TimeoutError("estimate call timed out"))
+    )
     request = _build_valid_request()
 
     with execution_boundary(
@@ -285,7 +300,9 @@ def test_external_modules_cannot_be_called_outside_execution_boundary() -> None:
     registry = ExternalModuleRegistry()
     registry.register(EstimateModuleAdapter())
 
-    with pytest.raises(ExecutionBoundaryViolationError, match="direct_external_module_call_blocked"):
+    with pytest.raises(
+        ExecutionBoundaryViolationError, match="direct_external_module_call_blocked"
+    ):
         execute_external_module(_build_valid_request(), registry=registry)
 
 

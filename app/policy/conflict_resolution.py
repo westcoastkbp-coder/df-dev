@@ -36,9 +36,7 @@ def _validate_resolution_type(resolution_type: object) -> str:
     normalized = _normalize_text(resolution_type)
     if normalized not in VALID_RESOLUTION_TYPES:
         allowed = ", ".join(sorted(VALID_RESOLUTION_TYPES))
-        raise ConflictResolutionError(
-            f"resolution_type must be one of: {allowed}"
-        )
+        raise ConflictResolutionError(f"resolution_type must be one of: {allowed}")
     return normalized
 
 
@@ -111,7 +109,11 @@ def resolve_conflict(
     )
     set_state(
         "conflict",
-        _normalize_text(payload.get("logical_id") or payload.get("resource_id") or normalized_artifact_id),
+        _normalize_text(
+            payload.get("logical_id")
+            or payload.get("resource_id")
+            or normalized_artifact_id
+        ),
         "resolved",
         str(saved_path),
         domain=_normalize_text(artifact.get("domain")),

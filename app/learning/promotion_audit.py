@@ -27,7 +27,11 @@ def _normalize_status(value: object) -> str:
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .isoformat(timespec="microseconds")
+        .replace("+00:00", "Z")
+    )
 
 
 def _canonical_json(payload: object) -> str:
@@ -49,7 +53,9 @@ def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temp_path = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
     try:
-        temp_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        temp_path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
         os.replace(temp_path, path)
     finally:
         if temp_path.exists():
@@ -57,7 +63,9 @@ def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
 
 
 def config_version(config: dict[str, Any]) -> str:
-    return f"sha256:{hashlib.sha256(_canonical_json(config).encode('utf-8')).hexdigest()}"
+    return (
+        f"sha256:{hashlib.sha256(_canonical_json(config).encode('utf-8')).hexdigest()}"
+    )
 
 
 def candidate_model_artifact_refs(candidate_model: str) -> list[str]:
@@ -100,10 +108,10 @@ def build_promotion_audit_record(
             "config_version_before": config_version_before,
             "config_version_after": config_version_after,
         }
-        digest = hashlib.sha256(_canonical_json(promotion_seed).encode("utf-8")).hexdigest()[:12]
-        resolved_promotion_id = (
-            f"promotion-{record_timestamp.replace('-', '').replace(':', '').replace('.', '')}-{digest}"
-        )
+        digest = hashlib.sha256(
+            _canonical_json(promotion_seed).encode("utf-8")
+        ).hexdigest()[:12]
+        resolved_promotion_id = f"promotion-{record_timestamp.replace('-', '').replace(':', '').replace('.', '')}-{digest}"
 
     return {
         "promotion_id": resolved_promotion_id,
@@ -161,7 +169,10 @@ def read_promotion_audit_records(*, status: str | None = None) -> list[dict[str,
             continue
         if not isinstance(payload, dict):
             continue
-        if normalized_status is not None and _normalize_text(payload.get("status")).lower() != normalized_status:
+        if (
+            normalized_status is not None
+            and _normalize_text(payload.get("status")).lower() != normalized_status
+        ):
             continue
         records.append(payload)
     return records

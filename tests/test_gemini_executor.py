@@ -15,12 +15,20 @@ class _FakeResponse:
         return self._payload
 
 
-def test_post_gemini_prompt_uses_current_request_contract(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_post_gemini_prompt_uses_current_request_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     captured_request: dict[str, object] = {}
-    monkeypatch.setattr("control.gemini_executor._load_gemini_api_key", lambda: "test-key")
-    monkeypatch.setattr("control.gemini_executor._load_gemini_model", lambda: "gemini-2.5-flash")
+    monkeypatch.setattr(
+        "control.gemini_executor._load_gemini_api_key", lambda: "test-key"
+    )
+    monkeypatch.setattr(
+        "control.gemini_executor._load_gemini_model", lambda: "gemini-2.5-flash"
+    )
 
-    def _fake_post(url: str, *, headers: dict, json: dict, timeout: int) -> _FakeResponse:
+    def _fake_post(
+        url: str, *, headers: dict, json: dict, timeout: int
+    ) -> _FakeResponse:
         captured_request["url"] = url
         captured_request["headers"] = headers
         captured_request["json"] = json
@@ -67,9 +75,15 @@ def test_post_gemini_prompt_uses_current_request_contract(monkeypatch: pytest.Mo
     }
 
 
-def test_post_gemini_prompt_surfaces_api_errors(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("control.gemini_executor._load_gemini_api_key", lambda: "test-key")
-    monkeypatch.setattr("control.gemini_executor._load_gemini_model", lambda: "gemini-2.5-flash")
+def test_post_gemini_prompt_surfaces_api_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "control.gemini_executor._load_gemini_api_key", lambda: "test-key"
+    )
+    monkeypatch.setattr(
+        "control.gemini_executor._load_gemini_model", lambda: "gemini-2.5-flash"
+    )
     monkeypatch.setattr(
         "control.gemini_executor.requests.post",
         lambda *args, **kwargs: _FakeResponse(
@@ -84,7 +98,9 @@ def test_post_gemini_prompt_surfaces_api_errors(monkeypatch: pytest.MonkeyPatch)
         ),
     )
 
-    with pytest.raises(ValueError, match="Gemini API error: code=404 \\| NOT_FOUND \\| model not found"):
+    with pytest.raises(
+        ValueError, match="Gemini API error: code=404 \\| NOT_FOUND \\| model not found"
+    ):
         gemini_executor._post_gemini_prompt("Task: ping")
 
 
@@ -95,8 +111,8 @@ def test_extract_candidate_text_joins_text_parts() -> None:
                 {
                     "content": {
                         "parts": [
-                            {"text": "{\"result\":"},
-                            {"text": "{\"status\":\"ok\"}}"},
+                            {"text": '{"result":'},
+                            {"text": '{"status":"ok"}}'},
                         ]
                     }
                 }
@@ -104,4 +120,4 @@ def test_extract_candidate_text_joins_text_parts() -> None:
         }
     )
 
-    assert text == "{\"result\":\n{\"status\":\"ok\"}}"
+    assert text == '{"result":\n{"status":"ok"}}'

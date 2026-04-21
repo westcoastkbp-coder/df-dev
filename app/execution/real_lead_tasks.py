@@ -22,7 +22,11 @@ from app.orchestrator.task_factory import (
 )
 from app.orchestrator.task_lifecycle import set_task_state, transition_task_status
 from app.policy.policy_gate import evaluate_workflow_contract, evaluate_workflow_policy
-from runtime.system_log import append_execution_trace_step, log_event, log_task_execution
+from runtime.system_log import (
+    append_execution_trace_step,
+    log_event,
+    log_task_execution,
+)
 
 
 def _record_trace(
@@ -83,8 +87,14 @@ def create_real_lead_parent_task(
 ) -> dict[str, object]:
     prepared = prepare_real_lead_parent_task_input(lead_input, task_id=task_id)
     lead_input_payload = dict(prepared.get("lead_input_payload", {}) or {})
-    requested_task_id = str(dict(prepared.get("task_input", {}) or {}).get("task_id", "")).strip()
-    existing_parent = get_task(requested_task_id, store_path=store_path) if requested_task_id else None
+    requested_task_id = str(
+        dict(prepared.get("task_input", {}) or {}).get("task_id", "")
+    ).strip()
+    existing_parent = (
+        get_task(requested_task_id, store_path=store_path)
+        if requested_task_id
+        else None
+    )
     if existing_parent is not None:
         if str(existing_parent.get("status", "")).strip() == "CREATED":
             set_task_state(
@@ -118,7 +128,9 @@ def create_missing_input_followup_task(
     lead_input_payload = dict(prepared.get("lead_input_payload", {}) or {})
     missing_fields = list(prepared.get("missing_fields", []) or [])
     idempotency_key = str(prepared.get("idempotency_key", "")).strip()
-    existing_followup = find_task_by_idempotency_key(idempotency_key, store_path=store_path)
+    existing_followup = find_task_by_idempotency_key(
+        idempotency_key, store_path=store_path
+    )
     if existing_followup is not None:
         _log_idempotent_skip(
             idempotency_key=idempotency_key,
@@ -239,7 +251,11 @@ def execute_real_lead_pipeline(
     from app.execution.lead_estimate_contract import decision_reason_code
 
     next_action = str(decision.get("next_step", "")).strip()
-    if next_action in {"create_estimate_task", "request_missing_scope", "manual_review"}:
+    if next_action in {
+        "create_estimate_task",
+        "request_missing_scope",
+        "manual_review",
+    }:
         idempotency_key = build_idempotency_key(
             lead_id=lead_input_payload.get("lead_id"),
             workflow_type=WORKFLOW_TYPE,
@@ -249,7 +265,9 @@ def execute_real_lead_pipeline(
                 "next_step": next_action,
             },
         )
-        existing_child = find_task_by_idempotency_key(idempotency_key, store_path=store_path)
+        existing_child = find_task_by_idempotency_key(
+            idempotency_key, store_path=store_path
+        )
         if existing_child is not None:
             _log_idempotent_skip(
                 idempotency_key=idempotency_key,

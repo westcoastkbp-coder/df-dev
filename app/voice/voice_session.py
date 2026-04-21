@@ -11,7 +11,9 @@ from app.ownerbox.domain import normalize_ownerbox_domain_binding
 
 VOICE_SESSION_STATUSES = frozenset({"active", "paused", "completed", "failed"})
 VOICE_TURN_STATUSES = frozenset({"received", "completed", "blocked", "failed"})
-VOICE_RESPONSE_TYPES = frozenset({"spoken_text", "confirmation_request", "input_error", "error"})
+VOICE_RESPONSE_TYPES = frozenset(
+    {"spoken_text", "confirmation_request", "input_error", "error"}
+)
 VOICE_EXECUTION_MODES = frozenset({"live", "dry_run"})
 _IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9._:@-]+$")
 _LANGUAGE_TAG_PATTERN = re.compile(r"^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,2}$")
@@ -72,7 +74,9 @@ def _normalize_mapping(value: object) -> dict[str, object]:
     return normalized
 
 
-def _normalize_status(value: object, *, allowed: frozenset[str], field_name: str) -> str:
+def _normalize_status(
+    value: object, *, allowed: frozenset[str], field_name: str
+) -> str:
     normalized = _normalize_text(value).lower()
     if normalized not in allowed:
         raise ValueError(f"{field_name} must be one of: {', '.join(sorted(allowed))}")
@@ -132,7 +136,9 @@ class ResponsePlan:
             "target_language",
             _normalize_language_tag(self.target_language, default="und"),
         )
-        object.__setattr__(self, "text_payload", _collapse_whitespace(self.text_payload))
+        object.__setattr__(
+            self, "text_payload", _collapse_whitespace(self.text_payload)
+        )
         object.__setattr__(
             self,
             "action_refs",
@@ -179,15 +185,29 @@ class VoiceSession:
     session_status: str = "active"
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "session_id", _stable_identifier(self.session_id, field_name="session_id"))
-        object.__setattr__(self, "caller_id", _stable_identifier(self.caller_id, field_name="caller_id"))
-        object.__setattr__(self, "channel_type", _stable_identifier(self.channel_type, field_name="channel_type").lower())
+        object.__setattr__(
+            self,
+            "session_id",
+            _stable_identifier(self.session_id, field_name="session_id"),
+        )
+        object.__setattr__(
+            self,
+            "caller_id",
+            _stable_identifier(self.caller_id, field_name="caller_id"),
+        )
+        object.__setattr__(
+            self,
+            "channel_type",
+            _stable_identifier(self.channel_type, field_name="channel_type").lower(),
+        )
         object.__setattr__(
             self,
             "active_language",
             _normalize_language_tag(self.active_language, default="und"),
         )
-        object.__setattr__(self, "language_profile", _normalize_mapping(self.language_profile))
+        object.__setattr__(
+            self, "language_profile", _normalize_mapping(self.language_profile)
+        )
         context_ref = _normalize_text(self.context_ref)
         object.__setattr__(self, "context_ref", context_ref or None)
         object.__setattr__(
@@ -234,8 +254,14 @@ class VoiceTurn:
     trace_metadata: VoiceTraceMetadata | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "turn_id", _stable_identifier(self.turn_id, field_name="turn_id"))
-        object.__setattr__(self, "session_id", _stable_identifier(self.session_id, field_name="session_id"))
+        object.__setattr__(
+            self, "turn_id", _stable_identifier(self.turn_id, field_name="turn_id")
+        )
+        object.__setattr__(
+            self,
+            "session_id",
+            _stable_identifier(self.session_id, field_name="session_id"),
+        )
         object.__setattr__(self, "input_text", _collapse_whitespace(self.input_text))
         object.__setattr__(
             self,
@@ -270,7 +296,9 @@ class VoiceTurn:
             "output_text": self.output_text,
             "turn_status": self.turn_status,
             "created_at": self.created_at,
-            "trace_metadata": None if self.trace_metadata is None else self.trace_metadata.to_dict(),
+            "trace_metadata": None
+            if self.trace_metadata is None
+            else self.trace_metadata.to_dict(),
         }
 
 
@@ -320,7 +348,9 @@ def update_voice_session(
             if language_profile is None
             else dict(language_profile)
         ),
-        context_ref=session.context_ref if context_ref is None else (_normalize_text(context_ref) or None),
+        context_ref=session.context_ref
+        if context_ref is None
+        else (_normalize_text(context_ref) or None),
         domain_binding=(
             dict(session.domain_binding)
             if domain_binding is None
@@ -375,7 +405,9 @@ def create_voice_trace_metadata(
         turn_id=_stable_identifier(turn_id, field_name="turn_id"),
         caller_id=_stable_identifier(caller_id, field_name="caller_id"),
         detected_language=_normalize_language_tag(detected_language, default="und"),
-        action_id=None if action_text is None else _stable_identifier(action_text, field_name="action_id"),
+        action_id=None
+        if action_text is None
+        else _stable_identifier(action_text, field_name="action_id"),
         result_status=_normalize_text(result_status).lower(),
         started_at=_normalize_text(started_at) or _utc_timestamp(),
         completed_at=_normalize_text(completed_at) or _utc_timestamp(),

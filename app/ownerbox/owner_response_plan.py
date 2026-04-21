@@ -99,7 +99,9 @@ def _normalize_optional_trust_class(value: object) -> str | None:
     if not normalized:
         return None
     if normalized not in TRUST_CLASSES:
-        raise ValueError("trust_class must be one of: " + ", ".join(sorted(TRUST_CLASSES)))
+        raise ValueError(
+            "trust_class must be one of: " + ", ".join(sorted(TRUST_CLASSES))
+        )
     return normalized
 
 
@@ -177,24 +179,36 @@ class OwnerResponsePlan:
             "owner_session_id",
             _stable_identifier(self.owner_session_id, field_name="owner_session_id"),
         )
-        object.__setattr__(self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id"))
-        object.__setattr__(self, "response_type", _normalize_response_type(self.response_type))
+        object.__setattr__(
+            self, "owner_id", _stable_identifier(self.owner_id, field_name="owner_id")
+        )
+        object.__setattr__(
+            self, "response_type", _normalize_response_type(self.response_type)
+        )
         object.__setattr__(
             self,
             "target_language",
             _normalize_language_tag(self.target_language, default="und"),
         )
         object.__setattr__(self, "summary_text", _normalize_summary(self.summary_text))
-        object.__setattr__(self, "action_refs", _normalize_action_refs(self.action_refs))
+        object.__setattr__(
+            self, "action_refs", _normalize_action_refs(self.action_refs)
+        )
         object.__setattr__(
             self,
             "approval_id",
             _normalize_optional_identifier(self.approval_id, field_name="approval_id"),
         )
-        object.__setattr__(self, "trust_class", _normalize_optional_trust_class(self.trust_class))
-        object.__setattr__(self, "preview_text", _normalize_optional_preview_text(self.preview_text))
+        object.__setattr__(
+            self, "trust_class", _normalize_optional_trust_class(self.trust_class)
+        )
+        object.__setattr__(
+            self, "preview_text", _normalize_optional_preview_text(self.preview_text)
+        )
         object.__setattr__(self, "metadata", _normalize_mapping(self.metadata))
-        object.__setattr__(self, "created_at", _normalize_text(self.created_at) or _utc_timestamp())
+        object.__setattr__(
+            self, "created_at", _normalize_text(self.created_at) or _utc_timestamp()
+        )
         object.__setattr__(self, "status", _normalize_status(self.status))
 
     def to_dict(self) -> dict[str, object]:
@@ -236,7 +250,8 @@ def create_owner_response_plan(
     response_plan_id: object | None = None,
 ) -> OwnerResponsePlan:
     return OwnerResponsePlan(
-        response_plan_id=_normalize_text(response_plan_id) or _new_identifier("owner-response-plan"),
+        response_plan_id=_normalize_text(response_plan_id)
+        or _new_identifier("owner-response-plan"),
         owner_session_id=_normalize_text(owner_session_id),
         owner_id=_normalize_text(owner_id),
         response_type=_normalize_text(response_type),

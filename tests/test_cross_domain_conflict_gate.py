@@ -3,7 +3,9 @@ from __future__ import annotations
 from app.policy.cross_domain_conflict_gate import evaluate_cross_domain_conflict
 
 
-def _task_packet(*, domain: str = "dev", resource_id: str = "crew-west") -> dict[str, object]:
+def _task_packet(
+    *, domain: str = "dev", resource_id: str = "crew-west"
+) -> dict[str, object]:
     return {
         "task_id": 9,
         "instruction": "Execute the task",
@@ -81,7 +83,14 @@ def test_cross_domain_conflict_gate_allows_different_resource() -> None:
 def test_cross_domain_conflict_gate_allows_completed_artifact_in_other_domain() -> None:
     decision = evaluate_cross_domain_conflict(
         _task_packet(domain="dev", resource_id="crew-west"),
-        [_artifact("artifact-4", domain="ownerbox", resource_id="crew-west", status="completed")],
+        [
+            _artifact(
+                "artifact-4",
+                domain="ownerbox",
+                resource_id="crew-west",
+                status="completed",
+            )
+        ],
     )
 
     assert decision == {

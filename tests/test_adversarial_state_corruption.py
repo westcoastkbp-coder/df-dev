@@ -142,6 +142,7 @@ def test_invalid_status_value_blocks_execution(monkeypatch, tmp_path: Path) -> N
     corrupted = dict(task)
     corrupted["status"] = "BROKEN"
     import json
+
     _mutate_descriptor(
         store_path,
         task_id="DF-CORRUPT-STATUS-V1",
@@ -159,7 +160,9 @@ def test_invalid_status_value_blocks_execution(monkeypatch, tmp_path: Path) -> N
     }
 
 
-def test_partial_write_row_descriptor_divergence_must_not_execute(monkeypatch, tmp_path: Path) -> None:
+def test_partial_write_row_descriptor_divergence_must_not_execute(
+    monkeypatch, tmp_path: Path
+) -> None:
     store_path = _configure_state_backend(monkeypatch, tmp_path)
     _create_validated_task(store_path, task_id="DF-CORRUPT-PARTIAL-V1")
     _mutate_row_status(

@@ -111,14 +111,18 @@ class _SuccessfulValidation:
     returncode = 0
 
 
-def test_memory_destruction_missing_system_context_recovers(monkeypatch, tmp_path: Path) -> None:
+def test_memory_destruction_missing_system_context_recovers(
+    monkeypatch, tmp_path: Path
+) -> None:
     target = tmp_path / "system_context.json"
     monkeypatch.setattr(memory, "CTX_PATH", target)
 
     assert memory.load_context() == memory.default_context()
 
 
-def test_memory_destruction_corrupted_json_recovers(monkeypatch, tmp_path: Path) -> None:
+def test_memory_destruction_corrupted_json_recovers(
+    monkeypatch, tmp_path: Path
+) -> None:
     target = tmp_path / "system_context.json"
     target.write_text("{broken json", encoding="utf-8")
     monkeypatch.setattr(memory, "CTX_PATH", target)
@@ -126,7 +130,9 @@ def test_memory_destruction_corrupted_json_recovers(monkeypatch, tmp_path: Path)
     assert memory.load_context() == memory.default_context()
 
 
-def test_memory_destruction_partial_json_restores_missing_defaults(monkeypatch, tmp_path: Path) -> None:
+def test_memory_destruction_partial_json_restores_missing_defaults(
+    monkeypatch, tmp_path: Path
+) -> None:
     target = tmp_path / "system_context.json"
     target.write_text(
         json.dumps({"system": "Digital Foreman", "status": "WORKING"}),
@@ -148,7 +154,9 @@ def test_memory_destruction_partial_json_restores_missing_defaults(monkeypatch, 
     assert result["next_required"] == ""
 
 
-def test_memory_destruction_wrong_field_types_restore_defaults(monkeypatch, tmp_path: Path) -> None:
+def test_memory_destruction_wrong_field_types_restore_defaults(
+    monkeypatch, tmp_path: Path
+) -> None:
     target = tmp_path / "system_context.json"
     target.write_text(
         json.dumps(
@@ -194,14 +202,18 @@ def test_memory_destruction_empty_file_recovers(monkeypatch, tmp_path: Path) -> 
     assert memory.load_context() == memory.default_context()
 
 
-def test_audit_destruction_missing_audit_file_is_safe(monkeypatch, tmp_path: Path) -> None:
+def test_audit_destruction_missing_audit_file_is_safe(
+    monkeypatch, tmp_path: Path
+) -> None:
     target = tmp_path / "audit_log.jsonl"
     monkeypatch.setattr(audit_log, "LOG_PATH", target)
 
     assert audit_log.read_audit_log() == []
 
 
-def test_audit_destruction_broken_jsonl_row_is_skipped(monkeypatch, tmp_path: Path) -> None:
+def test_audit_destruction_broken_jsonl_row_is_skipped(
+    monkeypatch, tmp_path: Path
+) -> None:
     target = tmp_path / "audit_log.jsonl"
     target.write_text("{bad row}\n", encoding="utf-8")
     monkeypatch.setattr(audit_log, "LOG_PATH", target)
@@ -209,7 +221,9 @@ def test_audit_destruction_broken_jsonl_row_is_skipped(monkeypatch, tmp_path: Pa
     assert audit_log.read_audit_log() == []
 
 
-def test_audit_destruction_mixed_rows_keep_valid_entries(monkeypatch, tmp_path: Path) -> None:
+def test_audit_destruction_mixed_rows_keep_valid_entries(
+    monkeypatch, tmp_path: Path
+) -> None:
     target = tmp_path / "audit_log.jsonl"
     target.write_text(
         "\n".join(
@@ -240,7 +254,9 @@ def test_audit_destruction_empty_file_is_safe(monkeypatch, tmp_path: Path) -> No
     assert audit_log.read_audit_log() == []
 
 
-def test_audit_destruction_corrupt_history_does_not_false_escalate(monkeypatch, tmp_path: Path) -> None:
+def test_audit_destruction_corrupt_history_does_not_false_escalate(
+    monkeypatch, tmp_path: Path
+) -> None:
     target = tmp_path / "audit_log.jsonl"
     target.write_text(
         "\n".join(
@@ -260,7 +276,9 @@ def test_audit_destruction_corrupt_history_does_not_false_escalate(monkeypatch, 
     }
 
 
-def test_false_success_attack_missing_review_cannot_mark_working(monkeypatch, capsys) -> None:
+def test_false_success_attack_missing_review_cannot_mark_working(
+    monkeypatch, capsys
+) -> None:
     state = {"context": _base_context(), "audit": []}
     _patch_loop_state(monkeypatch, state)
     monkeypatch.setattr(
@@ -291,7 +309,9 @@ def test_false_success_attack_blocked_review_stays_blocked(monkeypatch, capsys) 
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("pass", "ok"))
-    monkeypatch.setattr(codex_loop, "run_external_review", lambda *args, **kwargs: _blocked_review())
+    monkeypatch.setattr(
+        codex_loop, "run_external_review", lambda *args, **kwargs: _blocked_review()
+    )
     monkeypatch.setattr(codex_loop, "get_git_commit", lambda: "abc123")
     monkeypatch.setattr(codex_loop, "get_git_branch", lambda: "main")
 
@@ -304,7 +324,9 @@ def test_false_success_attack_blocked_review_stays_blocked(monkeypatch, capsys) 
     assert state["audit"][-1]["status"] == "BLOCKED"
 
 
-def test_false_success_attack_malformed_review_payload_cannot_mark_working(monkeypatch, capsys) -> None:
+def test_false_success_attack_malformed_review_payload_cannot_mark_working(
+    monkeypatch, capsys
+) -> None:
     state = {"context": _base_context(), "audit": []}
     _patch_loop_state(monkeypatch, state)
     monkeypatch.setattr(
@@ -336,7 +358,9 @@ def test_false_success_attack_malformed_review_payload_cannot_mark_working(monke
     assert state["audit"][-1]["status"] == "BLOCKED"
 
 
-def test_false_success_attack_missing_decision_trace_never_becomes_working(monkeypatch, capsys) -> None:
+def test_false_success_attack_missing_decision_trace_never_becomes_working(
+    monkeypatch, capsys
+) -> None:
     state = {"context": _base_context(), "audit": []}
     _patch_loop_state(monkeypatch, state)
     monkeypatch.setattr(
@@ -357,7 +381,9 @@ def test_false_success_attack_missing_decision_trace_never_becomes_working(monke
     monkeypatch.setattr(
         codex_loop,
         "run_test",
-        lambda test_path: (_ for _ in ()).throw(AssertionError("run_test should not execute")),
+        lambda test_path: (_ for _ in ()).throw(
+            AssertionError("run_test should not execute")
+        ),
     )
 
     codex_loop.main()
@@ -369,7 +395,9 @@ def test_false_success_attack_missing_decision_trace_never_becomes_working(monke
     assert "decision_trace" not in output
 
 
-def test_escalation_loop_attack_repeated_fail_entries_trigger_escalation(monkeypatch, capsys) -> None:
+def test_escalation_loop_attack_repeated_fail_entries_trigger_escalation(
+    monkeypatch, capsys
+) -> None:
     state = {"context": _base_context(), "audit": []}
     _patch_loop_state(monkeypatch, state)
     monkeypatch.setattr(
@@ -384,7 +412,9 @@ def test_escalation_loop_attack_repeated_fail_entries_trigger_escalation(monkeyp
     monkeypatch.setattr(
         codex_loop,
         "run_test",
-        lambda test_path: (_ for _ in ()).throw(AssertionError("run_test should not execute")),
+        lambda test_path: (_ for _ in ()).throw(
+            AssertionError("run_test should not execute")
+        ),
     )
 
     codex_loop.main()
@@ -395,7 +425,9 @@ def test_escalation_loop_attack_repeated_fail_entries_trigger_escalation(monkeyp
     assert state["audit"][-1]["status"] == "ESCALATED"
 
 
-def test_escalation_loop_attack_repeated_blocked_entries_trigger_escalation(monkeypatch, capsys) -> None:
+def test_escalation_loop_attack_repeated_blocked_entries_trigger_escalation(
+    monkeypatch, capsys
+) -> None:
     state = {"context": _base_context(), "audit": []}
     _patch_loop_state(monkeypatch, state)
     monkeypatch.setattr(
@@ -410,7 +442,9 @@ def test_escalation_loop_attack_repeated_blocked_entries_trigger_escalation(monk
     monkeypatch.setattr(
         codex_loop,
         "run_test",
-        lambda test_path: (_ for _ in ()).throw(AssertionError("run_test should not execute")),
+        lambda test_path: (_ for _ in ()).throw(
+            AssertionError("run_test should not execute")
+        ),
     )
 
     codex_loop.main()
@@ -421,7 +455,9 @@ def test_escalation_loop_attack_repeated_blocked_entries_trigger_escalation(monk
     assert state["audit"][-1]["status"] == "ESCALATED"
 
 
-def test_escalation_loop_attack_mixed_fail_and_blocked_history_escalates(monkeypatch, capsys) -> None:
+def test_escalation_loop_attack_mixed_fail_and_blocked_history_escalates(
+    monkeypatch, capsys
+) -> None:
     state = {"context": _base_context(), "audit": []}
     _patch_loop_state(monkeypatch, state)
     monkeypatch.setattr(
@@ -436,7 +472,9 @@ def test_escalation_loop_attack_mixed_fail_and_blocked_history_escalates(monkeyp
     monkeypatch.setattr(
         codex_loop,
         "run_test",
-        lambda test_path: (_ for _ in ()).throw(AssertionError("run_test should not execute")),
+        lambda test_path: (_ for _ in ()).throw(
+            AssertionError("run_test should not execute")
+        ),
     )
 
     codex_loop.main()
@@ -447,7 +485,9 @@ def test_escalation_loop_attack_mixed_fail_and_blocked_history_escalates(monkeyp
     assert state["audit"][-1]["status"] == "ESCALATED"
 
 
-def test_escalation_loop_attack_already_escalated_module_does_not_auto_downgrade(monkeypatch, capsys) -> None:
+def test_escalation_loop_attack_already_escalated_module_does_not_auto_downgrade(
+    monkeypatch, capsys
+) -> None:
     state = {
         "context": _base_context(
             modules_state={
@@ -463,18 +503,24 @@ def test_escalation_loop_attack_already_escalated_module_does_not_auto_downgrade
     monkeypatch.setattr(
         codex_loop,
         "run_test",
-        lambda test_path: (_ for _ in ()).throw(AssertionError("run_test should not execute")),
+        lambda test_path: (_ for _ in ()).throw(
+            AssertionError("run_test should not execute")
+        ),
     )
 
     codex_loop.main()
     output = json.loads(capsys.readouterr().out.strip())
 
     assert output["status"] == "escalated"
-    assert state["context"]["modules_state"]["execution_replay"]["status"] == "ESCALATED"
+    assert (
+        state["context"]["modules_state"]["execution_replay"]["status"] == "ESCALATED"
+    )
     assert state["context"]["status"] != "WORKING"
 
 
-def test_strategy_learning_attack_malformed_strategy_history_does_not_crash(monkeypatch, capsys) -> None:
+def test_strategy_learning_attack_malformed_strategy_history_does_not_crash(
+    monkeypatch, capsys
+) -> None:
     state = {
         "context": _base_context(
             strategy_history="corrupted",
@@ -508,7 +554,9 @@ def test_strategy_learning_attack_malformed_strategy_history_does_not_crash(monk
     }
 
 
-def test_strategy_learning_attack_conflicting_history_falls_back_to_default(monkeypatch, capsys) -> None:
+def test_strategy_learning_attack_conflicting_history_falls_back_to_default(
+    monkeypatch, capsys
+) -> None:
     state = {
         "context": _base_context(
             strategy_history=[
@@ -525,7 +573,9 @@ def test_strategy_learning_attack_conflicting_history_falls_back_to_default(monk
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("fail", "broken"))
-    monkeypatch.setattr(codex_loop, "execute_fix_task", lambda prompt: _FailedExecution())
+    monkeypatch.setattr(
+        codex_loop, "execute_fix_task", lambda prompt: _FailedExecution()
+    )
 
     codex_loop.main()
     output = json.loads(capsys.readouterr().out.strip())
@@ -534,7 +584,9 @@ def test_strategy_learning_attack_conflicting_history_falls_back_to_default(monk
     assert state["context"]["last_strategy"] == "code_fix"
 
 
-def test_strategy_learning_attack_weak_evidence_cannot_override_default_strategy(monkeypatch, capsys) -> None:
+def test_strategy_learning_attack_weak_evidence_cannot_override_default_strategy(
+    monkeypatch, capsys
+) -> None:
     state = {
         "context": _base_context(
             strategy_history=[{"strategy": "performance_fix", "result": "success"}]
@@ -548,7 +600,9 @@ def test_strategy_learning_attack_weak_evidence_cannot_override_default_strategy
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("fail", "broken"))
-    monkeypatch.setattr(codex_loop, "execute_fix_task", lambda prompt: _FailedExecution())
+    monkeypatch.setattr(
+        codex_loop, "execute_fix_task", lambda prompt: _FailedExecution()
+    )
 
     codex_loop.main()
     output = json.loads(capsys.readouterr().out.strip())
@@ -557,7 +611,9 @@ def test_strategy_learning_attack_weak_evidence_cannot_override_default_strategy
     assert state["context"]["last_strategy"] == "code_fix"
 
 
-def test_strategy_learning_attack_invalid_entries_still_append_safe_feedback(monkeypatch, capsys) -> None:
+def test_strategy_learning_attack_invalid_entries_still_append_safe_feedback(
+    monkeypatch, capsys
+) -> None:
     state = {
         "context": _base_context(
             strategy_history=[{"strategy": None}, "bad", 7],
@@ -592,7 +648,9 @@ def test_git_trace_integrity_no_git_available_uses_fallbacks(monkeypatch) -> Non
     assert git_trace.get_git_branch() == "no_branch"
 
 
-def test_git_trace_integrity_malformed_context_payload_is_replaced_with_valid_trace(monkeypatch, capsys) -> None:
+def test_git_trace_integrity_malformed_context_payload_is_replaced_with_valid_trace(
+    monkeypatch, capsys
+) -> None:
     state = {
         "context": _base_context(git="corrupted"),
         "audit": [],
@@ -604,7 +662,9 @@ def test_git_trace_integrity_malformed_context_payload_is_replaced_with_valid_tr
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("pass", "ok"))
-    monkeypatch.setattr(codex_loop, "run_external_review", lambda *args, **kwargs: _approved_review())
+    monkeypatch.setattr(
+        codex_loop, "run_external_review", lambda *args, **kwargs: _approved_review()
+    )
     monkeypatch.setattr(
         git_trace,
         "run_in_dev_env",
@@ -620,7 +680,9 @@ def test_git_trace_integrity_malformed_context_payload_is_replaced_with_valid_tr
     assert "time" in state["context"]["git"]
 
 
-def test_git_trace_integrity_pass_path_survives_git_failure(monkeypatch, capsys) -> None:
+def test_git_trace_integrity_pass_path_survives_git_failure(
+    monkeypatch, capsys
+) -> None:
     state = {"context": _base_context(), "audit": []}
     _patch_loop_state(monkeypatch, state)
     monkeypatch.setattr(
@@ -629,7 +691,9 @@ def test_git_trace_integrity_pass_path_survives_git_failure(monkeypatch, capsys)
         lambda module: {"unstable": False, "reason": ""},
     )
     monkeypatch.setattr(codex_loop, "run_test", lambda test_path: ("pass", "ok"))
-    monkeypatch.setattr(codex_loop, "run_external_review", lambda *args, **kwargs: _approved_review())
+    monkeypatch.setattr(
+        codex_loop, "run_external_review", lambda *args, **kwargs: _approved_review()
+    )
     monkeypatch.setattr(
         git_trace,
         "run_in_dev_env",
@@ -644,7 +708,9 @@ def test_git_trace_integrity_pass_path_survives_git_failure(monkeypatch, capsys)
     assert "time" in state["audit"][-1]["git"]
 
 
-def test_timeout_stale_state_attack_clears_invalid_working_status(monkeypatch, capsys) -> None:
+def test_timeout_stale_state_attack_clears_invalid_working_status(
+    monkeypatch, capsys
+) -> None:
     state = {
         "context": _base_context(
             status="WORKING",
@@ -671,7 +737,9 @@ def test_timeout_stale_state_attack_clears_invalid_working_status(monkeypatch, c
     assert state["context"]["last_codex_loop"]["status"] == "timeout"
 
 
-def test_timeout_stale_state_attack_overwrites_corrupted_strategy_feedback(monkeypatch, capsys) -> None:
+def test_timeout_stale_state_attack_overwrites_corrupted_strategy_feedback(
+    monkeypatch, capsys
+) -> None:
     state = {
         "context": _base_context(
             strategy_history="broken",
@@ -697,7 +765,9 @@ def test_timeout_stale_state_attack_overwrites_corrupted_strategy_feedback(monke
     }
 
 
-def test_timeout_stale_state_attack_escalation_history_prevents_false_recovery(monkeypatch, capsys) -> None:
+def test_timeout_stale_state_attack_escalation_history_prevents_false_recovery(
+    monkeypatch, capsys
+) -> None:
     state = {
         "context": _base_context(
             status="WORKING",
@@ -718,7 +788,9 @@ def test_timeout_stale_state_attack_escalation_history_prevents_false_recovery(m
     monkeypatch.setattr(
         codex_loop,
         "run_test",
-        lambda test_path: (_ for _ in ()).throw(AssertionError("run_test should not execute")),
+        lambda test_path: (_ for _ in ()).throw(
+            AssertionError("run_test should not execute")
+        ),
     )
 
     codex_loop.main()
@@ -744,7 +816,9 @@ def test_decision_trace_integrity_rejects_malformed_trace() -> None:
         _assert_escalation_trace(decision)
 
 
-def test_decision_trace_integrity_escalation_audit_row_must_include_trace(monkeypatch, capsys) -> None:
+def test_decision_trace_integrity_escalation_audit_row_must_include_trace(
+    monkeypatch, capsys
+) -> None:
     state = {"context": _base_context(), "audit": []}
     _patch_loop_state(monkeypatch, state)
     monkeypatch.setattr(
@@ -755,7 +829,9 @@ def test_decision_trace_integrity_escalation_audit_row_must_include_trace(monkey
     monkeypatch.setattr(
         codex_loop,
         "run_test",
-        lambda test_path: (_ for _ in ()).throw(AssertionError("run_test should not execute")),
+        lambda test_path: (_ for _ in ()).throw(
+            AssertionError("run_test should not execute")
+        ),
     )
 
     codex_loop.main()

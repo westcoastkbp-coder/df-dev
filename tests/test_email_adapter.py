@@ -3,11 +3,21 @@ from __future__ import annotations
 import pytest
 
 import app.adapters.email_adapter as email_adapter_module
-from app.adapters.email_adapter import EmailAdapterError, EmailExecution, execute_email_action
-from app.execution.action_contract import ActionContractViolation, validate_action_contract, validate_action_result_contract
+from app.adapters.email_adapter import (
+    EmailAdapterError,
+    EmailExecution,
+    execute_email_action,
+)
+from app.execution.action_contract import (
+    ActionContractViolation,
+    validate_action_contract,
+    validate_action_result_contract,
+)
 
 
-def _valid_email_action_contract(*, operation: str = "create_draft", execution_mode: str = "live") -> dict[str, object]:
+def _valid_email_action_contract(
+    *, operation: str = "create_draft", execution_mode: str = "live"
+) -> dict[str, object]:
     parameters: dict[str, object] = {
         "operation": operation,
         "to": ["owner@example.com"],
@@ -52,7 +62,15 @@ class StubEmailRuntime:
         attachments: list[str],
     ) -> EmailExecution:
         self.calls.append(
-            ("create_draft", {"to": list(to), "subject": subject, "body": body, "attachments": list(attachments)})
+            (
+                "create_draft",
+                {
+                    "to": list(to),
+                    "subject": subject,
+                    "body": body,
+                    "attachments": list(attachments),
+                },
+            )
         )
         return EmailExecution(
             result_type="email_draft",
@@ -69,7 +87,15 @@ class StubEmailRuntime:
         attachments: list[str],
     ) -> EmailExecution:
         self.calls.append(
-            ("send_email", {"to": list(to), "subject": subject, "body": body, "attachments": list(attachments)})
+            (
+                "send_email",
+                {
+                    "to": list(to),
+                    "subject": subject,
+                    "body": body,
+                    "attachments": list(attachments),
+                },
+            )
         )
         return EmailExecution(
             result_type="email_send",
@@ -141,7 +167,9 @@ def test_invalid_recipients_rejected() -> None:
         "attachments": [],
     }
 
-    with pytest.raises(ActionContractViolation, match="invalid recipient: not-an-email"):
+    with pytest.raises(
+        ActionContractViolation, match="invalid recipient: not-an-email"
+    ):
         validate_action_contract(payload)
 
 
@@ -164,7 +192,9 @@ def test_email_dry_run_does_not_resolve_live_provider(monkeypatch) -> None:
     monkeypatch.setattr(
         email_adapter_module,
         "_build_default_email_runtime",
-        lambda config: (_ for _ in ()).throw(AssertionError("live provider must not be resolved")),
+        lambda config: (_ for _ in ()).throw(
+            AssertionError("live provider must not be resolved")
+        ),
     )
 
     result = execute_email_action(
@@ -175,7 +205,9 @@ def test_email_dry_run_does_not_resolve_live_provider(monkeypatch) -> None:
     assert result["result_type"] == "simulation"
 
 
-def test_email_missing_provider_config_returns_provider_not_configured(monkeypatch) -> None:
+def test_email_missing_provider_config_returns_provider_not_configured(
+    monkeypatch,
+) -> None:
     monkeypatch.delenv("DIGITAL_FOREMAN_EMAIL_BACKEND", raising=False)
 
     result = execute_email_action(_valid_email_action_contract(operation="send_email"))
@@ -193,7 +225,9 @@ def test_email_real_provider_path_uses_provider_factory(monkeypatch) -> None:
         captured["provider_mode"] = config.provider_mode
         return runtime, "gmail"
 
-    monkeypatch.setattr(email_adapter_module, "_build_default_email_runtime", build_runtime)
+    monkeypatch.setattr(
+        email_adapter_module, "_build_default_email_runtime", build_runtime
+    )
 
     result = execute_email_action(
         _valid_email_action_contract(operation="send_email"),

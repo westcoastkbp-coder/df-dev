@@ -49,12 +49,20 @@ def test_ensure_dev_session_creates_markdown_from_github_packet(tmp_path) -> Non
     session_text = session_path.read_text(encoding="utf-8")
 
     assert session_path.is_file()
-    assert state["source_of_truth"]["github_context"]["packet_path"] == "tasks/github/issue-9.json"
+    assert (
+        state["source_of_truth"]["github_context"]["packet_path"]
+        == "tasks/github/issue-9.json"
+    )
     assert "Require GitHub-backed session context" in session_text
-    assert "tests/test_client_intake_flow.py::test_execute_product_task_locks_client_intake_flow" in session_text
+    assert (
+        "tests/test_client_intake_flow.py::test_execute_product_task_locks_client_intake_flow"
+        in session_text
+    )
 
 
-def test_build_codex_execution_prompt_embeds_session_and_github_context(tmp_path) -> None:
+def test_build_codex_execution_prompt_embeds_session_and_github_context(
+    tmp_path,
+) -> None:
     packet_path = tmp_path / "tasks" / "github" / "issue-9.json"
     packet_path.parent.mkdir(parents=True, exist_ok=True)
     packet_path.write_text(

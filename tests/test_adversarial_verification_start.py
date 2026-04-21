@@ -65,7 +65,10 @@ class CrashOnFinalPersist:
         self.triggered = False
 
     def __call__(self, task_data: dict[str, object]) -> None:
-        if str(task_data.get("status", "")).strip() == "COMPLETED" and not self.triggered:
+        if (
+            str(task_data.get("status", "")).strip() == "COMPLETED"
+            and not self.triggered
+        ):
             self.triggered = True
             raise StatePersistenceError(
                 build_state_persist_failure(
@@ -73,7 +76,9 @@ class CrashOnFinalPersist:
                     operation="write_task",
                 )
             )
-        task_factory_module.save_task(task_data, store_path=task_factory_module.TASK_SYSTEM_FILE)
+        task_factory_module.save_task(
+            task_data, store_path=task_factory_module.TASK_SYSTEM_FILE
+        )
 
 
 def _read_jsonl(path: Path) -> list[dict[str, object]]:
@@ -154,7 +159,9 @@ def _configure_isolated_runtime(monkeypatch, root_dir: Path) -> AdversarialRunti
         "TASK_LIFECYCLE_LOG_FILE",
         root_dir / "runtime" / "logs" / "task_lifecycle.jsonl",
     )
-    monkeypatch.setattr(token_telemetry_module, "TOKEN_USAGE_LOG_FILE", token_usage_log_file)
+    monkeypatch.setattr(
+        token_telemetry_module, "TOKEN_USAGE_LOG_FILE", token_usage_log_file
+    )
     monkeypatch.setattr(
         token_efficiency_module,
         "TOKEN_EFFICIENCY_LOG_FILE",
@@ -199,7 +206,9 @@ def _effect_entries(effect_log_file: Path) -> list[dict[str, object]]:
     return _read_jsonl(effect_log_file)
 
 
-def _make_executor(effect_log_file: Path) -> Callable[[dict[str, object]], dict[str, object]]:
+def _make_executor(
+    effect_log_file: Path,
+) -> Callable[[dict[str, object]], dict[str, object]]:
     def executor(task_data: dict[str, object]) -> dict[str, object]:
         effect_log_file.parent.mkdir(parents=True, exist_ok=True)
         entry = {
@@ -208,7 +217,9 @@ def _make_executor(effect_log_file: Path) -> Callable[[dict[str, object]], dict[
             "effect": "recorded",
         }
         with effect_log_file.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(entry, ensure_ascii=True, separators=(",", ":")) + "\n")
+            handle.write(
+                json.dumps(entry, ensure_ascii=True, separators=(",", ":")) + "\n"
+            )
         return build_action_result(
             status="completed",
             task_id=task_data.get("task_id"),
@@ -225,10 +236,14 @@ def _make_executor(effect_log_file: Path) -> Callable[[dict[str, object]], dict[
 
 
 def _persist_task(task_data: dict[str, object]) -> None:
-    task_factory_module.save_task(task_data, store_path=task_factory_module.TASK_SYSTEM_FILE)
+    task_factory_module.save_task(
+        task_data, store_path=task_factory_module.TASK_SYSTEM_FILE
+    )
 
 
-def _build_executing_task(runtime: AdversarialRuntime, *, task_id: str) -> dict[str, object]:
+def _build_executing_task(
+    runtime: AdversarialRuntime, *, task_id: str
+) -> dict[str, object]:
     task = task_factory_module.create_task(
         {
             "task_id": task_id,
@@ -284,7 +299,9 @@ def _run_once(
     return executed_task, snapshot
 
 
-def _assert_final_state_equal(left: dict[str, object], right: dict[str, object]) -> None:
+def _assert_final_state_equal(
+    left: dict[str, object], right: dict[str, object]
+) -> None:
     assert left["final_task_state"] == right["final_task_state"]
 
 
@@ -292,15 +309,23 @@ def _assert_lifecycle_equal(left: dict[str, object], right: dict[str, object]) -
     assert left["lifecycle_transitions"] == right["lifecycle_transitions"]
 
 
-def _assert_action_result_equal(left: dict[str, object], right: dict[str, object]) -> None:
+def _assert_action_result_equal(
+    left: dict[str, object], right: dict[str, object]
+) -> None:
     assert left["action_result"] == right["action_result"]
 
 
-def test_context_free_execution_is_identical_across_clean_room_restarts(monkeypatch, tmp_path: Path) -> None:
-    left_runtime = _configure_isolated_runtime(monkeypatch, tmp_path / "context_free_left")
+def test_context_free_execution_is_identical_across_clean_room_restarts(
+    monkeypatch, tmp_path: Path
+) -> None:
+    left_runtime = _configure_isolated_runtime(
+        monkeypatch, tmp_path / "context_free_left"
+    )
     _, left_snapshot = _run_once(left_runtime)
 
-    right_runtime = _configure_isolated_runtime(monkeypatch, tmp_path / "context_free_right")
+    right_runtime = _configure_isolated_runtime(
+        monkeypatch, tmp_path / "context_free_right"
+    )
     _, right_snapshot = _run_once(right_runtime)
 
     _assert_final_state_equal(left_snapshot, right_snapshot)
@@ -327,8 +352,7 @@ def test_repeated_identical_task_execution_does_not_duplicate_external_effects(
     observed = {
         "effect_count": len(_effect_entries(shared_effect_log)),
         "effect_task_ids": [
-            entry.get("task_id")
-            for entry in _effect_entries(shared_effect_log)
+            entry.get("task_id") for entry in _effect_entries(shared_effect_log)
         ],
     }
     assert observed == {
@@ -345,7 +369,9 @@ def test_partial_failure_does_not_leave_state_and_effects_diverged(
     crash_injector = CrashOnFinalPersist()
 
     crashed_task, _ = _run_once(runtime, persist=crash_injector)
-    persisted_after_crash = task_factory_module.get_task("DF-ADVERSARIAL-TASK-V1", runtime.store_path)
+    persisted_after_crash = task_factory_module.get_task(
+        "DF-ADVERSARIAL-TASK-V1", runtime.store_path
+    )
 
     _reset_runtime_globals()
     recovered_task = run_execution(
@@ -354,14 +380,22 @@ def test_partial_failure_does_not_leave_state_and_effects_diverged(
         persist=_persist_task,
         executor=_make_executor(runtime.effect_log_file),
     )
-    persisted_after_recovery = task_factory_module.get_task("DF-ADVERSARIAL-TASK-V1", runtime.store_path)
+    persisted_after_recovery = task_factory_module.get_task(
+        "DF-ADVERSARIAL-TASK-V1", runtime.store_path
+    )
 
     observed = {
         "returned_status_after_crash": str(crashed_task.get("status", "")).strip(),
-        "persisted_status_after_crash": str((persisted_after_crash or {}).get("status", "")).strip(),
+        "persisted_status_after_crash": str(
+            (persisted_after_crash or {}).get("status", "")
+        ).strip(),
         "recovered_status": str(recovered_task.get("status", "")).strip(),
-        "recovered_result_status": str(dict(recovered_task.get("result", {}) or {}).get("status", "")).strip(),
-        "persisted_status_after_recovery": str((persisted_after_recovery or {}).get("status", "")).strip(),
+        "recovered_result_status": str(
+            dict(recovered_task.get("result", {}) or {}).get("status", "")
+        ).strip(),
+        "persisted_status_after_recovery": str(
+            (persisted_after_recovery or {}).get("status", "")
+        ).strip(),
         "effect_count": len(_effect_entries(runtime.effect_log_file)),
     }
     assert observed == {
@@ -378,7 +412,9 @@ def test_failed_result_recovery_does_not_write_completed(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
-    runtime = _configure_isolated_runtime(monkeypatch, tmp_path / "failed_result_recovery")
+    runtime = _configure_isolated_runtime(
+        monkeypatch, tmp_path / "failed_result_recovery"
+    )
     task = _build_executing_task(runtime, task_id="DF-FAILED-RECOVERY-V1")
     _persist_recovery_result(
         runtime,
@@ -402,12 +438,18 @@ def test_failed_result_recovery_does_not_write_completed(
         persist=_persist_task,
         executor=_make_executor(runtime.effect_log_file),
     )
-    persisted_after_recovery = task_factory_module.get_task(task["task_id"], runtime.store_path)
+    persisted_after_recovery = task_factory_module.get_task(
+        task["task_id"], runtime.store_path
+    )
 
     observed = {
         "recovered_status": str(recovered_task.get("status", "")).strip(),
-        "recovered_result_status": str(dict(recovered_task.get("result", {}) or {}).get("status", "")).strip(),
-        "persisted_status_after_recovery": str((persisted_after_recovery or {}).get("status", "")).strip(),
+        "recovered_result_status": str(
+            dict(recovered_task.get("result", {}) or {}).get("status", "")
+        ).strip(),
+        "persisted_status_after_recovery": str(
+            (persisted_after_recovery or {}).get("status", "")
+        ).strip(),
         "effect_count": len(_effect_entries(runtime.effect_log_file)),
     }
     assert observed == {
@@ -438,7 +480,9 @@ def test_failed_task_rerun_does_not_upgrade_to_completed(
             diagnostic_message="simulated failure",
         ),
     )
-    failed_task = dict(task_factory_module.get_task(task["task_id"], runtime.store_path) or {})
+    failed_task = dict(
+        task_factory_module.get_task(task["task_id"], runtime.store_path) or {}
+    )
     failed_task["status"] = "FAILED"
     task_factory_module.save_task(failed_task, store_path=runtime.store_path)
 
@@ -449,11 +493,15 @@ def test_failed_task_rerun_does_not_upgrade_to_completed(
         persist=_persist_task,
         executor=_make_executor(runtime.effect_log_file),
     )
-    persisted_after_rerun = task_factory_module.get_task(task["task_id"], runtime.store_path)
+    persisted_after_rerun = task_factory_module.get_task(
+        task["task_id"], runtime.store_path
+    )
 
     observed = {
         "rerun_status": str(rerun_task.get("status", "")).strip(),
-        "persisted_status_after_rerun": str((persisted_after_rerun or {}).get("status", "")).strip(),
+        "persisted_status_after_rerun": str(
+            (persisted_after_rerun or {}).get("status", "")
+        ).strip(),
         "effect_count": len(_effect_entries(runtime.effect_log_file)),
     }
     assert observed == {
@@ -467,7 +515,9 @@ def test_partial_result_recovery_does_not_write_completed(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
-    runtime = _configure_isolated_runtime(monkeypatch, tmp_path / "partial_result_recovery")
+    runtime = _configure_isolated_runtime(
+        monkeypatch, tmp_path / "partial_result_recovery"
+    )
     task = _build_executing_task(runtime, task_id="DF-PARTIAL-RECOVERY-V1")
     _persist_recovery_result(
         runtime,
@@ -491,12 +541,18 @@ def test_partial_result_recovery_does_not_write_completed(
         persist=_persist_task,
         executor=_make_executor(runtime.effect_log_file),
     )
-    persisted_after_recovery = task_factory_module.get_task(task["task_id"], runtime.store_path)
+    persisted_after_recovery = task_factory_module.get_task(
+        task["task_id"], runtime.store_path
+    )
 
     observed = {
         "recovered_status": str(recovered_task.get("status", "")).strip(),
-        "recovered_result_status": str(dict(recovered_task.get("result", {}) or {}).get("status", "")).strip(),
-        "persisted_status_after_recovery": str((persisted_after_recovery or {}).get("status", "")).strip(),
+        "recovered_result_status": str(
+            dict(recovered_task.get("result", {}) or {}).get("status", "")
+        ).strip(),
+        "persisted_status_after_recovery": str(
+            (persisted_after_recovery or {}).get("status", "")
+        ).strip(),
         "effect_count": len(_effect_entries(runtime.effect_log_file)),
     }
     assert observed == {

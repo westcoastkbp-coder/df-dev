@@ -9,7 +9,11 @@ from app.memory import memory_registry
 from app.state.state_store import get_state
 from app.storage import storage_adapter
 import app.training.dataset_builder as dataset_builder_module
-from app.training.dataset_builder import build_dataset, create_training_job, dataset_contract_path
+from app.training.dataset_builder import (
+    build_dataset,
+    create_training_job,
+    dataset_contract_path,
+)
 
 
 def _write_policy(tmp_path: Path) -> Path:
@@ -89,7 +93,9 @@ def test_build_dataset_normalizes_records_filters_invalid_and_saves_to_shared_pa
     dataset = build_dataset("execution")
 
     output = capsys.readouterr().out
-    dataset_path = shared_root / "datasets" / "execution" / f"{dataset['dataset_id']}.json"
+    dataset_path = (
+        shared_root / "datasets" / "execution" / f"{dataset['dataset_id']}.json"
+    )
     stored = _read_json(dataset_path)
 
     assert dataset["dataset_type"] == "execution"

@@ -37,7 +37,9 @@ def _parse_timestamp(value: object) -> datetime | None:
     if not normalized:
         return None
     try:
-        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(timezone.utc)
+        return datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(
+            timezone.utc
+        )
     except ValueError:
         return None
 
@@ -80,9 +82,12 @@ def _last_success_timestamp(tasks: list[dict[str, object]]) -> str:
         for task in tasks
         for timestamp in (
             _parse_timestamp(task.get("completed_at")),
-            _latest_task_timestamp(task) if _normalize_text(task.get("status")).upper() == "COMPLETED" else None,
+            _latest_task_timestamp(task)
+            if _normalize_text(task.get("status")).upper() == "COMPLETED"
+            else None,
         )
-        if timestamp is not None and _normalize_text(task.get("status")).upper() == "COMPLETED"
+        if timestamp is not None
+        and _normalize_text(task.get("status")).upper() == "COMPLETED"
     ]
     if not timestamps:
         return ""
@@ -90,14 +95,18 @@ def _last_success_timestamp(tasks: list[dict[str, object]]) -> str:
 
 
 def _failed_task_count(tasks: list[dict[str, object]]) -> int:
-    return sum(1 for task in tasks if _normalize_text(task.get("status")).upper() == "FAILED")
+    return sum(
+        1 for task in tasks if _normalize_text(task.get("status")).upper() == "FAILED"
+    )
 
 
 def _execution_latency_seconds(tasks: list[dict[str, object]]) -> float:
     durations: list[float] = []
     for task in tasks:
         started_at = _parse_timestamp(task.get("started_at"))
-        finished_at = _parse_timestamp(task.get("completed_at")) or _parse_timestamp(task.get("failed_at"))
+        finished_at = _parse_timestamp(task.get("completed_at")) or _parse_timestamp(
+            task.get("failed_at")
+        )
         if started_at is not None and finished_at is not None:
             durations.append(max(0.0, (finished_at - started_at).total_seconds()))
             continue
@@ -109,7 +118,9 @@ def _execution_latency_seconds(tasks: list[dict[str, object]]) -> float:
     return round(sum(durations) / len(durations), 4)
 
 
-def _system_responsiveness_seconds(tasks: list[dict[str, object]], *, now_timestamp: str) -> int:
+def _system_responsiveness_seconds(
+    tasks: list[dict[str, object]], *, now_timestamp: str
+) -> int:
     now_dt = _parse_timestamp(now_timestamp)
     latest_activity = max(
         (_latest_task_timestamp(task) for task in tasks),
@@ -119,7 +130,9 @@ def _system_responsiveness_seconds(tasks: list[dict[str, object]], *, now_timest
     return 0 if delta is None else delta
 
 
-def _recent_escalation_count(*, now_timestamp: str, log_file: Path | None = None) -> int:
+def _recent_escalation_count(
+    *, now_timestamp: str, log_file: Path | None = None
+) -> int:
     target = Path(log_file) if log_file is not None else ESCALATION_LOG_FILE
     now_dt = _parse_timestamp(now_timestamp)
     if now_dt is None or not target.exists():
@@ -167,7 +180,9 @@ def evaluate_system_health(
     now_dt = _parse_timestamp(now_timestamp)
     seconds_since_last_success = _seconds_between(earlier=last_success_dt, later=now_dt)
     failed_tasks_count = _failed_task_count(normalized_tasks)
-    stuck_tasks_count = len(detect_stuck_tasks(normalized_tasks, now_timestamp=now_timestamp))
+    stuck_tasks_count = len(
+        detect_stuck_tasks(normalized_tasks, now_timestamp=now_timestamp)
+    )
     execution_latency_seconds = _execution_latency_seconds(normalized_tasks)
     system_responsiveness_seconds = _system_responsiveness_seconds(
         normalized_tasks,
@@ -184,14 +199,22 @@ def evaluate_system_health(
         "execution_latency_seconds": execution_latency_seconds,
         "system_responsiveness_seconds": system_responsiveness_seconds,
         "escalation_frequency": escalation_frequency,
-        "seconds_since_last_success": 0 if seconds_since_last_success is None else seconds_since_last_success,
+        "seconds_since_last_success": 0
+        if seconds_since_last_success is None
+        else seconds_since_last_success,
     }
 
     critical_reasons: list[str] = []
     degraded_reasons: list[str] = []
-    if seconds_since_last_success is not None and seconds_since_last_success >= CRITICAL_NO_SUCCESS_SECONDS:
+    if (
+        seconds_since_last_success is not None
+        and seconds_since_last_success >= CRITICAL_NO_SUCCESS_SECONDS
+    ):
         critical_reasons.append("no_success_within_critical_threshold")
-    elif seconds_since_last_success is not None and seconds_since_last_success >= DEGRADED_NO_SUCCESS_SECONDS:
+    elif (
+        seconds_since_last_success is not None
+        and seconds_since_last_success >= DEGRADED_NO_SUCCESS_SECONDS
+    ):
         degraded_reasons.append("no_success_within_degraded_threshold")
 
     if failed_tasks_count >= CRITICAL_FAILURE_COUNT:
@@ -270,7 +293,8 @@ def enforce_system_health_response(
         target_task,
         {
             "status": "escalation_required",
-            "task_id": _normalize_text(target_task.get("task_id")) or SYSTEM_HEALTH_TASK_ID,
+            "task_id": _normalize_text(target_task.get("task_id"))
+            or SYSTEM_HEALTH_TASK_ID,
             "reason": "system_health_critical",
             "severity": "critical",
         },
@@ -299,4 +323,3 @@ def assess_system_health(
     )
     enforce_system_health_response(signal, task_data=task_data)
     return signal
-

@@ -56,7 +56,9 @@ def _loaded_env_value(name: str, default: str = "") -> str:
 
 
 def _gmail_credentials_configured() -> bool:
-    return all(_loaded_env_value(env_name) for env_name in GMAIL_CREDENTIAL_ENV_MAP.values())
+    return all(
+        _loaded_env_value(env_name) for env_name in GMAIL_CREDENTIAL_ENV_MAP.values()
+    )
 
 
 def _gmail_access_token_cache_path() -> Path:
@@ -122,8 +124,12 @@ def _gmail_access_token() -> str:
     payload = urlencode(
         {
             "client_id": _loaded_env_value(GMAIL_CREDENTIAL_ENV_MAP["client_id"]),
-            "client_secret": _loaded_env_value(GMAIL_CREDENTIAL_ENV_MAP["client_secret"]),
-            "refresh_token": _loaded_env_value(GMAIL_CREDENTIAL_ENV_MAP["refresh_token"]),
+            "client_secret": _loaded_env_value(
+                GMAIL_CREDENTIAL_ENV_MAP["client_secret"]
+            ),
+            "refresh_token": _loaded_env_value(
+                GMAIL_CREDENTIAL_ENV_MAP["refresh_token"]
+            ),
             "grant_type": "refresh_token",
         }
     ).encode("utf-8")
@@ -146,7 +152,9 @@ def _gmail_access_token() -> str:
 
     access_token = str(response.get("access_token") or "").strip()
     if not access_token:
-        raise GmailToolError("GMAIL_API_FAILED", "Gmail token exchange returned no access token.")
+        raise GmailToolError(
+            "GMAIL_API_FAILED", "Gmail token exchange returned no access token."
+        )
     _write_cached_gmail_access_token(access_token, response.get("expires_in"))
     return access_token
 
@@ -296,7 +304,9 @@ def _payload_body_text(payload: dict[str, Any]) -> str:
     return ""
 
 
-def _ensure_non_empty_email(subject: str, sender: str, body_text: str) -> tuple[str, str, str]:
+def _ensure_non_empty_email(
+    subject: str, sender: str, body_text: str
+) -> tuple[str, str, str]:
     normalized_sender = str(sender or "").strip()
     normalized_subject = str(subject or "").strip() or "(no subject)"
     normalized_body = str(body_text or "").strip()
@@ -355,7 +365,9 @@ def _mock_read_latest() -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        raise GmailToolError("GMAIL_READ_FAILED", "Mock Gmail inbox entry is invalid.") from error
+        raise GmailToolError(
+            "GMAIL_READ_FAILED", "Mock Gmail inbox entry is invalid."
+        ) from error
 
     subject, sender, body_text = _ensure_non_empty_email(
         str(payload.get("subject") or ""),
@@ -364,7 +376,9 @@ def _mock_read_latest() -> dict[str, Any]:
     )
     reply_to_email = parseaddr(str(payload.get("reply_to") or sender))[1].strip()
     if "@" not in reply_to_email:
-        raise GmailToolError("GMAIL_READ_FAILED", "Mock Gmail sender address is invalid.")
+        raise GmailToolError(
+            "GMAIL_READ_FAILED", "Mock Gmail sender address is invalid."
+        )
 
     cached_payload = {
         "message_id": str(payload.get("message_id") or path.stem).strip() or path.stem,
@@ -398,7 +412,9 @@ def _real_read_latest() -> dict[str, Any]:
 
     latest_message = messages[0]
     if not isinstance(latest_message, dict):
-        raise GmailToolError("GMAIL_READ_FAILED", "Latest inbox message metadata is invalid.")
+        raise GmailToolError(
+            "GMAIL_READ_FAILED", "Latest inbox message metadata is invalid."
+        )
 
     message_id = str(latest_message.get("id") or "").strip()
     if not message_id:
@@ -413,12 +429,16 @@ def _real_read_latest() -> dict[str, Any]:
     headers = payload.get("headers")
     sender = _header_value(headers, "Reply-To") or _header_value(headers, "From")
     subject = _header_value(headers, "Subject")
-    body_text = _payload_body_text(payload) or str(detail_payload.get("snippet") or "").strip()
+    body_text = (
+        _payload_body_text(payload) or str(detail_payload.get("snippet") or "").strip()
+    )
     subject, sender, body_text = _ensure_non_empty_email(subject, sender, body_text)
 
     reply_to_email = parseaddr(sender)[1].strip()
     if "@" not in reply_to_email:
-        raise GmailToolError("GMAIL_READ_FAILED", "Latest email sender address is invalid.")
+        raise GmailToolError(
+            "GMAIL_READ_FAILED", "Latest email sender address is invalid."
+        )
 
     cached_payload = {
         "message_id": message_id,
@@ -443,7 +463,9 @@ def _real_read_latest() -> dict[str, Any]:
     }
 
 
-def _safe_header_value(field_name: str, value: str, *, error_code: str = "GMAIL_DRAFT_FAILED") -> str:
+def _safe_header_value(
+    field_name: str, value: str, *, error_code: str = "GMAIL_DRAFT_FAILED"
+) -> str:
     normalized = str(value or "").strip()
     if not normalized:
         raise GmailToolError(error_code, f"Draft {field_name} is required.")
@@ -483,7 +505,9 @@ def _normalized_send_body(value: str) -> str:
     return normalized
 
 
-def _draft_payload(subject: str, body: str, latest_email: dict[str, Any]) -> tuple[EmailMessage, str]:
+def _draft_payload(
+    subject: str, body: str, latest_email: dict[str, Any]
+) -> tuple[EmailMessage, str]:
     recipient = _safe_header_value(
         "recipient",
         str(latest_email.get("reply_to_email") or ""),
@@ -523,13 +547,17 @@ def _cached_thread_context_for_recipient(recipient: str) -> dict[str, Any]:
 
 
 def _send_payload(to: str, subject: str, body: str) -> tuple[EmailMessage, str, str]:
-    recipient = _safe_header_value("recipient", str(to or ""), error_code="GMAIL_SEND_FAILED")
+    recipient = _safe_header_value(
+        "recipient", str(to or ""), error_code="GMAIL_SEND_FAILED"
+    )
     if "@" not in recipient:
         raise GmailToolError("GMAIL_SEND_FAILED", "Email recipient is invalid.")
 
     message = EmailMessage()
     message["To"] = recipient
-    message["Subject"] = _safe_header_value("subject", subject, error_code="GMAIL_SEND_FAILED")
+    message["Subject"] = _safe_header_value(
+        "subject", subject, error_code="GMAIL_SEND_FAILED"
+    )
 
     latest_email = _cached_thread_context_for_recipient(recipient)
     internet_message_id = str(latest_email.get("internet_message_id") or "").strip()
@@ -551,7 +579,9 @@ def _send_payload(to: str, subject: str, body: str) -> tuple[EmailMessage, str, 
     return message, recipient, str(latest_email.get("thread_id") or "").strip()
 
 
-def _mock_create_draft(subject: str, body: str, latest_email: dict[str, Any]) -> dict[str, Any]:
+def _mock_create_draft(
+    subject: str, body: str, latest_email: dict[str, Any]
+) -> dict[str, Any]:
     message, recipient = _draft_payload(subject, body, latest_email)
     draft_id = f"gmail-draft-{_timestamp()}-{_slugify(subject)}"
     MOCK_DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -584,7 +614,9 @@ def _mock_create_draft(subject: str, body: str, latest_email: dict[str, Any]) ->
     }
 
 
-def _real_create_draft(subject: str, body: str, latest_email: dict[str, Any]) -> dict[str, Any]:
+def _real_create_draft(
+    subject: str, body: str, latest_email: dict[str, Any]
+) -> dict[str, Any]:
     message, recipient = _draft_payload(subject, body, latest_email)
     raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
     payload: dict[str, Any] = {
@@ -603,7 +635,9 @@ def _real_create_draft(subject: str, body: str, latest_email: dict[str, Any]) ->
 
     draft_id = str(response.get("id") or "").strip()
     if not draft_id:
-        raise GmailToolError("GMAIL_DRAFT_FAILED", "Gmail draft creation returned no draft id.")
+        raise GmailToolError(
+            "GMAIL_DRAFT_FAILED", "Gmail draft creation returned no draft id."
+        )
 
     return {
         "draft_id": draft_id,
@@ -645,9 +679,13 @@ def run_gmail_read_latest_external(input_payload: dict[str, Any]) -> dict[str, A
 
     mode = _requested_mode()
     if mode == "mock":
-        raise GmailToolError("GMAIL_API_FAILED", "Gmail external execution is disabled in mock mode.")
+        raise GmailToolError(
+            "GMAIL_API_FAILED", "Gmail external execution is disabled in mock mode."
+        )
     if not _gmail_credentials_available():
-        raise GmailToolError("GMAIL_API_FAILED", "Gmail credentials are not configured.")
+        raise GmailToolError(
+            "GMAIL_API_FAILED", "Gmail credentials are not configured."
+        )
     return _real_read_latest()
 
 
@@ -659,7 +697,9 @@ def run_gmail_read_latest_fallback(input_payload: dict[str, Any]) -> dict[str, A
 
 def run_gmail_create_draft_external(input_payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(input_payload, dict):
-        raise GmailToolError("GMAIL_DRAFT_FAILED", "Gmail tool input must be an object.")
+        raise GmailToolError(
+            "GMAIL_DRAFT_FAILED", "Gmail tool input must be an object."
+        )
 
     subject = _safe_header_value("subject", str(input_payload.get("subject") or ""))
     body = _normalized_draft_body(str(input_payload.get("body") or ""))
@@ -667,15 +707,21 @@ def run_gmail_create_draft_external(input_payload: dict[str, Any]) -> dict[str, 
     mode = _requested_mode()
 
     if mode == "mock":
-        raise GmailToolError("GMAIL_API_FAILED", "Gmail external execution is disabled in mock mode.")
+        raise GmailToolError(
+            "GMAIL_API_FAILED", "Gmail external execution is disabled in mock mode."
+        )
     if not _gmail_credentials_available():
-        raise GmailToolError("GMAIL_API_FAILED", "Gmail credentials are not configured.")
+        raise GmailToolError(
+            "GMAIL_API_FAILED", "Gmail credentials are not configured."
+        )
     return _real_create_draft(subject, body, latest_email)
 
 
 def run_gmail_create_draft_fallback(input_payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(input_payload, dict):
-        raise GmailToolError("GMAIL_DRAFT_FAILED", "Gmail tool input must be an object.")
+        raise GmailToolError(
+            "GMAIL_DRAFT_FAILED", "Gmail tool input must be an object."
+        )
 
     subject = _safe_header_value("subject", str(input_payload.get("subject") or ""))
     body = _normalized_draft_body(str(input_payload.get("body") or ""))
@@ -687,15 +733,25 @@ def run_google_gmail_send_external(input_payload: dict[str, Any]) -> dict[str, A
     if not isinstance(input_payload, dict):
         raise GmailToolError("GMAIL_SEND_FAILED", "Gmail tool input must be an object.")
 
-    to = _safe_header_value("recipient", str(input_payload.get("to") or ""), error_code="GMAIL_SEND_FAILED")
-    subject = _safe_header_value("subject", str(input_payload.get("subject") or ""), error_code="GMAIL_SEND_FAILED")
+    to = _safe_header_value(
+        "recipient", str(input_payload.get("to") or ""), error_code="GMAIL_SEND_FAILED"
+    )
+    subject = _safe_header_value(
+        "subject",
+        str(input_payload.get("subject") or ""),
+        error_code="GMAIL_SEND_FAILED",
+    )
     body = _normalized_send_body(str(input_payload.get("body") or ""))
     mode = _requested_mode()
 
     if mode == "mock":
-        raise GmailToolError("GMAIL_API_FAILED", "Gmail external execution is disabled in mock mode.")
+        raise GmailToolError(
+            "GMAIL_API_FAILED", "Gmail external execution is disabled in mock mode."
+        )
     if not _gmail_credentials_available():
-        raise GmailToolError("GMAIL_API_FAILED", "Gmail credentials are not configured.")
+        raise GmailToolError(
+            "GMAIL_API_FAILED", "Gmail credentials are not configured."
+        )
     return _real_send_email(to, subject, body)
 
 

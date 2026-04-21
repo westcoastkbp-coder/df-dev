@@ -11,16 +11,30 @@ if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
 from app.execution.paths import LOGS_DIR, ROOT_DIR
-from app.execution.product_box_manifest import ProductBoxManifestError, load_product_box_manifest
+from app.execution.product_box_manifest import (
+    ProductBoxManifestError,
+    load_product_box_manifest,
+)
 
 
 def _matches_blocked_module(module_name: str, blocked_pattern: str) -> bool:
-    normalized_pattern = str(blocked_pattern or "").strip().replace("\\", "/").removesuffix("/*").replace("/", ".")
-    return module_name == normalized_pattern or module_name.startswith(normalized_pattern + ".")
+    normalized_pattern = (
+        str(blocked_pattern or "")
+        .strip()
+        .replace("\\", "/")
+        .removesuffix("/*")
+        .replace("/", ".")
+    )
+    return module_name == normalized_pattern or module_name.startswith(
+        normalized_pattern + "."
+    )
 
 
 def _required_runtime_paths(manifest: dict[str, object]) -> list[str]:
-    return [str(path).strip().replace("\\", "/").strip("/") for path in list(manifest.get("required_runtime_paths", []) or [])]
+    return [
+        str(path).strip().replace("\\", "/").strip("/")
+        for path in list(manifest.get("required_runtime_paths", []) or [])
+    ]
 
 
 def _missing_path_from_manifest_error(error: Exception) -> str:
@@ -43,13 +57,19 @@ def _detect_dev_leaks(manifest: dict[str, object]) -> list[str]:
         unexpected_scripts = [
             path
             for path in scripts_dir.rglob("*")
-            if path.is_file() and path.relative_to(scripts_dir).as_posix() not in allowed_script_files
+            if path.is_file()
+            and path.relative_to(scripts_dir).as_posix() not in allowed_script_files
         ]
         if unexpected_scripts:
             leaks.append("scripts")
-    blocked_patterns = [str(item).strip() for item in list(manifest.get("blocked_modules", []) or [])]
+    blocked_patterns = [
+        str(item).strip() for item in list(manifest.get("blocked_modules", []) or [])
+    ]
     for module_name in sorted(sys.modules):
-        if any(_matches_blocked_module(module_name, pattern) for pattern in blocked_patterns):
+        if any(
+            _matches_blocked_module(module_name, pattern)
+            for pattern in blocked_patterns
+        ):
             leaks.append(module_name)
     return sorted(set(leaks))
 
@@ -94,7 +114,10 @@ def _run_real_task(system_context: dict[str, object]) -> tuple[str, list[str]]:
         str((LOGS_DIR / log_name).as_posix())
         for log_name in ("tasks.log", "system.log")
     )
-    if not isinstance(result, dict) or str(result.get("status", "")).strip().upper() != "COMPLETED":
+    if (
+        not isinstance(result, dict)
+        or str(result.get("status", "")).strip().upper() != "COMPLETED"
+    ):
         return "FAIL", list(required_logs)
 
     deadline = time.monotonic() + 1.0
@@ -149,7 +172,9 @@ def boot_product_box(system_context: dict[str, object]) -> dict[str, object]:
         report["execution_status"] = execution_status
         report["boot_status"] = (
             "PASS"
-            if not report["dev_leaks"] and not report["missing_files"] and execution_status == "OK"
+            if not report["dev_leaks"]
+            and not report["missing_files"]
+            and execution_status == "OK"
             else "FAIL"
         )
         return report

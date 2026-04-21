@@ -78,7 +78,9 @@ def _print_payload(payload: dict[str, Any]) -> None:
 
 
 def _print_memory_conflict_if_supported(response: Any) -> None:
-    conflict_printer = getattr(run_command_module, "_print_memory_conflict_if_needed", None)
+    conflict_printer = getattr(
+        run_command_module, "_print_memory_conflict_if_needed", None
+    )
     if callable(conflict_printer):
         conflict_printer(response)
 
@@ -210,7 +212,9 @@ def run_interface(text: str) -> tuple[int, dict[str, Any]]:
 
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
-    exit_code, payload = run_interface(" ".join(str(argument) for argument in arguments))
+    exit_code, payload = run_interface(
+        " ".join(str(argument) for argument in arguments)
+    )
     _print_payload(payload)
     return exit_code
 

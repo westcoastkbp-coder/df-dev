@@ -144,7 +144,9 @@ def check_invariants(task_packet: dict[str, Any] | None) -> dict[str, Any]:
             violations,
             _violation(
                 "replay_execution",
-                previous_trace_id=_normalize_text(replay_decision.get("previous_trace_id")),
+                previous_trace_id=_normalize_text(
+                    replay_decision.get("previous_trace_id")
+                ),
             ),
             task_id=task_id,
         )
@@ -209,7 +211,9 @@ def check_invariants(task_packet: dict[str, Any] | None) -> dict[str, Any]:
 
         conflict_state = _state("conflict", entity_id, domain="ownerbox")
         if conflict_state is not None:
-            normalized_conflict_state = _normalize_text(conflict_state.get("state")).lower()
+            normalized_conflict_state = _normalize_text(
+                conflict_state.get("state")
+            ).lower()
             if normalized_conflict_state in _ACTIVE_CONFLICT_STATES:
                 _append_violation(
                     violations,

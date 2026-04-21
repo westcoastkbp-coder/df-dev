@@ -48,14 +48,20 @@ def _should_exclude_path(relative_path: str, *, blocked_patterns: list[str]) -> 
     parts = normalized.split("/") if normalized else []
     if any(part in FORBIDDEN_BUILD_ARTIFACT_PARTS for part in parts):
         return True
-    if any(part.startswith(prefix) for part in parts for prefix in FORBIDDEN_BUILD_ARTIFACT_PREFIXES):
+    if any(
+        part.startswith(prefix)
+        for part in parts
+        for prefix in FORBIDDEN_BUILD_ARTIFACT_PREFIXES
+    ):
         return True
     if parts and parts[0] in FORBIDDEN_BUILD_FOLDERS:
         return True
     module_name = normalized.removesuffix(".py").replace("/", ".")
     if module_name.endswith(".__init__"):
         module_name = module_name[: -len(".__init__")]
-    if module_name and any(_matches_prefix(module_name, blocked) for blocked in blocked_patterns):
+    if module_name and any(
+        _matches_prefix(module_name, blocked) for blocked in blocked_patterns
+    ):
         return True
     return False
 
@@ -73,7 +79,9 @@ def _iter_project_files(root_dir: Path) -> list[Path]:
     def _ignore_walk_error(_: OSError) -> None:
         return
 
-    for current_root, _, file_names in os.walk(root_dir, topdown=True, onerror=_ignore_walk_error, followlinks=False):
+    for current_root, _, file_names in os.walk(
+        root_dir, topdown=True, onerror=_ignore_walk_error, followlinks=False
+    ):
         current_root_path = Path(current_root)
         for file_name in file_names:
             candidate = current_root_path / file_name
@@ -90,15 +98,24 @@ def _build_selected_files(
     root_dir: Path,
     manifest: dict[str, Any],
 ) -> tuple[list[Path], list[str], list[str], list[str]]:
-    allowlist = [_normalize_module_pattern(entry) for entry in manifest["product_runtime_allowlist"]]
-    blocked = [_normalize_module_pattern(entry) for entry in manifest["blocked_modules"]]
-    entrypoints = [_normalize_module_pattern(entry) for entry in manifest["product_entrypoints"]]
+    allowlist = [
+        _normalize_module_pattern(entry)
+        for entry in manifest["product_runtime_allowlist"]
+    ]
+    blocked = [
+        _normalize_module_pattern(entry) for entry in manifest["blocked_modules"]
+    ]
+    entrypoints = [
+        _normalize_module_pattern(entry) for entry in manifest["product_entrypoints"]
+    ]
 
-    included_modules, violations, blocked_references = _collect_modules_from_entrypoints(
-        root_dir=root_dir,
-        entrypoints=entrypoints,
-        allowlist=allowlist,
-        blocked=blocked,
+    included_modules, violations, blocked_references = (
+        _collect_modules_from_entrypoints(
+            root_dir=root_dir,
+            entrypoints=entrypoints,
+            allowlist=allowlist,
+            blocked=blocked,
+        )
     )
     if violations:
         return [], violations, sorted(included_modules), blocked_references
@@ -115,9 +132,19 @@ def _build_selected_files(
             selected_files.add(init_path.relative_to(root_dir))
 
     if missing_required_items:
-        return [], [f"missing module file for {item}" for item in missing_required_items], sorted(included_modules), blocked_references
+        return (
+            [],
+            [f"missing module file for {item}" for item in missing_required_items],
+            sorted(included_modules),
+            blocked_references,
+        )
 
-    return sorted(selected_files), [], sorted(included_modules), sorted(blocked_references)
+    return (
+        sorted(selected_files),
+        [],
+        sorted(included_modules),
+        sorted(blocked_references),
+    )
 
 
 def generate_product_box_build(
@@ -128,7 +155,9 @@ def generate_product_box_build(
     output_dir: Path | None = None,
 ) -> dict[str, Any]:
     resolved_root = (root_dir or PROJECT_ROOT).resolve(strict=False)
-    resolved_manifest_path = (manifest_path or DEFAULT_PRODUCT_BOX_MANIFEST_PATH).resolve(strict=False)
+    resolved_manifest_path = (
+        manifest_path or DEFAULT_PRODUCT_BOX_MANIFEST_PATH
+    ).resolve(strict=False)
     resolved_output_dir = (output_dir or DEFAULT_BUILD_DIR).resolve(strict=False)
 
     try:
@@ -149,9 +178,11 @@ def generate_product_box_build(
             "output_dir": str(resolved_output_dir),
         }
 
-    selected_files, dependency_violations, included_modules, blocked_references = _build_selected_files(
-        root_dir=resolved_root,
-        manifest=validated_manifest,
+    selected_files, dependency_violations, included_modules, blocked_references = (
+        _build_selected_files(
+            root_dir=resolved_root,
+            manifest=validated_manifest,
+        )
     )
     if dependency_violations:
         return {
@@ -166,7 +197,10 @@ def generate_product_box_build(
             "modules_included": included_modules,
         }
 
-    blocked_patterns = [_normalize_module_pattern(entry) for entry in validated_manifest["blocked_modules"]]
+    blocked_patterns = [
+        _normalize_module_pattern(entry)
+        for entry in validated_manifest["blocked_modules"]
+    ]
     excluded_files: list[str] = []
     for relative in _iter_project_files(resolved_root):
         relative_text = relative.as_posix()
@@ -187,9 +221,21 @@ def generate_product_box_build(
         included_files.append(relative_text)
         total_size_estimate += (resolved_root / relative_path).stat().st_size
 
-    required_paths = sorted({_normalize_relative_path(path) for path in validated_manifest["required_runtime_paths"]})
-    writable_paths = sorted({_normalize_relative_path(path) for path in validated_manifest["writable_paths"]})
-    if set(writable_paths) != {_normalize_relative_path(path) for path in APPROVED_WRITABLE_PATHS}:
+    required_paths = sorted(
+        {
+            _normalize_relative_path(path)
+            for path in validated_manifest["required_runtime_paths"]
+        }
+    )
+    writable_paths = sorted(
+        {
+            _normalize_relative_path(path)
+            for path in validated_manifest["writable_paths"]
+        }
+    )
+    if set(writable_paths) != {
+        _normalize_relative_path(path) for path in APPROVED_WRITABLE_PATHS
+    }:
         return {
             "build_status": "FAIL",
             "total_files": 0,
@@ -234,7 +280,10 @@ def generate_product_box_build(
             "excluded_files": sorted(set(excluded_files)),
             "missing_required_items": list(packaging_report["violations"]),
             "blocked_references_detected": sorted(
-                set(blocked_references + list(packaging_report["blocked_references_detected"]))
+                set(
+                    blocked_references
+                    + list(packaging_report["blocked_references_detected"])
+                )
             ),
             "total_size_estimate": total_size_estimate,
             "output_dir": str(resolved_output_dir),

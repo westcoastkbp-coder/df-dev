@@ -158,7 +158,9 @@ def test_validate_task_result_accepts_drive_to_google_doc_artifact(tmp_path) -> 
     }
 
 
-def test_validate_task_result_returns_drive_to_google_doc_failure_reason(tmp_path) -> None:
+def test_validate_task_result_returns_drive_to_google_doc_failure_reason(
+    tmp_path,
+) -> None:
     artifact_path = tmp_path / "drive-to-doc-82.json"
     artifact_path.write_text(
         json.dumps(
@@ -194,8 +196,16 @@ def test_validate_task_result_accepts_email_pipeline_artifact(tmp_path) -> None:
         json.dumps(
             {
                 "pipeline_steps": [
-                    {"step_index": 1, "tool_name": "gmail.read_latest", "output_key": "email_data"},
-                    {"step_index": 2, "tool_name": "claude.analyze", "output_key": "analysis_data"},
+                    {
+                        "step_index": 1,
+                        "tool_name": "gmail.read_latest",
+                        "output_key": "email_data",
+                    },
+                    {
+                        "step_index": 2,
+                        "tool_name": "claude.analyze",
+                        "output_key": "analysis_data",
+                    },
                     {"step_index": 3, "tool_name": "gmail.create_draft"},
                 ],
                 "pipeline_trace": [

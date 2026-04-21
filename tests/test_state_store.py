@@ -8,7 +8,12 @@ import pytest
 import scripts.run_codex_task as run_codex_task_module
 from app.memory import memory_registry
 from app.policy.conflict_resolution import resolve_conflict
-from app.state.state_store import StateStoreError, get_state, list_active_states, set_state
+from app.state.state_store import (
+    StateStoreError,
+    get_state,
+    list_active_states,
+    set_state,
+)
 from app.storage import storage_adapter
 from scripts.run_codex_task import run_codex_task
 
@@ -59,7 +64,9 @@ def _conflicting_artifact(*, resource_id: str = "crew-west") -> dict[str, object
     }
 
 
-def test_set_state_creates_new_active_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_set_state_creates_new_active_state(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     _configure_storage(monkeypatch, tmp_path)
 
     state = set_state(
@@ -153,13 +160,17 @@ def test_get_state_and_list_active_states_preserve_domain_isolation(
     assert dev_state["state"] == "reserved"
     assert owner_state["state"] == "owner_locked"
     assert [item["entity_id"] for item in list_active_states("dev")] == ["crew-west"]
-    assert [item["entity_id"] for item in list_active_states("ownerbox")] == ["crew-west"]
+    assert [item["entity_id"] for item in list_active_states("ownerbox")] == [
+        "crew-west"
+    ]
 
     with pytest.raises(StateStoreError, match="ambiguous"):
         get_state("resource", "crew-west")
 
 
-def test_execution_updates_task_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_execution_updates_task_state(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     _configure_storage(monkeypatch, tmp_path)
 
     task_path = tmp_path / "task-801.json"
@@ -235,7 +246,9 @@ def test_conflict_creation_and_resolution_update_conflict_state(
 
     conflict_state = get_state("conflict", "crew-west", domain="ownerbox")
     conflict_entry = memory_registry.get_artifact_by_logical_key(
-        memory_registry.compute_artifact_key("ownerbox", "conflict_escalation", "crew-west")
+        memory_registry.compute_artifact_key(
+            "ownerbox", "conflict_escalation", "crew-west"
+        )
     )
 
     assert conflict_state is not None
@@ -248,7 +261,9 @@ def test_conflict_creation_and_resolution_update_conflict_state(
 
     assert resolved_state is not None
     assert resolved_state["state"] == "resolved"
-    assert resolved_state["source_artifact"].endswith("conflict_escalation_conflict-crew-west.json")
+    assert resolved_state["source_artifact"].endswith(
+        "conflict_escalation_conflict-crew-west.json"
+    )
 
 
 def test_replay_blocked_keeps_existing_task_state(
@@ -290,4 +305,6 @@ def test_replay_blocked_keeps_existing_task_state(
     assert replay_state is not None
     assert second_task["failure_reason"] == "already_executed"
     assert replay_state == initial_state
-    assert replay_state["source_artifact"] == str(first_task["execution_trace_artifact_path"])
+    assert replay_state["source_artifact"] == str(
+        first_task["execution_trace_artifact_path"]
+    )

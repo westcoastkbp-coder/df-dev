@@ -23,7 +23,9 @@ THREE_SENTENCE_SUMMARY_INSTRUCTIONS = {
     "Summarize this document in 3 sentences",
     "Summarize this text in 3 sentences",
 }
-STRUCTURED_SUMMARY_INSTRUCTION = "Analyze this document and produce a concise structured summary"
+STRUCTURED_SUMMARY_INSTRUCTION = (
+    "Analyze this document and produce a concise structured summary"
+)
 EMAIL_REPLY_INSTRUCTION = "Summarize email and suggest reply"
 OWNER_SECTION_HEADERS = (
     "Action Steps:",
@@ -112,7 +114,9 @@ def _messages_response_with_retry(
     request_payload: dict[str, Any],
     api_key: str,
 ) -> dict[str, Any]:
-    for attempt_index, delay_seconds in enumerate((0.0, *REQUEST_RETRY_DELAYS_SECONDS), start=1):
+    for attempt_index, delay_seconds in enumerate(
+        (0.0, *REQUEST_RETRY_DELAYS_SECONDS), start=1
+    ):
         try:
             return _messages_response(request_payload, api_key)
         except HTTPError as error:
@@ -126,7 +130,9 @@ def _messages_response_with_retry(
 
         sleep(delay_seconds)
 
-    raise ClaudeToolError("CLAUDE_API_FAILED", "Anthropic API request retries exhausted.")
+    raise ClaudeToolError(
+        "CLAUDE_API_FAILED", "Anthropic API request retries exhausted."
+    )
 
 
 def _analysis_from_response(response_payload: dict[str, Any]) -> str:
@@ -156,7 +162,9 @@ def _analysis_from_response(response_payload: dict[str, Any]) -> str:
     return analysis
 
 
-def _cache_path(instruction: str, text: str, context: dict[str, Any] | None = None) -> Path:
+def _cache_path(
+    instruction: str, text: str, context: dict[str, Any] | None = None
+) -> Path:
     cache_key = sha256(
         json.dumps(
             {
@@ -281,16 +289,17 @@ def _deterministic_structured_summary(text: str) -> str:
     overview = _ensure_sentence_punctuation(sentences[0])
     key_points = sentences[: min(3, len(sentences))]
     bullet_lines = "\n".join(
-        f"- {_ensure_sentence_punctuation(point)}"
-        for point in key_points
+        f"- {_ensure_sentence_punctuation(point)}" for point in key_points
     )
     return f"Overview: {overview}\nKey points:\n{bullet_lines}"
 
 
 def _deterministic_email_reply_analysis(text: str) -> str:
     sentences = _split_sentences(text)
-    summary = _ensure_sentence_punctuation(sentences[0]) if sentences else (
-        "No readable email content was available."
+    summary = (
+        _ensure_sentence_punctuation(sentences[0])
+        if sentences
+        else ("No readable email content was available.")
     )
     return (
         f"Summary: {summary}\n\n"
@@ -312,11 +321,16 @@ def _looks_like_owner_instruction(instruction: str) -> bool:
     return all(term in normalized_instruction for term in required_terms)
 
 
-def _owner_priority_lines(request_text: str, context: dict[str, Any] | None = None) -> list[str]:
+def _owner_priority_lines(
+    request_text: str, context: dict[str, Any] | None = None
+) -> list[str]:
     normalized_request = str(request_text or "").strip().lower()
     priorities: list[str] = []
     memory_summary = _memory_summary_from_context(context)
-    if any(term in normalized_request for term in ("eb1", "eb-1", "o1", "o-1", "immigration", "visa")):
+    if any(
+        term in normalized_request
+        for term in ("eb1", "eb-1", "o1", "o-1", "immigration", "visa")
+    ):
         priorities.append("1. Immigration evidence and filing readiness.")
         priorities.append("2. Concrete proof of business and technical impact.")
     else:
@@ -330,12 +344,16 @@ def _owner_priority_lines(request_text: str, context: dict[str, Any] | None = No
                 f"3. Permit track remains {str(permits.get('priority')).strip()} priority."
             )
         else:
-            priorities.append("3. Preserve evidence trail in Digital Foreman for reuse.")
+            priorities.append(
+                "3. Preserve evidence trail in Digital Foreman for reuse."
+            )
     else:
         priorities.append("3. Preserve evidence trail in Digital Foreman for reuse.")
     owner_priorities = memory_summary.get("owner_priorities")
     if isinstance(owner_priorities, list):
-        for index, priority in enumerate(owner_priorities[:2], start=len(priorities) + 1):
+        for index, priority in enumerate(
+            owner_priorities[:2], start=len(priorities) + 1
+        ):
             normalized_priority = str(priority or "").strip()
             if normalized_priority:
                 priorities.append(f"{index}. {normalized_priority}.")
@@ -396,7 +414,9 @@ def _deterministic_owner_action_plan(
     if last_decisions:
         preserved_decision = str(last_decisions[-1] or "").strip()
         if preserved_decision:
-            next_moves.append(f"Keep the latest system decision intact: {preserved_decision}.")
+            next_moves.append(
+                f"Keep the latest system decision intact: {preserved_decision}."
+            )
 
     priorities = _owner_priority_lines(normalized_request, context)
     return (
@@ -430,11 +450,17 @@ def _validated_claude_input(
     input_payload: dict[str, Any],
 ) -> tuple[str, str, dict[str, Any] | None]:
     if not isinstance(input_payload, dict):
-        raise ClaudeToolError("CLAUDE_API_FAILED", "Claude tool input must be an object.")
+        raise ClaudeToolError(
+            "CLAUDE_API_FAILED", "Claude tool input must be an object."
+        )
 
     text = str(input_payload.get("text") or "").strip()
     instruction = str(input_payload.get("instruction") or "").strip()
-    context = input_payload.get("context") if isinstance(input_payload.get("context"), dict) else None
+    context = (
+        input_payload.get("context")
+        if isinstance(input_payload.get("context"), dict)
+        else None
+    )
     if not text:
         raise ClaudeToolError("CLAUDE_API_FAILED", "Claude text is required.")
     if not instruction:

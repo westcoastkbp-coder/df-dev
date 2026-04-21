@@ -79,7 +79,10 @@ def test_repeated_fail_entries_escalate_before_execution(monkeypatch, capsys) ->
             "confidence": "high",
         },
     }
-    assert state["context"]["next_required"] == "manual intervention required for execution_replay"
+    assert (
+        state["context"]["next_required"]
+        == "manual intervention required for execution_replay"
+    )
     assert state["audit"] == [
         {
             "module": "execution_replay",
@@ -95,7 +98,9 @@ def test_repeated_fail_entries_escalate_before_execution(monkeypatch, capsys) ->
     ]
 
 
-def test_repeated_blocked_entries_escalate_before_execution(monkeypatch, capsys) -> None:
+def test_repeated_blocked_entries_escalate_before_execution(
+    monkeypatch, capsys
+) -> None:
     _, output, state = _run_escalation_case(
         monkeypatch,
         capsys,
@@ -117,7 +122,10 @@ def test_repeated_blocked_entries_escalate_before_execution(monkeypatch, capsys)
             "confidence": "high",
         },
     }
-    assert state["context"]["next_required"] == "manual intervention required for execution_replay"
+    assert (
+        state["context"]["next_required"]
+        == "manual intervention required for execution_replay"
+    )
     assert state["audit"][0]["status"] == "ESCALATED"
 
 
@@ -185,7 +193,9 @@ def test_already_working_module_returns_before_execution(monkeypatch, capsys) ->
     monkeypatch.setattr(codex_loop, "load_context", lambda: state["context"])
 
     def fail_detect_unstable(module):
-        raise AssertionError("detect_unstable_module should not run for working modules")
+        raise AssertionError(
+            "detect_unstable_module should not run for working modules"
+        )
 
     def fail_run_test(test_path):
         raise AssertionError("run_test should not execute for working modules")

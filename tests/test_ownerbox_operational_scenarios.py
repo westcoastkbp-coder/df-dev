@@ -160,11 +160,14 @@ def _scenario_orchestrator(
                     f"Printed '{parameters['document_title']}' on "
                     f"{parameters.get('printer_name') or 'configured_printer'}"
                 ),
-                "references": {"artifact_path": "runtime/out/artifacts/printer_jobs/demo.txt"},
+                "references": {
+                    "artifact_path": "runtime/out/artifacts/printer_jobs/demo.txt"
+                },
                 "metadata": {
                     "operation": operation,
                     "backend_used": "stub_printer",
-                    "printer_name": parameters.get("printer_name") or "configured_printer",
+                    "printer_name": parameters.get("printer_name")
+                    or "configured_printer",
                     "job_status": "submitted",
                     "pages": 1,
                 },
@@ -196,14 +199,22 @@ def test_scenario_registry_is_explicit_and_compile_is_deterministic() -> None:
         owner_id="owner-001",
         target_url="https://example.com/update",
         target_fields={"status": "ready"},
-        structured_inputs={"form_selector": "#update-form", "draft_field_name": "message"},
+        structured_inputs={
+            "form_selector": "#update-form",
+            "draft_field_name": "message",
+        },
         prompt_input="Draft a concise owner update.",
     )
     compilation = compile_owner_operational_scenario(request)
 
     assert compilation.workflow_type == "openai_then_browser_open_fill_submit"
-    assert compilation.workflow_metadata["scenario_type"] == "owner_draft_then_browser_update"
-    assert compilation.workflow_payload["fill_action"]["action_parameters"]["fields"] == {
+    assert (
+        compilation.workflow_metadata["scenario_type"]
+        == "owner_draft_then_browser_update"
+    )
+    assert compilation.workflow_payload["fill_action"]["action_parameters"][
+        "fields"
+    ] == {
         "message": "{{step1.result_summary}}",
         "status": "ready",
     }
@@ -227,11 +238,16 @@ def test_malformed_scenario_input_returns_validation_error_shape() -> None:
 
     assert result.workflow_id is None
     assert result.workflow_status == "failed"
-    assert result.failure_reason == "validation_error: target_url must be an absolute http or https URL"
+    assert (
+        result.failure_reason
+        == "validation_error: target_url must be an absolute http or https URL"
+    )
     assert result.pending_approval_ids == ()
 
 
-def test_email_review_and_send_previews_before_send_approval(monkeypatch, tmp_path: Path) -> None:
+def test_email_review_and_send_previews_before_send_approval(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_dispatch_runtime(monkeypatch, tmp_path)
     owner_domain, memory_scope, action_scope, trust_profile = _owner_boundary_bundle()
     email_calls: list[tuple[str, dict[str, object]]] = []
@@ -288,7 +304,10 @@ def test_web_form_review_and_submit_resumes_without_duplicate_submit(
             owner_id="owner-001",
             target_url="https://example.com/form",
             target_fields={"company": "Digital Foreman"},
-            structured_inputs={"form_selector": "#lead-form", "extract_selector": "main"},
+            structured_inputs={
+                "form_selector": "#lead-form",
+                "extract_selector": "main",
+            },
         ),
         owner_domain=owner_domain,
         memory_scope=memory_scope,
@@ -395,7 +414,10 @@ def test_draft_then_browser_update_uses_generated_text_in_fill_step(
             owner_id="owner-001",
             target_url="https://example.com/update",
             target_fields={"status": "ready"},
-            structured_inputs={"form_selector": "#update-form", "draft_field_name": "message"},
+            structured_inputs={
+                "form_selector": "#update-form",
+                "draft_field_name": "message",
+            },
             prompt_input="Draft a concise owner-facing update.",
         ),
         owner_domain=owner_domain,
@@ -405,7 +427,9 @@ def test_draft_then_browser_update_uses_generated_text_in_fill_step(
     )
 
     fill_parameters = next(
-        parameters for operation, parameters in browser_calls if operation == "fill_form"
+        parameters
+        for operation, parameters in browser_calls
+        if operation == "fill_form"
     )
 
     assert len(openai_calls) == 1
@@ -446,7 +470,10 @@ def test_print_scenario_validation_fails_on_malformed_input() -> None:
 
     assert result.workflow_id is None
     assert result.workflow_status == "failed"
-    assert result.failure_reason == "validation_error: structured_inputs.copies must be one of: 1"
+    assert (
+        result.failure_reason
+        == "validation_error: structured_inputs.copies must be one of: 1"
+    )
 
 
 def test_print_scenario_previews_before_approval_and_survives_restart(
@@ -482,7 +509,10 @@ def test_print_scenario_previews_before_approval_and_survives_restart(
     assert printer_calls == []
     assert created.workflow_status == "blocked"
     assert len(created.pending_approval_ids) == 1
-    assert created.preview_text == "Preview ready: Owner Review Bounded printable document text."
+    assert (
+        created.preview_text
+        == "Preview ready: Owner Review Bounded printable document text."
+    )
 
     restored = _scenario_orchestrator(
         openai_calls=[],
@@ -554,7 +584,9 @@ def test_print_scenario_executes_once_and_does_not_replay(
 
     traces = _trace_entries(tmp_path)
     print_trace = next(
-        trace for trace in reversed(traces) if trace.get("action_type") == "PRINT_DOCUMENT"
+        trace
+        for trace in reversed(traces)
+        if trace.get("action_type") == "PRINT_DOCUMENT"
     )
     assert print_trace["scenario_type"] == "owner_generate_review_and_print_document"
     assert print_trace["printer_name"] == "Zephyrus_Main"
@@ -566,10 +598,14 @@ def test_print_scenario_executes_once_and_does_not_replay(
         email_calls=[],
         printer_calls=printer_calls,
     )
-    state = verifier._workflow_orchestrator._workflow_state_store.load_state(created.workflow_id)
+    state = verifier._workflow_orchestrator._workflow_state_store.load_state(
+        created.workflow_id
+    )
     assert state is not None
     steps = list(state.snapshot["steps"])
-    print_action_id = next(step["action_id"] for step in steps if step["action_type"] == "PRINT_DOCUMENT")
+    print_action_id = next(
+        step["action_id"] for step in steps if step["action_type"] == "PRINT_DOCUMENT"
+    )
     history = task_memory.get_task_history(print_action_id)
     assert len(history) == 1
     assert "Bounded printable document text." not in history[0]["result_summary"]

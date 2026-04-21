@@ -13,17 +13,25 @@ def _normalize_text(value: Any) -> str:
 
 def _normalize_generated_at(value: Any) -> str:
     if isinstance(value, datetime):
-        normalized = value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
-        return normalized.astimezone(timezone.utc).isoformat(timespec="seconds").replace(
-            "+00:00",
-            "Z",
+        normalized = (
+            value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+        )
+        return (
+            normalized.astimezone(timezone.utc)
+            .isoformat(timespec="seconds")
+            .replace(
+                "+00:00",
+                "Z",
+            )
         )
 
     text = _normalize_text(value)
     if text:
         return text
 
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    )
 
 
 def _normalized_external_files(context_packet: dict[str, Any]) -> list[dict[str, str]]:
@@ -44,7 +52,9 @@ def _normalized_external_files(context_packet: dict[str, Any]) -> list[dict[str,
             {
                 "file_id": file_id,
                 "name": _normalize_text(entry.get("name")) or file_id,
-                "content": str(entry.get("content") or "").replace("\r\n", "\n").strip(),
+                "content": str(entry.get("content") or "")
+                .replace("\r\n", "\n")
+                .strip(),
             }
         )
 
@@ -94,7 +104,11 @@ def build_drive_to_google_doc_content(
         "content": content,
         "content_summary": content[:CONTENT_SUMMARY_CHAR_LIMIT],
         "generated_at": generated_at_text,
-        "source_file_ids": [external_file["file_id"] for external_file in external_files],
-        "source_file_names": [external_file["name"] for external_file in external_files],
+        "source_file_ids": [
+            external_file["file_id"] for external_file in external_files
+        ],
+        "source_file_names": [
+            external_file["name"] for external_file in external_files
+        ],
         "transform_mode": normalized_mode,
     }

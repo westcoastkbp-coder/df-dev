@@ -28,9 +28,7 @@ def _extract_json_object(text: str) -> dict[str, Any]:
     candidates = [normalized_text]
     if "```" in normalized_text:
         candidates.extend(
-            part.strip()
-            for part in normalized_text.split("```")
-            if part.strip()
+            part.strip() for part in normalized_text.split("```") if part.strip()
         )
 
     for candidate in candidates:
@@ -77,7 +75,9 @@ def _validated_topic_and_context(input_payload: dict[str, Any]) -> tuple[str, st
     return topic, context
 
 
-def run_linkedin_create_post_draft_external(input_payload: dict[str, Any]) -> dict[str, str]:
+def run_linkedin_create_post_draft_external(
+    input_payload: dict[str, Any],
+) -> dict[str, str]:
     topic, context = _validated_topic_and_context(input_payload)
 
     analysis = run_claude_analyze_external(
@@ -105,7 +105,9 @@ def run_linkedin_create_post_draft_external(input_payload: dict[str, Any]) -> di
     }
 
 
-def run_linkedin_create_post_draft_fallback(input_payload: dict[str, Any]) -> dict[str, str]:
+def run_linkedin_create_post_draft_fallback(
+    input_payload: dict[str, Any],
+) -> dict[str, str]:
     topic, context = _validated_topic_and_context(input_payload)
     return _fallback_output(topic, context)
 

@@ -57,7 +57,9 @@ def test_local_write_is_visible_to_remote_and_remote_write_is_visible_to_local(
         environ=remote_env,
         root_dir=tmp_path,
     )
-    local_view = get_context("active_task:REMOTE-TASK-1", environ=local_env, root_dir=tmp_path)
+    local_view = get_context(
+        "active_task:REMOTE-TASK-1", environ=local_env, root_dir=tmp_path
+    )
     assert local_view["task_id"] == "REMOTE-TASK-1"
     assert local_view["interaction_id"] == "interaction-remote-1"
     assert dict(local_view["value"])["runtime_owner"] == "cpu-server"
@@ -83,7 +85,9 @@ def test_task_creation_writes_active_context_and_interaction_event(
         store_path=store_path,
     )
 
-    context = get_context(f"active_task:{created['task_id']}", environ=env, root_dir=tmp_path)
+    context = get_context(
+        f"active_task:{created['task_id']}", environ=env, root_dir=tmp_path
+    )
     assert context["task_id"] == created["task_id"]
     assert context["interaction_id"] == "interaction-1"
     assert dict(context["value"])["status"] == "CREATED"
@@ -140,7 +144,9 @@ def test_decision_resolution_reads_and_writes_shared_context(
     context = get_context("active_task:DECISION-1", environ=env, root_dir=tmp_path)
     decision_context = dict(context["value"])["decision_context"]
     assert dict(decision_context["global_context"])["office"] == "west"
-    assert dict(decision_context["active_task_context"])["value"]["status"] == "VALIDATED"
+    assert (
+        dict(decision_context["active_task_context"])["value"]["status"] == "VALIDATED"
+    )
 
     config = load_runtime_config(root_dir=tmp_path, environ=env)
     decision_events = _read_jsonl(config.storage_paths.decisions_file)
@@ -200,8 +206,12 @@ def test_decision_resolution_compacts_recursive_active_task_snapshot(
         },
     )
 
-    context = get_context("active_task:DECISION-COMPACT-1", environ=env, root_dir=tmp_path)
-    active_snapshot = dict(dict(context["value"])["decision_context"])["active_task_context"]
+    context = get_context(
+        "active_task:DECISION-COMPACT-1", environ=env, root_dir=tmp_path
+    )
+    active_snapshot = dict(dict(context["value"])["decision_context"])[
+        "active_task_context"
+    ]
     assert active_snapshot["task_id"] == "DECISION-COMPACT-1"
     assert dict(active_snapshot["value"])["status"] == "VALIDATED"
     assert "decision_context" not in dict(active_snapshot["value"])
@@ -260,7 +270,9 @@ def test_execution_runner_updates_shared_context_for_completion(
     monkeypatch.setenv("DF_STORAGE_ROOT", env["DF_STORAGE_ROOT"])
 
     store_path = tmp_path / "tasks.json"
-    monkeypatch.setattr(execution_runner_module.task_factory_module, "TASK_SYSTEM_FILE", store_path)
+    monkeypatch.setattr(
+        execution_runner_module.task_factory_module, "TASK_SYSTEM_FILE", store_path
+    )
 
     task = create_task(
         {
@@ -295,12 +307,18 @@ def test_execution_runner_updates_shared_context_for_completion(
     )
 
     assert executed["status"] == "COMPLETED"
-    context = get_context(f"active_task:{task['task_id']}", environ=env, root_dir=tmp_path)
+    context = get_context(
+        f"active_task:{task['task_id']}", environ=env, root_dir=tmp_path
+    )
     assert dict(context["value"])["status"] == "COMPLETED"
     assert dict(dict(context["value"])["result"])["status"] == "completed"
 
     config = load_runtime_config(root_dir=tmp_path, environ=env)
     interaction_events = _read_jsonl(config.storage_paths.interactions_file)
-    event_types = [entry["event_type"] for entry in interaction_events if entry["task_id"] == task["task_id"]]
+    event_types = [
+        entry["event_type"]
+        for entry in interaction_events
+        if entry["task_id"] == task["task_id"]
+    ]
     assert "execution_started" in event_types
     assert "execution_completed" in event_types

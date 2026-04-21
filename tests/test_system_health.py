@@ -60,7 +60,8 @@ def _write_escalations(path: Path, *timestamps: str) -> None:
         for index, timestamp in enumerate(timestamps, start=1)
     ]
     path.write_text(
-        "\n".join(json.dumps(entry, ensure_ascii=True) for entry in entries) + ("\n" if entries else ""),
+        "\n".join(json.dumps(entry, ensure_ascii=True) for entry in entries)
+        + ("\n" if entries else ""),
         encoding="utf-8",
     )
 
@@ -101,8 +102,12 @@ def test_repeated_failure_classifies_degraded(tmp_path: Path) -> None:
     escalation_log = tmp_path / "runtime" / "logs" / "escalations.jsonl"
     signal = system_health_module.evaluate_system_health(
         [
-            _task(task_id="DF-FAIL-001", status="FAILED", failed_at="2026-04-05T00:00:30Z"),
-            _task(task_id="DF-FAIL-002", status="FAILED", failed_at="2026-04-05T00:00:40Z"),
+            _task(
+                task_id="DF-FAIL-001", status="FAILED", failed_at="2026-04-05T00:00:30Z"
+            ),
+            _task(
+                task_id="DF-FAIL-002", status="FAILED", failed_at="2026-04-05T00:00:40Z"
+            ),
         ],
         now_timestamp="2026-04-05T00:01:00Z",
         escalation_log_file=escalation_log,
@@ -114,7 +119,9 @@ def test_repeated_failure_classifies_degraded(tmp_path: Path) -> None:
     assert signal["metrics"]["failed_tasks_count"] == 2
 
 
-def test_severe_issues_classify_critical_and_escalate(tmp_path: Path, monkeypatch) -> None:
+def test_severe_issues_classify_critical_and_escalate(
+    tmp_path: Path, monkeypatch
+) -> None:
     health_log = tmp_path / "runtime" / "logs" / "system_health.jsonl"
     escalation_log = tmp_path / "runtime" / "logs" / "escalations.jsonl"
     monkeypatch.setattr(system_health_module, "SYSTEM_HEALTH_LOG_FILE", health_log)
@@ -127,15 +134,25 @@ def test_severe_issues_classify_critical_and_escalate(tmp_path: Path, monkeypatc
     )
 
     critical_tasks = [
-        _task(task_id="DF-SUCCESS-OLD", status="COMPLETED", completed_at="2026-04-05T00:00:00Z"),
+        _task(
+            task_id="DF-SUCCESS-OLD",
+            status="COMPLETED",
+            completed_at="2026-04-05T00:00:00Z",
+        ),
         _task(task_id="DF-FAIL-001", status="FAILED", failed_at="2026-04-05T00:09:00Z"),
         _task(task_id="DF-FAIL-002", status="FAILED", failed_at="2026-04-05T00:09:10Z"),
         _task(task_id="DF-FAIL-003", status="FAILED", failed_at="2026-04-05T00:09:20Z"),
         _task(task_id="DF-FAIL-004", status="FAILED", failed_at="2026-04-05T00:09:30Z"),
         _task(task_id="DF-FAIL-005", status="FAILED", failed_at="2026-04-05T00:09:40Z"),
-        _task(task_id="DF-STUCK-001", status="EXECUTING", result={"status": "task_stuck"}),
-        _task(task_id="DF-STUCK-002", status="CREATED", result={"status": "task_stuck"}),
-        _task(task_id="DF-STUCK-003", status="DEFERRED", result={"status": "task_stuck"}),
+        _task(
+            task_id="DF-STUCK-001", status="EXECUTING", result={"status": "task_stuck"}
+        ),
+        _task(
+            task_id="DF-STUCK-002", status="CREATED", result={"status": "task_stuck"}
+        ),
+        _task(
+            task_id="DF-STUCK-003", status="DEFERRED", result={"status": "task_stuck"}
+        ),
     ]
 
     signal = system_health_module.assess_system_health(
@@ -172,8 +189,12 @@ def test_identical_runs_produce_identical_classification(tmp_path: Path) -> None
             completed_at="2026-04-05T00:00:04Z",
             last_updated_at="2026-04-05T00:00:04Z",
         ),
-        _task(task_id="DF-STABLE-002", status="FAILED", failed_at="2026-04-05T00:09:30Z"),
-        _task(task_id="DF-STABLE-003", status="FAILED", failed_at="2026-04-05T00:09:35Z"),
+        _task(
+            task_id="DF-STABLE-002", status="FAILED", failed_at="2026-04-05T00:09:30Z"
+        ),
+        _task(
+            task_id="DF-STABLE-003", status="FAILED", failed_at="2026-04-05T00:09:35Z"
+        ),
     ]
 
     first = system_health_module.evaluate_system_health(

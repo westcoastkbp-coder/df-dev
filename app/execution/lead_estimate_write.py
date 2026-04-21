@@ -96,7 +96,9 @@ def bind_decision_action(
 
     source_task_id = normalize_text(task_data.get("task_id"))
     payload = dict(task_data.get("payload", {}) or {})
-    source_lead_id = normalize_text(payload.get("lead_id") or task_data.get("source_lead_id"))
+    source_lead_id = normalize_text(
+        payload.get("lead_id") or task_data.get("source_lead_id")
+    )
     reason_code = decision_reason_code(next_action)
 
     if next_action == "archive_lead":

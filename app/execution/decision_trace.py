@@ -20,7 +20,9 @@ def _normalize_text(value: object) -> str:
     return " ".join(str(value or "").strip().split())
 
 
-def _short_text(value: object, *, default: str = "", max_chars: int = TRACE_MAX_CHARS) -> str:
+def _short_text(
+    value: object, *, default: str = "", max_chars: int = TRACE_MAX_CHARS
+) -> str:
     normalized = _normalize_text(value) or default
     if len(normalized) <= max_chars:
         return normalized
@@ -75,7 +77,12 @@ def infer_confidence(*, status: object, explicit: object = "") -> str:
     normalized_status = _normalize_text(status).lower()
     if normalized_status in {"completed", "success"}:
         return "high"
-    if normalized_status in {"failed", "error", "policy_blocked", "execution_boundary_violation"}:
+    if normalized_status in {
+        "failed",
+        "error",
+        "policy_blocked",
+        "execution_boundary_violation",
+    }:
         return "medium"
     return "low"
 
@@ -164,7 +171,9 @@ def build_decision_trace(
         "reason": _short_text(reason, default="execution decision recorded"),
         "context_used": _short_text(context_used, default="bounded execution context"),
         "action_type": _short_text(action_type, default="UNKNOWN_ACTION"),
-        "policy_result": _short_text(policy_result, default="allowed: policy gate passed"),
+        "policy_result": _short_text(
+            policy_result, default="allowed: policy gate passed"
+        ),
         "confidence": normalized_confidence,
         "vendor": normalize_vendor(vendor),
     }

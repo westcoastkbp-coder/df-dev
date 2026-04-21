@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import sqlite3
@@ -17,10 +17,14 @@ from app.orchestrator import task_state_store as task_state_store_module
 from app.orchestrator import task_memory as task_memory_module
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 
 
 def _read_jsonl(path: Path) -> list[dict[str, object]]:
@@ -33,7 +37,9 @@ def _read_jsonl(path: Path) -> list[dict[str, object]]:
     ]
 
 
-def test_lead_followup_creates_file_memory_and_logs(monkeypatch, tmp_path: Path) -> None:
+def test_lead_followup_creates_file_memory_and_logs(
+    monkeypatch, tmp_path: Path
+) -> None:
     output_dir = tmp_path / "runtime" / "out"
     leads_dir = output_dir / "leads"
     leads_dir.mkdir(parents=True, exist_ok=True)
@@ -68,7 +74,11 @@ def test_lead_followup_creates_file_memory_and_logs(monkeypatch, tmp_path: Path)
     monkeypatch.setattr(task_factory_module, "TASK_SYSTEM_FILE", task_store_file)
     monkeypatch.setattr(task_memory_module, "ROOT_DIR", tmp_path)
     monkeypatch.setattr(task_state_store_module, "ROOT_DIR", tmp_path)
-    monkeypatch.setattr(task_state_store_module, "TASK_STATE_DB_FILE", Path("runtime/state/task_state.sqlite3"))
+    monkeypatch.setattr(
+        task_state_store_module,
+        "TASK_STATE_DB_FILE",
+        Path("runtime/state/task_state.sqlite3"),
+    )
     monkeypatch.setattr(mock_executor_module, "ROOT_DIR", tmp_path)
     monkeypatch.setattr(task_queue_module, "TASK_QUEUE_FILE", queue_file)
     monkeypatch.setattr(task_queue_module, "TASK_LOG_FILE", task_log_file)
@@ -134,12 +144,24 @@ def test_lead_followup_creates_file_memory_and_logs(monkeypatch, tmp_path: Path)
     followup_file = leads_dir / "lead_001_followup.txt"
     assert followup_file.exists()
     followup_content = followup_file.read_text(encoding="utf-8")
-    assert "summary: Lead for ADU project on 5000 sqft lot requesting pricing." in followup_content
-    assert "recommended_next_action: Prepare preliminary pricing range and schedule qualification call." in followup_content
-    assert "short_message: Thanks for reaching out about your ADU project." in followup_content
+    assert (
+        "summary: Lead for ADU project on 5000 sqft lot requesting pricing."
+        in followup_content
+    )
+    assert (
+        "recommended_next_action: Prepare preliminary pricing range and schedule qualification call."
+        in followup_content
+    )
+    assert (
+        "short_message: Thanks for reaching out about your ADU project."
+        in followup_content
+    )
 
     task_log = _read_jsonl(task_log_file)
-    assert [entry["event_type"] for entry in task_log[:2]] == ["queue_enqueue", "queue_dequeue"]
+    assert [entry["event_type"] for entry in task_log[:2]] == [
+        "queue_enqueue",
+        "queue_dequeue",
+    ]
 
     policy_log = _read_jsonl(policy_log_file)
     assert any(
@@ -162,7 +184,8 @@ def test_lead_followup_creates_file_memory_and_logs(monkeypatch, tmp_path: Path)
         for entry in system_log
     )
     assert any(
-        "updated task_memory for DF-LEAD-FOLLOWUP-V1" in entry["details"].get("message", "")
+        "updated task_memory for DF-LEAD-FOLLOWUP-V1"
+        in entry["details"].get("message", "")
         for entry in system_log
     )
 
@@ -177,4 +200,3 @@ def test_lead_followup_creates_file_memory_and_logs(monkeypatch, tmp_path: Path)
     assert rows
     assert "DF-LEAD-FOLLOWUP-V1" in rows[0][0]
     assert "lead_followup" in rows[0][0]
-

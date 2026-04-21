@@ -28,7 +28,14 @@ _ROUTE_ALIASES = {
     "read_drive_file": GOOGLE_DRIVE_READ_FILE_TOOL,
     "read drive file": GOOGLE_DRIVE_READ_FILE_TOOL,
 }
-_ROUTE_HINT_FIELDS = ("tool_name", "tool", "target_tool", "operation", "action", "route")
+_ROUTE_HINT_FIELDS = (
+    "tool_name",
+    "tool",
+    "target_tool",
+    "operation",
+    "action",
+    "route",
+)
 _NESTED_INPUT_FIELDS = ("input", "payload", "arguments", "args")
 
 
@@ -74,7 +81,9 @@ def _route_from_explicit_hint(input_payload: dict[str, Any]) -> str:
 
 
 def _route_from_payload_shape(delegate_input: dict[str, Any]) -> str:
-    if all(_has_value(delegate_input.get(field)) for field in ("to", "subject", "body")):
+    if all(
+        _has_value(delegate_input.get(field)) for field in ("to", "subject", "body")
+    ):
         return GOOGLE_GMAIL_SEND_TOOL
     if all(_has_value(delegate_input.get(field)) for field in ("title", "content")):
         return GOOGLE_DOCS_CREATE_TOOL
@@ -107,15 +116,27 @@ def _document_input_from_result(result: Any) -> dict[str, str] | None:
     return None
 
 
-def _email_input_from_result(result: Any, fallback_input: dict[str, Any]) -> dict[str, str] | None:
+def _email_input_from_result(
+    result: Any, fallback_input: dict[str, Any]
+) -> dict[str, str] | None:
     if not isinstance(result, dict):
         return None
 
-    recipient = str(result.get("to") or result.get("email_to") or fallback_input.get("to") or "").strip()
-    subject = str(
-        result.get("subject") or result.get("email_subject") or fallback_input.get("subject") or ""
+    recipient = str(
+        result.get("to") or result.get("email_to") or fallback_input.get("to") or ""
     ).strip()
-    body = str(result.get("body") or result.get("email_body") or fallback_input.get("body") or "")
+    subject = str(
+        result.get("subject")
+        or result.get("email_subject")
+        or fallback_input.get("subject")
+        or ""
+    ).strip()
+    body = str(
+        result.get("body")
+        or result.get("email_body")
+        or fallback_input.get("body")
+        or ""
+    )
     if recipient and subject and body.strip():
         return {
             "to": recipient,
@@ -125,7 +146,9 @@ def _email_input_from_result(result: Any, fallback_input: dict[str, Any]) -> dic
     return None
 
 
-def _drive_input_from_result(result: Any, fallback_input: dict[str, Any]) -> dict[str, str] | None:
+def _drive_input_from_result(
+    result: Any, fallback_input: dict[str, Any]
+) -> dict[str, str] | None:
     if not isinstance(result, dict):
         result = {}
 
@@ -144,7 +167,11 @@ def _prepared_route(input_payload: dict[str, Any]) -> tuple[str, dict[str, Any]]
     from integrations.gemini_tool import call_gemini_google_operator
 
     response_payload = call_gemini_google_operator(task, context)
-    result = response_payload.get("result") if isinstance(response_payload, dict) else response_payload
+    result = (
+        response_payload.get("result")
+        if isinstance(response_payload, dict)
+        else response_payload
+    )
 
     document_input = _document_input_from_result(result)
     if document_input is not None:
@@ -185,7 +212,9 @@ def _resolved_route(input_payload: dict[str, Any]) -> tuple[str, dict[str, Any]]
 
 def run_google_layer_external(input_payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(input_payload, dict):
-        raise GoogleLayerError("GOOGLE_LAYER_INPUT_INVALID", "Google Layer input must be an object.")
+        raise GoogleLayerError(
+            "GOOGLE_LAYER_INPUT_INVALID", "Google Layer input must be an object."
+        )
 
     target_tool_name, delegate_input = _resolved_route(input_payload)
     if target_tool_name == GOOGLE_LAYER_TOOL:
@@ -204,11 +233,16 @@ def run_google_layer_external(input_payload: dict[str, Any]) -> dict[str, Any]:
         raise GoogleLayerError(
             str(error_payload.get("type") or "GOOGLE_LAYER_ROUTE_FAILED").strip()
             or "GOOGLE_LAYER_ROUTE_FAILED",
-            str(error_payload.get("message") or "Google Layer delegation failed.").strip()
+            str(
+                error_payload.get("message") or "Google Layer delegation failed."
+            ).strip()
             or "Google Layer delegation failed.",
         )
 
     delegated_data = delegated_result.get("data")
     if not isinstance(delegated_data, dict):
-        raise GoogleLayerError("GOOGLE_LAYER_OUTPUT_INVALID", "Google Layer delegate output must be an object.")
+        raise GoogleLayerError(
+            "GOOGLE_LAYER_OUTPUT_INVALID",
+            "Google Layer delegate output must be an object.",
+        )
     return dict(delegated_data)

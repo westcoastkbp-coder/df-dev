@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import hashlib
 import json
@@ -64,7 +64,9 @@ def _normalize_idempotency_value(value: object) -> object:
     if isinstance(value, Mapping):
         return {
             _normalize_text(key): _normalize_idempotency_value(item)
-            for key, item in sorted(dict(value).items(), key=lambda item: _normalize_text(item[0]))
+            for key, item in sorted(
+                dict(value).items(), key=lambda item: _normalize_text(item[0])
+            )
         }
     if isinstance(value, Iterable) and not isinstance(value, (str, bytes, Mapping)):
         return [_normalize_idempotency_value(item) for item in value]
@@ -156,9 +158,7 @@ def build_idempotency_key(
     normalized_workflow_type = _normalize_text(workflow_type)
     normalized_step_name = _normalize_text(step_name)
     payload_hash = _idempotency_payload_hash(payload)
-    return (
-        f"{normalized_lead_id}:{normalized_workflow_type}:{normalized_step_name}:{payload_hash}"
-    )
+    return f"{normalized_lead_id}:{normalized_workflow_type}:{normalized_step_name}:{payload_hash}"
 
 
 def find_task_by_idempotency_key(
@@ -242,7 +242,8 @@ def normalize_task_input(input_data: Mapping[str, object]) -> dict[str, object]:
         "task_type": task_type,
         "parent_task_id": parent_task_id,
         "parent_task_type": _normalize_text(
-            input_data.get("parent_task_type") or normalized_payload.get("parent_task_type")
+            input_data.get("parent_task_type")
+            or normalized_payload.get("parent_task_type")
         ),
         "execution_mode": execution_mode,
         "approved_at": _normalize_text(input_data.get("approved_at")),
@@ -276,7 +277,9 @@ def normalize_task_input(input_data: Mapping[str, object]) -> dict[str, object]:
             if isinstance(input_data.get("network_policy"), Mapping)
             else None
         ),
-        "constraints": input_data.get("constraints", normalized_payload.get("constraints", "")),
+        "constraints": input_data.get(
+            "constraints", normalized_payload.get("constraints", "")
+        ),
         "target_environment": input_data.get("target_environment"),
         "treat_as_dev_environment": input_data.get("treat_as_dev_environment"),
         "allow_code_generation": input_data.get("allow_code_generation"),
@@ -294,7 +297,8 @@ def policy_input_from_task_input(input_data: Mapping[str, object]) -> dict[str, 
             or payload.get("treat_as_dev_environment")
         ),
         "allow_code_generation": bool(
-            input_data.get("allow_code_generation") or payload.get("allow_code_generation")
+            input_data.get("allow_code_generation")
+            or payload.get("allow_code_generation")
         ),
         "context_scope": [],
         "assumptions": {},
@@ -356,7 +360,9 @@ def _cached_tasks(store_path: Path | None = None) -> list[dict[str, object]] | N
     return [dict(task) for task in _TASK_STORE]
 
 
-def _update_cached_task(task_data: dict[str, object], store_path: Path | None = None) -> None:
+def _update_cached_task(
+    task_data: dict[str, object], store_path: Path | None = None
+) -> None:
     target = store_path or TASK_SYSTEM_FILE
     cached_tasks = _cached_tasks(target)
     if cached_tasks is None:
@@ -413,11 +419,15 @@ def _save_store(tasks: list[dict[str, object]], store_path: Path | None = None) 
                 ),
             )
 
-    run_in_transaction(write_all, store_path=target, operation_name="replace_task_store")
+    run_in_transaction(
+        write_all, store_path=target, operation_name="replace_task_store"
+    )
     _sync_memory_index(tasks, target)
 
 
-def save_task(task_data: dict[str, object], store_path: Path | None = None) -> dict[str, object]:
+def save_task(
+    task_data: dict[str, object], store_path: Path | None = None
+) -> dict[str, object]:
     from app.policy.policy_gate import evaluate_task_creation_policy
 
     existing_tasks = load_tasks(store_path)
@@ -445,9 +455,10 @@ def save_task(task_data: dict[str, object], store_path: Path | None = None) -> d
     if not creation_policy.execution_allowed:
         raise ValueError(f"policy gate blocked task creation: {creation_policy.reason}")
     payload = _normalize_payload(persisted_task.get("payload"))
-    if (
-        _normalize_text(persisted_task.get("intent")) == "system_improvement_task"
-        and bool(creation_policy.policy_trace.get("core_impact"))
+    if _normalize_text(
+        persisted_task.get("intent")
+    ) == "system_improvement_task" and bool(
+        creation_policy.policy_trace.get("core_impact")
     ):
         # Core-targeted improvement tasks may be created, but they must remain
         # parked in the approval queue until a high-approval path unlocks them.
@@ -479,15 +490,24 @@ def append_history_event(
 ) -> dict[str, object]:
     history = list(task_data.get("history", []))
     payload = dict(data or {})
-    payload.setdefault("interaction_id", _normalize_text(task_data.get("interaction_id")))
-    payload.setdefault("job_id", _normalize_text(task_data.get("job_id") or task_data.get("task_id")))
-    payload.setdefault("trace_id", _normalize_text(task_data.get("trace_id") or task_data.get("task_id")))
+    payload.setdefault(
+        "interaction_id", _normalize_text(task_data.get("interaction_id"))
+    )
+    payload.setdefault(
+        "job_id", _normalize_text(task_data.get("job_id") or task_data.get("task_id"))
+    )
+    payload.setdefault(
+        "trace_id",
+        _normalize_text(task_data.get("trace_id") or task_data.get("task_id")),
+    )
     history.append(
         {
             "timestamp": now(),
             "event": _normalize_text(action) or "updated",
             "from_status": "",
-            "to_status": _normalize_text(payload.get("status") or task_data.get("status")),
+            "to_status": _normalize_text(
+                payload.get("status") or task_data.get("status")
+            ),
             "details": payload,
         }
     )
@@ -524,7 +544,9 @@ def _previous_context_snapshot(value: object) -> dict[str, object]:
         "status": _normalize_text(value.get("status")),
         "approval_status": _normalize_text(value.get("approval_status")),
         "summary": _normalize_text(value.get("summary")),
-        "updated_at": _normalize_text(value.get("updated_at") or value.get("timestamp")),
+        "updated_at": _normalize_text(
+            value.get("updated_at") or value.get("timestamp")
+        ),
     }
 
 
@@ -546,7 +568,8 @@ def _sync_task_context(task: Mapping[str, object], *, event_type: str) -> None:
             "summary": _build_summary(normalized_task),
             "payload": dict(normalized_task.get("payload", {}) or {}),
             "history": list(normalized_task.get("history", [])),
-            "updated_at": _normalize_text(normalized_task.get("last_updated_at")) or now(),
+            "updated_at": _normalize_text(normalized_task.get("last_updated_at"))
+            or now(),
             "previous_context": _previous_context_snapshot(current_context),
         },
         task_id=task_id,
@@ -581,11 +604,14 @@ def create_task(
     requested_status_value = _normalize_text(input_data.get("status"))
     requested_status = normalize_task_status(requested_status_value)
     if requested_status not in {"CREATED", "AWAITING_APPROVAL"}:
-        raise ValueError("task must be created with status `created` or `awaiting_approval`")
+        raise ValueError(
+            "task must be created with status `created` or `awaiting_approval`"
+        )
 
     normalized = normalize_task_input(input_data)
     existing_task = find_task_by_idempotency_key(
-        normalized.get("idempotency_key") or dict(normalized.get("payload", {})).get("idempotency_key"),
+        normalized.get("idempotency_key")
+        or dict(normalized.get("payload", {})).get("idempotency_key"),
         store_path=store_path,
     )
     if existing_task is not None:
@@ -655,7 +681,9 @@ def get_task(task_id: str, store_path: Path | None = None) -> dict[str, object] 
     return validate_task_contract(dict(task)) if task else None
 
 
-def get_task_status(task_id: str, store_path: Path | None = None) -> dict[str, object] | None:
+def get_task_status(
+    task_id: str, store_path: Path | None = None
+) -> dict[str, object] | None:
     task = get_task(task_id, store_path)
     if task is None:
         return None
@@ -669,7 +697,9 @@ def get_task_status(task_id: str, store_path: Path | None = None) -> dict[str, o
     }
 
 
-def get_recent_tasks(limit: int = 10, store_path: Path | None = None) -> list[dict[str, object]]:
+def get_recent_tasks(
+    limit: int = 10, store_path: Path | None = None
+) -> list[dict[str, object]]:
     tasks = load_tasks(store_path)
     normalized_limit = max(0, int(limit))
     if normalized_limit == 0:
@@ -728,7 +758,9 @@ def get_open_tasks(store_path: Path | None = None) -> list[dict[str, object]]:
     )
 
 
-def append_note(task_id: str, note: object, store_path: Path | None = None) -> dict[str, object]:
+def append_note(
+    task_id: str, note: object, store_path: Path | None = None
+) -> dict[str, object]:
     task = get_task(task_id, store_path)
     if task is None:
         raise ValueError(f"task not found: {task_id}")
@@ -752,7 +784,9 @@ def append_note(task_id: str, note: object, store_path: Path | None = None) -> d
                 "notes_count": len(notes),
                 "interaction_id": _normalize_text(task.get("interaction_id")),
                 "job_id": _normalize_text(task.get("job_id") or task.get("task_id")),
-                "trace_id": _normalize_text(task.get("trace_id") or task.get("task_id")),
+                "trace_id": _normalize_text(
+                    task.get("trace_id") or task.get("task_id")
+                ),
             },
         }
     )
@@ -809,7 +843,9 @@ def close_task(
         from app.execution.real_lead_contract import build_followup_context_payload
         from app.execution.followup_reentry import reenter_completed_followup
 
-        reenter_completed_followup(build_followup_context_payload(persisted_task), store_path=store_path)
+        reenter_completed_followup(
+            build_followup_context_payload(persisted_task), store_path=store_path
+        )
     return persisted_task
 
 
@@ -869,4 +905,3 @@ def apply_task_approval(
         event_type="approval_granted" if approved else "approval_rejected",
     )
     return persisted_task
-

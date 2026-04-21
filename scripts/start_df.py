@@ -16,7 +16,10 @@ from app.config.hybrid_runtime import HybridRuntimeConfig, load_runtime_config
 from app.config.hybrid_topology import HYBRID_SERVICE_BOUNDARY
 from app.context.shared_context_store import prepare_shared_context_store
 from app.execution.paths import DATA_DIR, LOGS_DIR, OUTPUT_DIR, RUNTIME_DIR, STATE_DIR
-from app.execution.product_box_manifest import default_product_box_manifest_path, load_product_box_manifest
+from app.execution.product_box_manifest import (
+    default_product_box_manifest_path,
+    load_product_box_manifest,
+)
 from runtime.system_log import log_event
 
 
@@ -24,7 +27,11 @@ MODE = str(os.getenv("MODE", "product")).strip().lower() or "product"
 
 
 def _entry_url(root_dir: Path) -> str:
-    return (root_dir / OUTPUT_DIR / "landing" / "index.html").relative_to(root_dir).as_posix()
+    return (
+        (root_dir / OUTPUT_DIR / "landing" / "index.html")
+        .relative_to(root_dir)
+        .as_posix()
+    )
 
 
 def _required_dirs(root_dir: Path, config: HybridRuntimeConfig) -> tuple[Path, ...]:
@@ -114,8 +121,12 @@ def _validate_role_config(
     config: HybridRuntimeConfig,
 ) -> None:
     _add_check(checks, errors, name="role", ok=True, detail=config.role)
-    _add_check(checks, errors, name="bind:host", ok=bool(config.host), detail=config.host)
-    _add_check(checks, errors, name="bind:port", ok=config.port > 0, detail=str(config.port))
+    _add_check(
+        checks, errors, name="bind:host", ok=bool(config.host), detail=config.host
+    )
+    _add_check(
+        checks, errors, name="bind:port", ok=config.port > 0, detail=str(config.port)
+    )
     if config.role == "local_dev":
         _add_check(
             checks,
@@ -189,14 +200,18 @@ def _validate_config(
             errors,
             name="config:manifest_path",
             ok=True,
-            detail=_root_relative(root_dir, manifest_path) if manifest_path.exists() else "not-required",
+            detail=_root_relative(root_dir, manifest_path)
+            if manifest_path.exists()
+            else "not-required",
         )
         _add_check(
             checks,
             errors,
             name="config:system_context",
             ok=True,
-            detail=_root_relative(root_dir, system_context_path) if system_context_path.exists() else "not-required",
+            detail=_root_relative(root_dir, system_context_path)
+            if system_context_path.exists()
+            else "not-required",
         )
         return
     _add_check(
@@ -296,7 +311,9 @@ def _validate_runtime_state(
 
     task_state_store.ROOT_DIR = root_dir
     task_state_store.LEGACY_TASK_MEMORY_FILE = STATE_DIR / "task_memory.json"
-    task_state_store.TASK_STATE_DB_FILE = config.storage_paths.state_dir / "task_state.sqlite3"
+    task_state_store.TASK_STATE_DB_FILE = (
+        config.storage_paths.state_dir / "task_state.sqlite3"
+    )
     db_path = task_state_store.db_path_for()
     if not db_path.exists() or db_path.stat().st_size == 0:
         _add_check(
@@ -396,7 +413,9 @@ def _initialize_system_state(config: HybridRuntimeConfig) -> None:
             existing = json.loads(system_state_file.read_text(encoding="utf-8"))
         except Exception:
             existing = {}
-        payload["system_id"] = str(existing.get("system_id", "")).strip() or payload["system_id"]
+        payload["system_id"] = (
+            str(existing.get("system_id", "")).strip() or payload["system_id"]
+        )
     system_state_file.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
@@ -412,7 +431,9 @@ def boot_runtime(*, config: HybridRuntimeConfig) -> None:
             "mode": MODE,
             "role": config.role,
             "entry_url": _entry_url(ROOT_DIR),
-            "execution_compute_mode": str(metrics.get("execution_compute_mode", "")).strip(),
+            "execution_compute_mode": str(
+                metrics.get("execution_compute_mode", "")
+            ).strip(),
         },
     )
 
@@ -421,7 +442,11 @@ def main() -> int:
     config = load_runtime_config(root_dir=ROOT_DIR)
     report = build_startup_report(root_dir=ROOT_DIR)
     if report["system_status"] != "ready":
-        log_event("validation", {"message": "startup validation failed", "errors": report["errors"]}, status="error")
+        log_event(
+            "validation",
+            {"message": "startup validation failed", "errors": report["errors"]},
+            status="error",
+        )
         print(f"system_status: {report['system_status']}")
         print(f"role: {report['role']}")
         print(f"mode: {report['mode']}")

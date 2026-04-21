@@ -40,15 +40,18 @@ def test_missing_required_entry_fails(tmp_path: Path) -> None:
     ]
     manifest_path = _write_manifest(tmp_path, manifest)
 
-    with pytest.raises(ProductBoxManifestError, match="writable_paths must also appear in required_runtime_paths"):
+    with pytest.raises(
+        ProductBoxManifestError,
+        match="writable_paths must also appear in required_runtime_paths",
+    ):
         validate_product_box_manifest(manifest_path=manifest_path)
 
 
 def test_forbidden_module_in_allowlist_fails(tmp_path: Path) -> None:
     manifest = _load_manifest()
-    manifest["product_runtime_allowlist"] = list(manifest["product_runtime_allowlist"]) + [
-        "app.execution.execution_replay"
-    ]
+    manifest["product_runtime_allowlist"] = list(
+        manifest["product_runtime_allowlist"]
+    ) + ["app.execution.execution_replay"]
     manifest_path = _write_manifest(tmp_path, manifest)
 
     with pytest.raises(ProductBoxManifestError, match="conflicts with blocked_modules"):
@@ -69,5 +72,7 @@ def test_duplicated_or_conflicting_entries_fail(tmp_path: Path) -> None:
     manifest["optional_paths"] = list(manifest["optional_paths"]) + ["runtime/out"]
     manifest_path = _write_manifest(tmp_path, manifest)
 
-    with pytest.raises(ProductBoxManifestError, match="optional_paths` contains duplicate entries"):
+    with pytest.raises(
+        ProductBoxManifestError, match="optional_paths` contains duplicate entries"
+    ):
         validate_product_box_manifest(manifest_path=manifest_path)

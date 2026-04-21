@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import asyncio
 import json
@@ -135,7 +135,9 @@ def _build_budget_deferred_signal(task_id: str) -> dict[str, object]:
     }
 
 
-def _emit_mode_trace(task_data: dict[str, object], routing_decision: dict[str, object]) -> None:
+def _emit_mode_trace(
+    task_data: dict[str, object], routing_decision: dict[str, object]
+) -> None:
     trace = build_mode_trace(
         task_id=str(task_data.get("task_id", "")).strip(),
         execution_mode=str(routing_decision.get("execution_mode", "")).strip().upper(),
@@ -345,7 +347,9 @@ def process_next_queued_task(
                 network_snapshot_collector=network_snapshot_collector,
             )
             _emit_mode_trace(task_data, routing_decision)
-            execution_mode = str(routing_decision.get("execution_mode", "")).strip().upper()
+            execution_mode = (
+                str(routing_decision.get("execution_mode", "")).strip().upper()
+            )
             if execution_mode == "REMOTE":
                 with asyncio.Runner() as runner:
                     executed_task = runner.run(
@@ -387,12 +391,18 @@ def process_next_queued_task(
             escalation_decision = decide_escalation_action(
                 task_data,
                 reason=task_data["error"],
-                signal=dict(task_data.get("result", {}) or {}) if isinstance(task_data.get("result"), dict) else None,
+                signal=dict(task_data.get("result", {}) or {})
+                if isinstance(task_data.get("result"), dict)
+                else None,
             )
-            if escalation_decision.get("action") == "escalate" and isinstance(escalation_decision.get("signal"), dict):
+            if escalation_decision.get("action") == "escalate" and isinstance(
+                escalation_decision.get("signal"), dict
+            ):
                 record_escalation(task_data, escalation_decision["signal"])
             persist(task_data)
-            log_event("validation", f"task worker blocked {task_id}: {task_data['error']}")
+            log_event(
+                "validation", f"task worker blocked {task_id}: {task_data['error']}"
+            )
             assess_system_health(
                 active_task_loader(),
                 now_timestamp=now(),
@@ -426,7 +436,9 @@ class TaskWorker:
         persist: TaskPersister = _default_persist,
         executor=execute_product_task,
         telemetry_collector: Callable[[], dict[str, object]] = collect_runtime_metrics,
-        network_snapshot_collector: Callable[[], dict[str, object]] = get_network_snapshot,
+        network_snapshot_collector: Callable[
+            [], dict[str, object]
+        ] = get_network_snapshot,
         decision_resolver: DecisionResolver = route_execution,
         max_tokens_per_run: int | None = None,
         default_estimated_tokens: int = DEFAULT_ESTIMATED_TOKENS,
@@ -505,4 +517,3 @@ __all__ = [
     "TaskWorker",
     "process_next_queued_task",
 ]
-

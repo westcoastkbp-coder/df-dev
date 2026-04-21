@@ -16,9 +16,7 @@ def main() -> None:
 
     timestamp = datetime.now().astimezone().isoformat()
     result_file.write_text(
-        f"timestamp: {timestamp}\n"
-        f"task_id: {task_id}\n"
-        "status: SUCCESS\n",
+        f"timestamp: {timestamp}\ntask_id: {task_id}\nstatus: SUCCESS\n",
         encoding="utf-8",
     )
 

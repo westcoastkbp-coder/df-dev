@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import logging
@@ -83,4 +83,3 @@ def schedule_call(*, contact_id: str, phone_number: str, script: str) -> dict[st
     }
     _log_event(result["log"], f"mock call recorded path={target_path}")
     return result
-

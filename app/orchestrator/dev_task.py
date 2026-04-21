@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import ast
 import difflib
@@ -14,8 +14,16 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Iterable
 
-from app.execution.execution_policy import MAX_EXECUTION_TIME, MAX_RETRY_ATTEMPTS, TIMEOUT_HOOKS, TIMEOUT_PYTEST
-from app.execution.policy_guard import PolicyViolationError, load_validated_system_context
+from app.execution.execution_policy import (
+    MAX_EXECUTION_TIME,
+    MAX_RETRY_ATTEMPTS,
+    TIMEOUT_HOOKS,
+    TIMEOUT_PYTEST,
+)
+from app.execution.policy_guard import (
+    PolicyViolationError,
+    load_validated_system_context,
+)
 from app.orchestrator.execution_store import save_execution_record
 from control.dev_runtime import run_in_dev_env
 
@@ -117,15 +125,19 @@ def _selected_model_for_agent(agent_name: object) -> str:
 
 
 def _task_route_text(task: "DevTask") -> str:
-    return " ".join(
-        [
-            task.title,
-            task.objective,
-            *task.constraints,
-            *task.validation_steps,
-            *task.scope_files,
-        ]
-    ).strip().lower()
+    return (
+        " ".join(
+            [
+                task.title,
+                task.objective,
+                *task.constraints,
+                *task.validation_steps,
+                *task.scope_files,
+            ]
+        )
+        .strip()
+        .lower()
+    )
 
 
 def _contains_route_keyword(text: str, keywords: tuple[str, ...]) -> bool:
@@ -928,8 +940,10 @@ def build_execution_plan(task: DevTask) -> ExecutionPlan:
 
     return ExecutionPlan(
         task_id=task.id,
-        selected_agent=str(intelligence_route.get("selected_agent", "codex")).strip() or "codex",
-        selected_model=str(intelligence_route.get("selected_model", "openai")).strip() or "openai",
+        selected_agent=str(intelligence_route.get("selected_agent", "codex")).strip()
+        or "codex",
+        selected_model=str(intelligence_route.get("selected_model", "openai")).strip()
+        or "openai",
         routing_reason=str(intelligence_route.get("routing_reason", "")).strip(),
         parallel_execution_allowed=bool(
             intelligence_route.get("parallel_execution_allowed", False)
@@ -1446,13 +1460,17 @@ def _constraint_policy_overrides(task: DevTask) -> dict[str, object]:
         elif normalized_key.startswith("assumption."):
             assumptions = dict(policy_input.get("assumptions", {}))
             assumptions[normalized_key.removeprefix("assumption.")] = (
-                bool_value if lowered_value in {"true", "false", "1", "0", "yes", "no"} else normalized_value
+                bool_value
+                if lowered_value in {"true", "false", "1", "0", "yes", "no"}
+                else normalized_value
             )
             policy_input["assumptions"] = assumptions
         elif normalized_key.startswith("session.product_box."):
             session_context = dict(policy_input.get("session_context", {}))
             product_box = dict(session_context.get("product_box", {}))
-            product_box[normalized_key.removeprefix("session.product_box.")] = bool_value
+            product_box[normalized_key.removeprefix("session.product_box.")] = (
+                bool_value
+            )
             session_context["product_box"] = product_box
             policy_input["session_context"] = session_context
         elif normalized_key.startswith("session.memory."):
@@ -1465,7 +1483,9 @@ def _constraint_policy_overrides(task: DevTask) -> dict[str, object]:
     return policy_input
 
 
-def _apply_system_context(task: DevTask, plan: ExecutionPlan) -> tuple[DevTask, ExecutionPlan, dict[str, object]]:
+def _apply_system_context(
+    task: DevTask, plan: ExecutionPlan
+) -> tuple[DevTask, ExecutionPlan, dict[str, object]]:
     _, system_rules = load_validated_system_context(_constraint_policy_overrides(task))
     protected_task = create_dev_task(
         id=task.id,
@@ -1567,7 +1587,9 @@ def _policy_guard_failure_result(
             "selected_agent": plan.selected_agent,
             "planning_mode": planning_mode,
             "plan_valid": bool(plan_validation.get("valid", True)),
-            "plan_issues": tuple(str(item) for item in plan_validation.get("issues", ())),
+            "plan_issues": tuple(
+                str(item) for item in plan_validation.get("issues", ())
+            ),
             "policy_decision": "denied",
             "policy_reasons": (policy_message,),
             "execution_intent": plan.execution_intent,
@@ -2208,7 +2230,10 @@ def dispatch_executor(
 
     raw_result: dict[str, object]
 
-    if selected_agent in {"claude", "codex", "gemini"} and circuit_state["state"] == "open":
+    if (
+        selected_agent in {"claude", "codex", "gemini"}
+        and circuit_state["state"] == "open"
+    ):
         fallback_used = True
         fallback_reason = "circuit breaker open"
         raw_result = local_executor(task, plan)
@@ -3649,9 +3674,7 @@ def build_user_summary(result: dict[str, object]) -> str:
             else f"Ð¡Ð¸ÑÑ‚ÐµÐ¼Ð° Ð²Ñ‹Ð¿Ð¾Ð»Ð½Ð¸Ð»Ð° Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ñ Ð´Ð»Ñ {change_count} file(s)."
         )
     elif bool(primary_intent.get("should_modify", False)):
-        action_text = (
-            "Ð¡Ð¸ÑÑ‚ÐµÐ¼Ð° Ð¿Ð¾Ð¿Ñ‹Ñ‚Ð°Ð»Ð°ÑÑŒ Ð¿Ð¾Ð´Ð³Ð¾Ñ‚Ð¾Ð²Ð¸Ñ‚ÑŒ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ Ð² Ñ€Ð°Ð¼ÐºÐ°Ñ… Ñ€Ð°Ð·Ñ€ÐµÑˆÑ‘Ð½Ð½Ð¾Ð³Ð¾ scope."
-        )
+        action_text = "Ð¡Ð¸ÑÑ‚ÐµÐ¼Ð° Ð¿Ð¾Ð¿Ñ‹Ñ‚Ð°Ð»Ð°ÑÑŒ Ð¿Ð¾Ð´Ð³Ð¾Ñ‚Ð¾Ð²Ð¸Ñ‚ÑŒ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ Ð² Ñ€Ð°Ð¼ÐºÐ°Ñ… Ñ€Ð°Ð·Ñ€ÐµÑˆÑ‘Ð½Ð½Ð¾Ð³Ð¾ scope."
     else:
         action_text = "Ð¡Ð¸ÑÑ‚ÐµÐ¼Ð° Ð²Ñ‹Ð¿Ð¾Ð»Ð½Ð¸Ð»Ð° Ð°Ð½Ð°Ð»Ð¸Ð· Ð±ÐµÐ· Ð¿Ñ€Ð¸Ð¼ÐµÐ½ÐµÐ½Ð¸Ñ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ð¹."
 
@@ -3724,7 +3747,9 @@ def run_dev_task(task: DevTask) -> dict[str, object]:
             task,
             execution_plan,
             planning_mode=(
-                "dynamic" if dynamic_rule_matched and plan_validation["valid"] else "static"
+                "dynamic"
+                if dynamic_rule_matched and plan_validation["valid"]
+                else "static"
             ),
             plan_validation=plan_validation,
             reason=str(exc),
@@ -4001,4 +4026,3 @@ def persist_dev_result(
 ) -> dict[str, object]:
     rendered = render_dev_result(result)
     return save_execution_record(rendered, actor=actor)
-

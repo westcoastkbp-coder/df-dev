@@ -28,7 +28,9 @@ def test_normalize_input_recognizes_client_intake_flow() -> None:
     assert payload["callable_as_one_action"] is True
 
 
-def test_execute_product_task_locks_client_intake_flow(monkeypatch, tmp_path: Path) -> None:
+def test_execute_product_task_locks_client_intake_flow(
+    monkeypatch, tmp_path: Path
+) -> None:
     monkeypatch.setattr(paths_module, "ROOT_DIR", tmp_path)
     monkeypatch.setattr(paths_module, "OUTPUT_DIR", Path("runtime/out"))
     monkeypatch.setattr(runner_module, "ROOT_DIR", tmp_path)

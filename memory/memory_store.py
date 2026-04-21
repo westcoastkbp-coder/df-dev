@@ -213,7 +213,11 @@ CONTEXT_INVALID = "CONTEXT_INVALID"
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .isoformat(timespec="milliseconds")
+        .replace("+00:00", "Z")
+    )
 
 
 def _base_memory_dir(memory_dir: Path | str | None = None) -> Path:
@@ -262,7 +266,9 @@ def _scoped_memory_path(scope_name: str, memory_dir: Path | str | None = None) -
 
 
 def _default_scoped_memory_payload(scope_name: str) -> dict[str, Any]:
-    return copy.deepcopy(DEFAULT_SCOPED_MEMORY[_normalize_scoped_memory_name(scope_name)])
+    return copy.deepcopy(
+        DEFAULT_SCOPED_MEMORY[_normalize_scoped_memory_name(scope_name)]
+    )
 
 
 def ensure_memory_files(memory_dir: Path | str | None = None) -> None:
@@ -289,12 +295,17 @@ def ensure_memory_files(memory_dir: Path | str | None = None) -> None:
         if path.is_file():
             continue
         path.write_text(
-            json.dumps(_default_scoped_memory_payload(scope_name), indent=2, sort_keys=True) + "\n",
+            json.dumps(
+                _default_scoped_memory_payload(scope_name), indent=2, sort_keys=True
+            )
+            + "\n",
             encoding="utf-8",
         )
 
 
-def _read_memory_file(memory_name: str, memory_dir: Path | str | None = None) -> dict[str, Any]:
+def _read_memory_file(
+    memory_name: str, memory_dir: Path | str | None = None
+) -> dict[str, Any]:
     ensure_memory_files(memory_dir)
     path = _memory_path(memory_name, memory_dir)
     default_payload = _default_memory_payload(memory_name)
@@ -506,10 +517,14 @@ def _prepare_execution_system_context_for_write(payload: Any) -> dict[str, Any]:
     prepared_payload["metadata"]["checksum"] = EXECUTION_CONTEXT_CHECKSUM_PLACEHOLDER
     while True:
         prepared_payload = _trim_execution_system_context(prepared_payload)
-        prepared_payload["metadata"]["checksum"] = _execution_context_checksum(prepared_payload)
+        prepared_payload["metadata"]["checksum"] = _execution_context_checksum(
+            prepared_payload
+        )
         if _execution_context_bytes(prepared_payload) <= EXECUTION_CONTEXT_MAX_BYTES:
             break
-        prepared_payload["metadata"]["checksum"] = EXECUTION_CONTEXT_CHECKSUM_PLACEHOLDER
+        prepared_payload["metadata"]["checksum"] = (
+            EXECUTION_CONTEXT_CHECKSUM_PLACEHOLDER
+        )
     return prepared_payload
 
 
@@ -536,7 +551,9 @@ def _read_execution_system_context_from_disk(path: Path) -> dict[str, Any]:
         raise _execution_context_validation_error() from error
     normalized_payload = _validated_execution_system_context_payload(payload)
     if _execution_context_bytes(normalized_payload) > EXECUTION_CONTEXT_MAX_BYTES:
-        normalized_payload = _prepare_execution_system_context_for_write(normalized_payload)
+        normalized_payload = _prepare_execution_system_context_for_write(
+            normalized_payload
+        )
         _write_execution_system_context_file(path, normalized_payload)
     return normalized_payload
 
@@ -564,7 +581,9 @@ def _merge_default_payload(
     return copy.deepcopy(payload)
 
 
-def _short_context_line(value: Any, *, max_chars: int = SYSTEM_CONTEXT_ACTION_MAX_CHARS) -> str:
+def _short_context_line(
+    value: Any, *, max_chars: int = SYSTEM_CONTEXT_ACTION_MAX_CHARS
+) -> str:
     normalized_value = " ".join(str(value or "").split()).strip()
     if len(normalized_value) <= max_chars:
         return normalized_value
@@ -580,14 +599,13 @@ def read_memory(
 ) -> dict[str, Any]:
     if memory_name is None:
         ensure_memory_files(memory_dir)
-        return {
-            name: _read_memory_file(name, memory_dir)
-            for name in MEMORY_FILES
-        }
+        return {name: _read_memory_file(name, memory_dir) for name in MEMORY_FILES}
     return _read_memory_file(memory_name, memory_dir)
 
 
-def read_shared_system_context(*, memory_dir: Path | str | None = None) -> dict[str, Any]:
+def read_shared_system_context(
+    *, memory_dir: Path | str | None = None
+) -> dict[str, Any]:
     ensure_memory_files(memory_dir)
     return _read_json_file(
         _shared_system_context_path(memory_dir),
@@ -595,7 +613,9 @@ def read_shared_system_context(*, memory_dir: Path | str | None = None) -> dict[
     )
 
 
-def read_execution_system_context(*, memory_dir: Path | str | None = None) -> dict[str, Any]:
+def read_execution_system_context(
+    *, memory_dir: Path | str | None = None
+) -> dict[str, Any]:
     ensure_memory_files(memory_dir)
     return _read_execution_system_context_from_disk(
         _execution_system_context_path(memory_dir)
@@ -678,10 +698,16 @@ def build_execution_system_context_summary(
         },
         "current_stage": {
             "phase": str(system_state["current_stage"].get("phase") or "").strip(),
-            "priority": str(system_state["current_stage"].get("priority") or "").strip(),
+            "priority": str(
+                system_state["current_stage"].get("priority") or ""
+            ).strip(),
         },
-        "active_flows": _normalized_strings(payload.get("active_tasks"))[:SYSTEM_CONTEXT_SUMMARY_ITEMS],
-        "recent_actions": _normalized_strings(payload.get("last_actions"))[-SYSTEM_CONTEXT_SUMMARY_ITEMS:],
+        "active_flows": _normalized_strings(payload.get("active_tasks"))[
+            :SYSTEM_CONTEXT_SUMMARY_ITEMS
+        ],
+        "recent_actions": _normalized_strings(payload.get("last_actions"))[
+            -SYSTEM_CONTEXT_SUMMARY_ITEMS:
+        ],
     }
 
 
@@ -711,7 +737,10 @@ def read_scoped_memory(
     ensure_memory_files(memory_dir)
     if scope_name is None:
         return {
-            name: _read_json_file(_scoped_memory_path(name, memory_dir), _default_scoped_memory_payload(name))
+            name: _read_json_file(
+                _scoped_memory_path(name, memory_dir),
+                _default_scoped_memory_payload(name),
+            )
             for name in SCOPED_MEMORY_NAMES
         }
     normalized_name = _normalize_scoped_memory_name(scope_name)
@@ -776,7 +805,9 @@ def _owner_context_summary(owner_memory: dict[str, Any]) -> dict[str, str]:
     }
 
 
-def _build_memory_summary_from_payload(memory_payload: dict[str, Any]) -> dict[str, Any]:
+def _build_memory_summary_from_payload(
+    memory_payload: dict[str, Any],
+) -> dict[str, Any]:
     decision_entries = memory_payload["decisions"].get("decisions")
     if not isinstance(decision_entries, list):
         decision_entries = []
@@ -833,7 +864,9 @@ def _build_memory_summary_from_payload(memory_payload: dict[str, Any]) -> dict[s
     return summary
 
 
-def _build_restricted_memory_summary_from_payload(memory_payload: dict[str, Any]) -> dict[str, Any]:
+def _build_restricted_memory_summary_from_payload(
+    memory_payload: dict[str, Any],
+) -> dict[str, Any]:
     summary = _build_memory_summary_from_payload(memory_payload)
     summary.pop("owner_context", None)
     summary.pop("owner_priorities", None)
@@ -887,7 +920,9 @@ def build_agent_context(
         "access_level": "agent_context",
         "role": normalized_role,
         "shared_system_context": read_shared_system_context(memory_dir=memory_dir),
-        "shared_memory_summary": _build_restricted_memory_summary_from_payload(memory_payload),
+        "shared_memory_summary": _build_restricted_memory_summary_from_payload(
+            memory_payload
+        ),
         "scoped_memory": {
             scope_name: read_scoped_memory(scope_name, memory_dir=memory_dir)
             for scope_name in scope_names

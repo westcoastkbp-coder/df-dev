@@ -25,7 +25,10 @@ def test_build_codex_task_is_deterministic() -> None:
     assert first["labels"] == ["STATUS: DONE"]
     assert first["instruction"]
     assert "DF SYSTEM TEST ISSUE 001" in first["instruction"]
-    assert "Created by github_issue_agent.py from Digital Foreman control system." in first["instruction"]
+    assert (
+        "Created by github_issue_agent.py from Digital Foreman control system."
+        in first["instruction"]
+    )
     assert first["constraints"]
     assert "Do not break existing code" in first["constraints"]
     assert "Modify only necessary parts" in first["constraints"]
@@ -48,7 +51,9 @@ def test_write_codex_task_uses_predictable_path(tmp_path) -> None:
     assert json.loads(path.read_text(encoding="utf-8")) == codex_task
 
 
-def test_transform_task_packet_to_codex_writes_context_packet_for_fresh_task(tmp_path) -> None:
+def test_transform_task_packet_to_codex_writes_context_packet_for_fresh_task(
+    tmp_path,
+) -> None:
     packet_path = tmp_path / "tasks" / "github" / "issue-12.json"
     packet_path.parent.mkdir(parents=True, exist_ok=True)
     packet_path.write_text(
@@ -66,7 +71,9 @@ def test_transform_task_packet_to_codex_writes_context_packet_for_fresh_task(tmp
         encoding="utf-8",
     )
     (tmp_path / "config").mkdir()
-    (tmp_path / "config" / "product_box_manifest.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "config" / "product_box_manifest.json").write_text(
+        "{}", encoding="utf-8"
+    )
     (tmp_path / "README.md").write_text("Digital Foreman", encoding="utf-8")
     (tmp_path / "control").mkdir()
     (tmp_path / "control" / "task_to_codex.py").write_text("pass\n", encoding="utf-8")
@@ -88,7 +95,10 @@ def test_transform_task_packet_to_codex_writes_context_packet_for_fresh_task(tmp
     assert context_packet["task_id"] == 12
     assert context_packet["title"] == "Add deterministic context"
     assert "Add deterministic context" in context_packet["instruction"]
-    assert "Use a small local context packet before execution." in context_packet["instruction"]
+    assert (
+        "Use a small local context packet before execution."
+        in context_packet["instruction"]
+    )
     assert context_packet["config_files"] == [
         {
             "content": "{}",
@@ -119,7 +129,9 @@ def test_build_codex_task_preserves_personal_context_payload() -> None:
     codex_task = build_codex_task(task_packet)
 
     assert codex_task["task_type"] == "personal_context_update"
-    assert codex_task["personal_context_update"] == task_packet["personal_context_update"]
+    assert (
+        codex_task["personal_context_update"] == task_packet["personal_context_update"]
+    )
     assert codex_task["file_paths"] == [
         "modules/personal/schema.json",
         "personal/personal_context.json",

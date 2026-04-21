@@ -75,7 +75,9 @@ def _run_passive_evaluation(
     update_config = load_model_update_config()
     if not bool(update_config.get("evaluation_mode", False)):
         return
-    if not deterministic_sample_selected(context, float(update_config.get("evaluation_sample_rate", 0.0))):
+    if not deterministic_sample_selected(
+        context, float(update_config.get("evaluation_sample_rate", 0.0))
+    ):
         return
     evaluate_models(context, filtered)
 
@@ -95,9 +97,16 @@ def resolve_memory(context: dict[str, Any] | None) -> list[dict[str, Any]]:
     filtered: list[dict[str, Any]] = []
     for artifact in artifacts:
         normalized_artifact = memory_object_from_mapping(artifact).to_dict()
-        if artifact_type and str(normalized_artifact.get("type") or "").strip() != artifact_type:
+        if (
+            artifact_type
+            and str(normalized_artifact.get("type") or "").strip() != artifact_type
+        ):
             continue
-        if memory_class and str(normalized_artifact.get("memory_class") or "").strip() != memory_class:
+        if (
+            memory_class
+            and str(normalized_artifact.get("memory_class") or "").strip()
+            != memory_class
+        ):
             continue
         artifact_tags = {
             str(item or "").strip()
@@ -117,8 +126,13 @@ def resolve_memory(context: dict[str, Any] | None) -> list[dict[str, Any]]:
     rankings = rank_memory(
         context,
         filtered,
-        model_enabled=bool(config.get("use_model", DEFAULT_MEMORY_RANKING_CONFIG["use_model"])),
-        model_id=str(config.get("model_id", DEFAULT_MEMORY_RANKING_CONFIG["model_id"]) or "").strip() or None,
+        model_enabled=bool(
+            config.get("use_model", DEFAULT_MEMORY_RANKING_CONFIG["use_model"])
+        ),
+        model_id=str(
+            config.get("model_id", DEFAULT_MEMORY_RANKING_CONFIG["model_id"]) or ""
+        ).strip()
+        or None,
     )
     if not rankings:
         print("[RANKER] top selected ids=[]")

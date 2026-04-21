@@ -101,7 +101,10 @@ def test_decompose_task_limits_total_subtasks_to_five() -> None:
     )
 
     assert len(decomposition["subtasks"]) == 5
-    assert decomposition["subtasks"][-1]["instruction"] == "create e.py; validate the result"
+    assert (
+        decomposition["subtasks"][-1]["instruction"]
+        == "create e.py; validate the result"
+    )
 
 
 def test_write_subtask_record_writes_expected_json(tmp_path) -> None:

@@ -106,7 +106,9 @@ def test_same_task_parallel_execution_must_not_duplicate_side_effects(
                 lambda snapshot: run_execution(
                     snapshot,
                     now=lambda: "2026-04-06T01:00:00Z",
-                    persist=lambda updated_task: _persist(updated_task, store_path=store_path),
+                    persist=lambda updated_task: _persist(
+                        updated_task, store_path=store_path
+                    ),
                     executor=executor,
                 ),
                 task_snapshots,
@@ -117,7 +119,9 @@ def test_same_task_parallel_execution_must_not_duplicate_side_effects(
     observed = {
         "side_effect_count": len(side_effects),
         "ledger_rows": len(_ledger_rows(store_path, execution_key=execution_key)),
-        "returned_statuses": sorted(str(result.get("status", "")).strip() for result in results),
+        "returned_statuses": sorted(
+            str(result.get("status", "")).strip() for result in results
+        ),
         "persisted_status": str((restored or {}).get("status", "")).strip(),
     }
     assert observed == {
@@ -194,7 +198,9 @@ def test_parallel_run_execution_must_not_leave_inconsistent_task_state(
                 lambda snapshot: run_execution(
                     snapshot,
                     now=lambda: "2026-04-06T01:10:00Z",
-                    persist=lambda updated_task: _persist(updated_task, store_path=store_path),
+                    persist=lambda updated_task: _persist(
+                        updated_task, store_path=store_path
+                    ),
                     executor=executor,
                 ),
                 task_snapshots,
@@ -202,7 +208,9 @@ def test_parallel_run_execution_must_not_leave_inconsistent_task_state(
         )
 
     restored = task_factory.get_task("DF-CONCURRENCY-STATE-V1", store_path)
-    assert all(str(result.get("status", "")).strip() == "COMPLETED" for result in results)
+    assert all(
+        str(result.get("status", "")).strip() == "COMPLETED" for result in results
+    )
     assert restored is not None
     assert restored["status"] == "COMPLETED"
 
@@ -225,7 +233,10 @@ def test_completed_task_replay_is_deterministic_without_new_side_effects(
             status="completed",
             task_id=task_data.get("task_id"),
             action_type="NEW_LEAD",
-            result_payload={"summary": "deterministic replay", "count": len(side_effects)},
+            result_payload={
+                "summary": "deterministic replay",
+                "count": len(side_effects),
+            },
             error_code="",
             error_message="",
             source="test_adversarial_concurrency_executor",
@@ -258,7 +269,11 @@ def test_completed_task_replay_is_deterministic_without_new_side_effects(
         )
         replay_results.append(json.loads(json.dumps(replayed.get("result", {}))))
         replay_snapshots.append(
-            json.loads(json.dumps(task_factory.get_task("DF-CONCURRENCY-REPLAY-V1", store_path)))
+            json.loads(
+                json.dumps(
+                    task_factory.get_task("DF-CONCURRENCY-REPLAY-V1", store_path)
+                )
+            )
         )
 
     assert len(side_effects) == 1

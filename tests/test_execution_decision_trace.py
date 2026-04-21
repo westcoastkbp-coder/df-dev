@@ -7,7 +7,9 @@ import app.product.runner as product_runner_module
 from app.product.runner import dispatch_action_trigger
 
 
-def test_dispatch_action_trigger_includes_decision_trace(monkeypatch, tmp_path: Path) -> None:
+def test_dispatch_action_trigger_includes_decision_trace(
+    monkeypatch, tmp_path: Path
+) -> None:
     monkeypatch.setattr(product_runner_module, "ROOT_DIR", tmp_path)
     monkeypatch.setattr(
         execution_boundary_module,

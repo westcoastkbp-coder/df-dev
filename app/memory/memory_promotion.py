@@ -129,7 +129,8 @@ def from_execution_result(
         content_summary=_normalize_text(content_summary),
         structured_payload={
             "fact_key": _normalize_text(fact_key),
-            "result_status": _normalize_text(normalized_payload.get("result_status")) or "approved",
+            "result_status": _normalize_text(normalized_payload.get("result_status"))
+            or "approved",
             "approved": bool(normalized_payload.get("approved", True)),
             "result_summary": _normalize_text(normalized_payload.get("result_summary")),
             "result_payload": normalized_payload,

@@ -53,7 +53,9 @@ def _normalized_string_list(value) -> list[str]:
     return normalized
 
 
-def _validate_drive_to_google_doc_artifact(artifact_text: str) -> dict[str, object] | None:
+def _validate_drive_to_google_doc_artifact(
+    artifact_text: str,
+) -> dict[str, object] | None:
     try:
         payload = json.loads(artifact_text)
     except json.JSONDecodeError:
@@ -71,8 +73,12 @@ def _validate_drive_to_google_doc_artifact(artifact_text: str) -> dict[str, obje
         return None
 
     reason = str(payload.get("reason") or "").strip()
-    loaded_source_file_ids = _normalized_string_list(payload.get("loaded_source_file_ids"))
-    source_file_ids = loaded_source_file_ids or _normalized_string_list(payload.get("source_file_ids"))
+    loaded_source_file_ids = _normalized_string_list(
+        payload.get("loaded_source_file_ids")
+    )
+    source_file_ids = loaded_source_file_ids or _normalized_string_list(
+        payload.get("source_file_ids")
+    )
 
     if not source_file_ids and not reason:
         return {
@@ -84,7 +90,8 @@ def _validate_drive_to_google_doc_artifact(artifact_text: str) -> dict[str, obje
     if not output_doc_title:
         return {
             "valid": False,
-            "reason": reason or "drive_to_google_doc artifact output_doc_title is empty",
+            "reason": reason
+            or "drive_to_google_doc artifact output_doc_title is empty",
         }
 
     output_doc_id = str(payload.get("output_doc_id") or "").strip()
@@ -99,7 +106,8 @@ def _validate_drive_to_google_doc_artifact(artifact_text: str) -> dict[str, obje
     if not output_doc_url.startswith(expected_prefix):
         return {
             "valid": False,
-            "reason": reason or "drive_to_google_doc artifact output_doc_url is invalid",
+            "reason": reason
+            or "drive_to_google_doc artifact output_doc_url is invalid",
         }
 
     return {
@@ -108,7 +116,9 @@ def _validate_drive_to_google_doc_artifact(artifact_text: str) -> dict[str, obje
     }
 
 
-def _validate_google_drive_read_artifact(artifact_text: str) -> dict[str, object] | None:
+def _validate_google_drive_read_artifact(
+    artifact_text: str,
+) -> dict[str, object] | None:
     try:
         payload = json.loads(artifact_text)
     except json.JSONDecodeError:
@@ -125,7 +135,9 @@ def _validate_google_drive_read_artifact(artifact_text: str) -> dict[str, object
     if not tool_ok:
         return {
             "valid": False,
-            "reason": reason or str(payload.get("tool_error_code") or "").strip() or "drive read failed",
+            "reason": reason
+            or str(payload.get("tool_error_code") or "").strip()
+            or "drive read failed",
         }
 
     if not {"file_id", "name", "mime_type", "content_text"}.issubset(payload):
@@ -209,7 +221,11 @@ def _validate_pipeline_artifact(artifact_text: str) -> dict[str, object] | None:
             "reason": reason or "pipeline artifact final_output is invalid",
         }
 
-    if any(not bool(step.get("success")) for step in pipeline_trace if isinstance(step, dict)):
+    if any(
+        not bool(step.get("success"))
+        for step in pipeline_trace
+        if isinstance(step, dict)
+    ):
         return {
             "valid": False,
             "reason": reason or "pipeline artifact contains a failed step",
@@ -242,7 +258,8 @@ def _validate_pipeline_artifact(artifact_text: str) -> dict[str, object] | None:
         if final_output.get("draft_created") is not True:
             return {
                 "valid": False,
-                "reason": reason or "pipeline artifact final_output.draft_created is false",
+                "reason": reason
+                or "pipeline artifact final_output.draft_created is false",
             }
         return {
             "valid": True,
@@ -284,7 +301,9 @@ def validate_task_result(
     if google_doc_validation is not None:
         return google_doc_validation
 
-    drive_to_google_doc_validation = _validate_drive_to_google_doc_artifact(artifact_text)
+    drive_to_google_doc_validation = _validate_drive_to_google_doc_artifact(
+        artifact_text
+    )
     if drive_to_google_doc_validation is not None:
         return drive_to_google_doc_validation
 

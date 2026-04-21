@@ -4,7 +4,10 @@ import json
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from control.github_issue_intake import normalize_issue_to_task_packet, write_task_packet
+from control.github_issue_intake import (
+    normalize_issue_to_task_packet,
+    write_task_packet,
+)
 
 
 def test_normalize_issue_to_task_packet_includes_required_fields() -> None:

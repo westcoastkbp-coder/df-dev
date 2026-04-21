@@ -65,15 +65,21 @@ def validate_tool_call(tool_call: Any) -> dict[str, Any]:
 
     tool_name = str(tool_call.get("tool_name") or "").strip()
     if not tool_name:
-        raise ToolValidationError("TOOL_NAME_REQUIRED", "tool_call.tool_name is required.")
+        raise ToolValidationError(
+            "TOOL_NAME_REQUIRED", "tool_call.tool_name is required."
+        )
 
     context_payload = tool_call.get("context")
     if context_payload is not None and not isinstance(context_payload, dict):
-        raise ToolValidationError("TOOL_INPUT_INVALID", "tool_call.context must be an object.")
+        raise ToolValidationError(
+            "TOOL_INPUT_INVALID", "tool_call.context must be an object."
+        )
 
     input_payload = tool_call.get("input")
     if not isinstance(input_payload, dict):
-        raise ToolValidationError("TOOL_INPUT_INVALID", "tool_call.input must be an object.")
+        raise ToolValidationError(
+            "TOOL_INPUT_INVALID", "tool_call.input must be an object."
+        )
 
     missing_fields = [
         field
@@ -89,10 +95,14 @@ def validate_tool_call(tool_call: Any) -> dict[str, Any]:
 
     object_fields = _OBJECT_INPUT_FIELDS.get(tool_name, ())
     invalid_object_fields = [
-        field for field in object_fields if not isinstance(input_payload.get(field), dict)
+        field
+        for field in object_fields
+        if not isinstance(input_payload.get(field), dict)
     ]
     if invalid_object_fields:
-        invalid_fields_csv = ", ".join(f"tool_call.input.{field}" for field in invalid_object_fields)
+        invalid_fields_csv = ", ".join(
+            f"tool_call.input.{field}" for field in invalid_object_fields
+        )
         raise ToolValidationError(
             "TOOL_INPUT_INVALID",
             f"{invalid_fields_csv} must be an object.",
@@ -115,6 +125,8 @@ def validate_tool_call(tool_call: Any) -> dict[str, Any]:
 
     return {
         "tool_name": tool_name,
-        "context": copy.deepcopy(context_payload) if isinstance(context_payload, dict) else None,
+        "context": copy.deepcopy(context_payload)
+        if isinstance(context_payload, dict)
+        else None,
         "input": copy.deepcopy(input_payload),
     }

@@ -121,13 +121,17 @@ def _training_record(index: int) -> dict[str, object]:
     }
 
 
-def _configure_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> tuple[Path, Path, Path]:
+def _configure_environment(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> tuple[Path, Path, Path]:
     shared_root = tmp_path / "shared"
     models_root = tmp_path / "DF" / "shared" / "models"
     config_path = tmp_path / "config" / "model_update.json"
 
     monkeypatch.setattr(dataset_builder_module, "SHARED_ROOT", shared_root)
-    monkeypatch.setattr(model_update_config_module, "MODEL_UPDATE_CONFIG_FILE", config_path)
+    monkeypatch.setattr(
+        model_update_config_module, "MODEL_UPDATE_CONFIG_FILE", config_path
+    )
     monkeypatch.setattr(model_loader_module, "MODELS_ROOT", models_root)
     monkeypatch.setattr(storage_adapter, "POLICY_FILE", _write_policy(tmp_path))
     monkeypatch.setattr(
@@ -142,7 +146,9 @@ def test_check_update_needed_returns_true_when_threshold_is_exceeded(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    shared_root, models_root, config_path = _configure_environment(monkeypatch, tmp_path)
+    shared_root, models_root, config_path = _configure_environment(
+        monkeypatch, tmp_path
+    )
     _write_model_update_config(config_path, min_new_records=50, last_dataset_size=0)
     _write_model_file(models_root, "memory_ranker_v1")
     _write_jsonl(
@@ -157,7 +163,9 @@ def test_check_update_needed_returns_false_at_threshold_boundary(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    shared_root, models_root, config_path = _configure_environment(monkeypatch, tmp_path)
+    shared_root, models_root, config_path = _configure_environment(
+        monkeypatch, tmp_path
+    )
     _write_model_update_config(config_path, min_new_records=50, last_dataset_size=10)
     _write_model_file(models_root, "memory_ranker_v1")
     _write_jsonl(
@@ -173,7 +181,9 @@ def test_trigger_model_update_creates_training_job_and_logs_event(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    shared_root, models_root, config_path = _configure_environment(monkeypatch, tmp_path)
+    shared_root, models_root, config_path = _configure_environment(
+        monkeypatch, tmp_path
+    )
     _write_model_update_config(config_path, min_new_records=2, last_dataset_size=0)
     _write_model_file(models_root, "memory_ranker_v1")
     _write_jsonl(
@@ -194,7 +204,9 @@ def test_trigger_model_update_creates_training_job_and_logs_event(
     assert job["payload"]["params"]["expected_model_id"] == "memory_ranker_v2"
     assert job["payload"]["params"]["active_model"] == "memory_ranker_v1"
     assert get_state("compute_job", job["job_id"], domain="dev")["state"] == "queued"
-    assert f"[MODEL_UPDATE] triggered dataset={result['dataset']['dataset_id']}" in output
+    assert (
+        f"[MODEL_UPDATE] triggered dataset={result['dataset']['dataset_id']}" in output
+    )
     assert "[MODEL_UPDATE] new model candidate=memory_ranker_v2" in output
 
 
@@ -202,7 +214,9 @@ def test_trigger_model_update_increments_model_id_from_existing_candidate(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    shared_root, models_root, config_path = _configure_environment(monkeypatch, tmp_path)
+    shared_root, models_root, config_path = _configure_environment(
+        monkeypatch, tmp_path
+    )
     _write_model_update_config(
         config_path,
         min_new_records=1,
@@ -228,7 +242,9 @@ def test_trigger_model_update_stores_candidate_model_and_last_dataset_size(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    shared_root, models_root, config_path = _configure_environment(monkeypatch, tmp_path)
+    shared_root, models_root, config_path = _configure_environment(
+        monkeypatch, tmp_path
+    )
     _write_model_update_config(config_path, min_new_records=2, last_dataset_size=0)
     _write_model_file(models_root, "memory_ranker_v1")
     _write_jsonl(

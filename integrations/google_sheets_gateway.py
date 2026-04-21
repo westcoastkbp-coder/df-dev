@@ -22,7 +22,9 @@ def _timestamp() -> str:
 
 
 def _requested_mode() -> str:
-    raw_mode = os.environ.get("DIGITAL_FOREMAN_GOOGLE_SHEETS_GATEWAY_MODE", "mock").strip()
+    raw_mode = os.environ.get(
+        "DIGITAL_FOREMAN_GOOGLE_SHEETS_GATEWAY_MODE", "mock"
+    ).strip()
     normalized = raw_mode.lower()
     if normalized == "real":
         return "real"
@@ -30,7 +32,9 @@ def _requested_mode() -> str:
 
 
 def _api_connected() -> bool:
-    raw_value = os.environ.get("DIGITAL_FOREMAN_GOOGLE_SHEETS_API_CONNECTED", "").strip()
+    raw_value = os.environ.get(
+        "DIGITAL_FOREMAN_GOOGLE_SHEETS_API_CONNECTED", ""
+    ).strip()
     return raw_value.lower() in TRUE_VALUES
 
 
@@ -48,8 +52,7 @@ def _resolve_mode() -> tuple[str, str | None]:
 
 def _slugify(value: object) -> str:
     cleaned = "".join(
-        char.lower() if char.isalnum() else "-"
-        for char in _normalize_text(value)
+        char.lower() if char.isalnum() else "-" for char in _normalize_text(value)
     )
     collapsed = "-".join(part for part in cleaned.split("-") if part)
     return collapsed or "sheet"

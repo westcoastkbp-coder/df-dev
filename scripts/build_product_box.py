@@ -15,7 +15,9 @@ def main() -> int:
         print(json.dumps(build_report, indent=2, sort_keys=True))
         return 1
 
-    packaging_report = validate_product_packaging(root_dir=Path(build_report["output_dir"]))
+    packaging_report = validate_product_packaging(
+        root_dir=Path(build_report["output_dir"])
+    )
     final_report = dict(build_report)
     final_report["packaging_validation"] = packaging_report
     print(json.dumps(final_report, indent=2, sort_keys=True))

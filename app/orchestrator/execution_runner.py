@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import app.orchestrator.task_factory as task_factory_module
 from app.execution import paths as execution_paths_module
@@ -19,7 +19,9 @@ def _sync_managed_execution_bindings() -> None:
         task_factory_module.TASK_SYSTEM_FILE = execution_paths_module.TASKS_FILE
     managed_execution_module.task_factory_module = task_factory_module
     managed_execution_module.store_task_result = store_task_result
-    managed_execution_module.assert_product_runtime_executor = assert_product_runtime_executor
+    managed_execution_module.assert_product_runtime_executor = (
+        assert_product_runtime_executor
+    )
     managed_execution_module.claim_execution_record = claim_execution_record
     managed_execution_module.complete_execution_record = complete_execution_record
     managed_execution_module.read_execution_record = read_execution_record

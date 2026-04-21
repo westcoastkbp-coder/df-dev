@@ -53,7 +53,9 @@ def _raw_task(task_id: str) -> dict[str, object]:
     }
 
 
-def test_create_task_persists_public_task_and_active_summary(monkeypatch, tmp_path: Path) -> None:
+def test_create_task_persists_public_task_and_active_summary(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_system_path = _configure_runtime(monkeypatch, tmp_path)
 
     task = task_store_module.create_task(
@@ -102,13 +104,17 @@ def test_update_task_updates_result_and_history(monkeypatch, tmp_path: Path) -> 
     assert updated["input"] == {"path": r"runtime\out\update.txt", "mode": "safe"}
     assert updated["result"] == {"preview": "ready"}
     assert updated["history"][-1]["event"] == "task_updated"
-    assert updated["history"][-1]["details"]["decision_trace"] == {"reason": "task input refined"}
+    assert updated["history"][-1]["details"]["decision_trace"] == {
+        "reason": "task input refined"
+    }
 
     system_context = get_context("system_context", root_dir=tmp_path)
     assert system_context["active_tasks"][0]["status"] == "VALIDATED"
 
 
-def test_run_execution_auto_binds_to_persisted_task_and_history(monkeypatch, tmp_path: Path) -> None:
+def test_run_execution_auto_binds_to_persisted_task_and_history(
+    monkeypatch, tmp_path: Path
+) -> None:
     task_system_path = _configure_runtime(monkeypatch, tmp_path)
     created = task_store_module.create_task(
         task_type="WRITE_FILE",
@@ -141,12 +147,17 @@ def test_run_execution_auto_binds_to_persisted_task_and_history(monkeypatch, tmp
     )
 
     assert executed["status"] == "COMPLETED"
-    persisted = task_factory_module.get_task("DF-TASK-LAYER-EXEC-V1", store_path=task_system_path)
+    persisted = task_factory_module.get_task(
+        "DF-TASK-LAYER-EXEC-V1", store_path=task_system_path
+    )
     assert persisted is not None
     assert persisted["status"] == "COMPLETED"
     assert persisted["result"]["task_id"] == "DF-TASK-LAYER-EXEC-V1"
     assert persisted["history"][-1]["event"] == "execution_completed"
-    assert persisted["history"][-1]["details"]["decision_trace"]["action_type"] == "WRITE_FILE"
+    assert (
+        persisted["history"][-1]["details"]["decision_trace"]["action_type"]
+        == "WRITE_FILE"
+    )
 
     system_context = get_context("system_context", root_dir=tmp_path)
     assert all(

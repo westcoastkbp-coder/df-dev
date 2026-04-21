@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from runtime.adapters.codex_adapter import CodexAdapter
 

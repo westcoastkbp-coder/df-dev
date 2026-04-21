@@ -66,8 +66,7 @@ class BrowserAdapterError(RuntimeError):
 
 
 class BrowserRuntime(Protocol):
-    def open_page(self, *, url: str, timeout_seconds: int) -> BrowserExecution:
-        ...
+    def open_page(self, *, url: str, timeout_seconds: int) -> BrowserExecution: ...
 
     def extract_text(
         self,
@@ -75,8 +74,7 @@ class BrowserRuntime(Protocol):
         url: str,
         selector: str,
         timeout_seconds: int,
-    ) -> BrowserExecution:
-        ...
+    ) -> BrowserExecution: ...
 
     def fill_form(
         self,
@@ -85,8 +83,7 @@ class BrowserRuntime(Protocol):
         fields: dict[str, str],
         selector: str | None,
         timeout_seconds: int,
-    ) -> BrowserExecution:
-        ...
+    ) -> BrowserExecution: ...
 
     def click_element(
         self,
@@ -94,8 +91,7 @@ class BrowserRuntime(Protocol):
         url: str,
         selector: str,
         timeout_seconds: int,
-    ) -> BrowserExecution:
-        ...
+    ) -> BrowserExecution: ...
 
     def submit_form(
         self,
@@ -103,8 +99,7 @@ class BrowserRuntime(Protocol):
         url: str,
         selector: str,
         timeout_seconds: int,
-    ) -> BrowserExecution:
-        ...
+    ) -> BrowserExecution: ...
 
 
 def _normalize_text(value: object) -> str:
@@ -124,7 +119,9 @@ def _truncate_text(value: object, *, limit: int = MAX_TEXT_LENGTH) -> str:
     return normalized[: limit - 3].rstrip() + "..."
 
 
-def _bounded_text(value: object, *, field_name: str, max_length: int = MAX_TEXT_LENGTH) -> str:
+def _bounded_text(
+    value: object, *, field_name: str, max_length: int = MAX_TEXT_LENGTH
+) -> str:
     normalized = _normalize_text(value)
     if not normalized:
         raise ActionContractViolation(f"{field_name} must not be empty")
@@ -142,7 +139,9 @@ def _normalize_optional_selector(value: object, *, required: bool) -> str | None
     if len(normalized) > MAX_SELECTOR_LENGTH:
         raise ActionContractViolation("parameters.selector exceeds max length")
     if _SELECTOR_FORBIDDEN_PATTERN.search(normalized):
-        raise ActionContractViolation("parameters.selector contains unsupported characters")
+        raise ActionContractViolation(
+            "parameters.selector contains unsupported characters"
+        )
     return normalized
 
 
@@ -150,7 +149,9 @@ def _validate_url(value: object, *, field_name: str = "parameters.url") -> str:
     normalized = _bounded_text(value, field_name=field_name, max_length=MAX_URL_LENGTH)
     parsed = urlparse(normalized)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise ActionContractViolation(f"{field_name} must be an absolute http or https URL")
+        raise ActionContractViolation(
+            f"{field_name} must be an absolute http or https URL"
+        )
     return normalized
 
 
@@ -179,7 +180,9 @@ def _validate_fields(value: object, *, required: bool) -> dict[str, str]:
         raise ActionContractViolation("parameters.fields exceeds max size")
     normalized: dict[str, str] = {}
     for key in sorted(value):
-        normalized_key = _bounded_text(key, field_name="parameters.fields key", max_length=64)
+        normalized_key = _bounded_text(
+            key, field_name="parameters.fields key", max_length=64
+        )
         item = value[key]
         if not isinstance(item, str):
             raise ActionContractViolation(
@@ -204,7 +207,9 @@ def _operation_result_type(operation: str) -> str:
     return mapping[operation]
 
 
-def validate_browser_action_parameters(parameters: Mapping[str, object]) -> dict[str, object]:
+def validate_browser_action_parameters(
+    parameters: Mapping[str, object],
+) -> dict[str, object]:
     normalized = dict(parameters)
     unexpected_fields = sorted(set(normalized) - SUPPORTED_PARAMETER_FIELDS)
     if unexpected_fields:
@@ -212,7 +217,9 @@ def validate_browser_action_parameters(parameters: Mapping[str, object]) -> dict
             "parameters contains unsupported fields: " + ", ".join(unexpected_fields)
         )
 
-    operation = _bounded_text(normalized.get("operation"), field_name="parameters.operation")
+    operation = _bounded_text(
+        normalized.get("operation"), field_name="parameters.operation"
+    )
     if operation not in SUPPORTED_OPERATIONS:
         raise ActionContractViolation(f"unsupported browser operation: {operation}")
 
@@ -228,15 +235,25 @@ def validate_browser_action_parameters(parameters: Mapping[str, object]) -> dict
     fields = _validate_fields(normalized.get("fields"), required=requires_fields)
 
     if operation != "fill_form" and normalized.get("fields") not in (None, {}):
-        raise ActionContractViolation(f"parameters.fields is not supported for {operation}")
+        raise ActionContractViolation(
+            f"parameters.fields is not supported for {operation}"
+        )
     if operation == "open_page" and selector is not None:
-        raise ActionContractViolation("parameters.selector is not supported for open_page")
+        raise ActionContractViolation(
+            "parameters.selector is not supported for open_page"
+        )
     if operation == "extract_text" and normalized.get("fields") not in (None, {}):
-        raise ActionContractViolation("parameters.fields is not supported for extract_text")
+        raise ActionContractViolation(
+            "parameters.fields is not supported for extract_text"
+        )
     if operation == "click_element" and normalized.get("fields") not in (None, {}):
-        raise ActionContractViolation("parameters.fields is not supported for click_element")
+        raise ActionContractViolation(
+            "parameters.fields is not supported for click_element"
+        )
     if operation == "submit_form" and normalized.get("fields") not in (None, {}):
-        raise ActionContractViolation("parameters.fields is not supported for submit_form")
+        raise ActionContractViolation(
+            "parameters.fields is not supported for submit_form"
+        )
 
     return {
         "operation": operation,
@@ -255,7 +272,11 @@ class StubBrowserRuntime:
         return BrowserExecution(
             result_type="browser_open",
             summary=_truncate_text(f"Opened page {url}"),
-            references={"url": url, "page_ref": page_ref, "timeout_seconds": timeout_seconds},
+            references={
+                "url": url,
+                "page_ref": page_ref,
+                "timeout_seconds": timeout_seconds,
+            },
         )
 
     def extract_text(
@@ -307,7 +328,11 @@ class StubBrowserRuntime:
         return BrowserExecution(
             result_type="browser_click",
             summary=f"Clicked {selector} on {url}",
-            references={"url": url, "selector": selector, "timeout_seconds": timeout_seconds},
+            references={
+                "url": url,
+                "selector": selector,
+                "timeout_seconds": timeout_seconds,
+            },
         )
 
     def submit_form(
@@ -320,14 +345,20 @@ class StubBrowserRuntime:
         return BrowserExecution(
             result_type="browser_submit",
             summary=f"Submitted form {selector} on {url}",
-            references={"url": url, "selector": selector, "timeout_seconds": timeout_seconds},
+            references={
+                "url": url,
+                "selector": selector,
+                "timeout_seconds": timeout_seconds,
+            },
         )
 
 
 class PlaywrightBrowserRuntime:
     backend_name = "playwright"
 
-    def __init__(self, *, headless: bool = True, browsers_path: str | None = None) -> None:
+    def __init__(
+        self, *, headless: bool = True, browsers_path: str | None = None
+    ) -> None:
         self._headless = headless
         self._browsers_path = _normalize_text(browsers_path) or None
 
@@ -384,7 +415,9 @@ class PlaywrightBrowserRuntime:
             ) from exc
 
     def _page_snapshot(self, page, *, requested_url: str) -> tuple[str, str]:
-        final_url = _truncate_text(getattr(page, "url", requested_url), limit=MAX_URL_LENGTH)
+        final_url = _truncate_text(
+            getattr(page, "url", requested_url), limit=MAX_URL_LENGTH
+        )
         try:
             title = _truncate_text(page.title(), limit=MAX_TEXT_LENGTH)
         except Exception:
@@ -460,7 +493,9 @@ class PlaywrightBrowserRuntime:
     ) -> BrowserExecution:
         def callback(page, timeout_ms: int) -> BrowserExecution:
             if selector:
-                page.locator(selector).first.wait_for(state="attached", timeout=timeout_ms)
+                page.locator(selector).first.wait_for(
+                    state="attached", timeout=timeout_ms
+                )
             for field_name, value in sorted(fields.items()):
                 page.locator(self._field_selector(field_name)).first.fill(
                     value,
@@ -526,7 +561,9 @@ class PlaywrightBrowserRuntime:
     ) -> BrowserExecution:
         def callback(page, timeout_ms: int) -> BrowserExecution:
             form = page.locator(selector).first
-            form.evaluate("(form) => form.requestSubmit ? form.requestSubmit() : form.submit()")
+            form.evaluate(
+                "(form) => form.requestSubmit ? form.requestSubmit() : form.submit()"
+            )
             page.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
             final_url, title = self._page_snapshot(page, requested_url=url)
             return BrowserExecution(
@@ -573,7 +610,8 @@ def _normalize_runtime_mode(value: object) -> str:
     if normalized not in SUPPORTED_RUNTIME_MODES:
         raise BrowserAdapterError(
             "validation_error",
-            "runtime_mode must be one of: " + ", ".join(sorted(SUPPORTED_RUNTIME_MODES)),
+            "runtime_mode must be one of: "
+            + ", ".join(sorted(SUPPORTED_RUNTIME_MODES)),
         )
     return normalized
 
@@ -586,9 +624,13 @@ def _resolve_browser_adapter_config(
     if isinstance(config, BrowserAdapterConfig):
         return config
     if not isinstance(config, Mapping):
-        raise BrowserAdapterError("validation_error", "browser adapter config must be a mapping")
+        raise BrowserAdapterError(
+            "validation_error", "browser adapter config must be a mapping"
+        )
     payload = dict(config)
-    unexpected_fields = sorted(set(payload) - {"runtime_mode", "headless", "browsers_path"})
+    unexpected_fields = sorted(
+        set(payload) - {"runtime_mode", "headless", "browsers_path"}
+    )
     if unexpected_fields:
         raise BrowserAdapterError(
             "validation_error",
@@ -642,7 +684,9 @@ def _build_default_browser_runtime(
     )
 
 
-def _runtime_backend_name(runtime: BrowserRuntime | None, config: BrowserAdapterConfig) -> str:
+def _runtime_backend_name(
+    runtime: BrowserRuntime | None, config: BrowserAdapterConfig
+) -> str:
     candidate = _normalize_text(getattr(runtime, "backend_name", ""))
     if candidate:
         return candidate
@@ -651,7 +695,9 @@ def _runtime_backend_name(runtime: BrowserRuntime | None, config: BrowserAdapter
     return "custom"
 
 
-def _simulation_payload(action_id: str, parameters: Mapping[str, object]) -> dict[str, object]:
+def _simulation_payload(
+    action_id: str, parameters: Mapping[str, object]
+) -> dict[str, object]:
     operation = _normalize_text(parameters.get("operation"))
     return build_action_result_contract(
         action_id=action_id,
@@ -696,7 +742,11 @@ def _failure_result(
     if normalized_diagnostic:
         payload["diagnostic"] = normalized_diagnostic
     operation = _normalize_text((parameters or {}).get("operation")) or "open_page"
-    result_type = _operation_result_type(operation) if operation in SUPPORTED_OPERATIONS else "browser_action"
+    result_type = (
+        _operation_result_type(operation)
+        if operation in SUPPORTED_OPERATIONS
+        else "browser_action"
+    )
     return build_action_result_contract(
         action_id=action_id,
         status="failed",
@@ -714,8 +764,13 @@ def execute_browser_action(
     config: BrowserAdapterConfig | Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     started_at = time.monotonic()
-    action_id = _normalize_text(_normalize_mapping(action_contract).get("action_id")) or "unknown_action"
-    raw_parameters = _normalize_mapping(_normalize_mapping(action_contract).get("parameters"))
+    action_id = (
+        _normalize_text(_normalize_mapping(action_contract).get("action_id"))
+        or "unknown_action"
+    )
+    raw_parameters = _normalize_mapping(
+        _normalize_mapping(action_contract).get("parameters")
+    )
     effective_config = _resolve_browser_adapter_config(config)
     backend_used = _runtime_backend_name(runtime, effective_config)
 
@@ -747,7 +802,10 @@ def execute_browser_action(
         elif operation == "fill_form":
             execution = runtime.fill_form(
                 url=str(parameters["url"]),
-                fields={str(key): str(value) for key, value in dict(parameters["fields"]).items()},
+                fields={
+                    str(key): str(value)
+                    for key, value in dict(parameters["fields"]).items()
+                },
                 selector=_normalize_text(parameters.get("selector")) or None,
                 timeout_seconds=int(parameters["timeout_seconds"]),
             )

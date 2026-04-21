@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import threading
@@ -12,8 +12,11 @@ _STORE_LOCK = threading.RLock()
 
 
 def now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(
-        "+00:00", "Z"
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
     )
 
 
@@ -29,7 +32,8 @@ def ensure_voice_runtime_storage() -> None:
 def _normalize_pending_item(item: object) -> dict[str, Any]:
     payload = dict(item or {})
     return {
-        "event_id": str(payload.get("event_id", "")).strip() or f"voice-out-{uuid.uuid4().hex[:12]}",
+        "event_id": str(payload.get("event_id", "")).strip()
+        or f"voice-out-{uuid.uuid4().hex[:12]}",
         "sequence": int(payload.get("sequence", 0) or 0),
         "kind": str(payload.get("kind", "assistant_response")).strip()
         or "assistant_response",
@@ -78,7 +82,9 @@ def _normalize_call_session(record: dict[str, object]) -> dict[str, Any]:
         or "idle",
         "current_mode": str(payload.get("current_mode", "idle")).strip() or "idle",
         "job_status": str(payload.get("job_status", "idle")).strip() or "idle",
-        "last_partial_transcript": str(payload.get("last_partial_transcript", "")).strip(),
+        "last_partial_transcript": str(
+            payload.get("last_partial_transcript", "")
+        ).strip(),
         "last_transcript": str(payload.get("last_transcript", "")).strip(),
         "last_response_text": str(payload.get("last_response_text", "")).strip(),
         "last_ack_text": str(payload.get("last_ack_text", "")).strip(),
@@ -94,16 +100,24 @@ def _normalize_call_session(record: dict[str, object]) -> dict[str, Any]:
         "last_validation_at": str(payload.get("last_validation_at", "")).strip(),
         "active_turn_event_id": str(payload.get("active_turn_event_id", "")).strip(),
         "last_runtime_state": str(payload.get("last_runtime_state", "")).strip(),
-        "last_runtime_confidence": str(payload.get("last_runtime_confidence", "")).strip(),
+        "last_runtime_confidence": str(
+            payload.get("last_runtime_confidence", "")
+        ).strip(),
         "voice_latency_metrics": _normalize_latency_metrics(
             payload.get("voice_latency_metrics", {})
         ),
-        "guardrail_activation_count": int(payload.get("guardrail_activation_count", 0) or 0),
-        "runtime_transition_count": int(payload.get("runtime_transition_count", 0) or 0),
+        "guardrail_activation_count": int(
+            payload.get("guardrail_activation_count", 0) or 0
+        ),
+        "runtime_transition_count": int(
+            payload.get("runtime_transition_count", 0) or 0
+        ),
         "runtime_verdict": str(payload.get("runtime_verdict", "")).strip(),
         "voice_runtime_verdict": str(payload.get("voice_runtime_verdict", "")).strip(),
         "runtime_verdict_score": int(payload.get("runtime_verdict_score", 0) or 0),
-        "last_runtime_verdict_at": str(payload.get("last_runtime_verdict_at", "")).strip(),
+        "last_runtime_verdict_at": str(
+            payload.get("last_runtime_verdict_at", "")
+        ).strip(),
         "reconnect_count": int(payload.get("reconnect_count", 0) or 0),
         "interruption_count": int(payload.get("interruption_count", 0) or 0),
         "response_sequence": int(payload.get("response_sequence", 0) or 0),
@@ -111,7 +125,8 @@ def _normalize_call_session(record: dict[str, object]) -> dict[str, Any]:
             payload.get("processed_event_ids", [])
         ),
         "pending_outbound": [
-            _normalize_pending_item(item) for item in list(payload.get("pending_outbound", []))
+            _normalize_pending_item(item)
+            for item in list(payload.get("pending_outbound", []))
         ],
         "created_at": str(payload.get("created_at", "")).strip() or now(),
         "updated_at": str(payload.get("updated_at", "")).strip() or now(),
@@ -165,7 +180,9 @@ def find_call_session(
     normalized_call_control_id = str(call_control_id or "").strip()
     normalized_session_id = str(session_id or "").strip()
     if not (
-        normalized_call_session_id or normalized_call_control_id or normalized_session_id
+        normalized_call_session_id
+        or normalized_call_control_id
+        or normalized_session_id
     ):
         return None
     for record in reversed(load_call_sessions()):
@@ -248,28 +265,41 @@ def create_or_update_call_session(
     created_at = str(base.get("created_at", "")).strip() or now()
     payload = {
         **base,
-        "call_session_id": str(call_session_id or "").strip() or base.get("call_session_id", ""),
+        "call_session_id": str(call_session_id or "").strip()
+        or base.get("call_session_id", ""),
         "session_id": str(session_id or "").strip() or base.get("session_id", ""),
-        "call_control_id": str(call_control_id or "").strip() or base.get("call_control_id", ""),
-        "telnyx_call_leg_id": str(telnyx_call_leg_id or "").strip() or base.get("telnyx_call_leg_id", ""),
+        "call_control_id": str(call_control_id or "").strip()
+        or base.get("call_control_id", ""),
+        "telnyx_call_leg_id": str(telnyx_call_leg_id or "").strip()
+        or base.get("telnyx_call_leg_id", ""),
         "stream_id": str(stream_id or "").strip() or base.get("stream_id", ""),
         "from_number": str(from_number or "").strip() or base.get("from_number", ""),
         "to_number": str(to_number or "").strip() or base.get("to_number", ""),
         "user_id": str(user_id or "").strip() or base.get("user_id", ""),
-        "user_role": str(user_role or "").strip().lower() or base.get("user_role", "foreman"),
-        "interaction_id": str(interaction_id or "").strip() or base.get("interaction_id", ""),
+        "user_role": str(user_role or "").strip().lower()
+        or base.get("user_role", "foreman"),
+        "interaction_id": str(interaction_id or "").strip()
+        or base.get("interaction_id", ""),
         "job_id": str(job_id or "").strip() or base.get("job_id", ""),
         "trace_id": str(trace_id or "").strip() or base.get("trace_id", ""),
-        "orchestrator_task_id": str(orchestrator_task_id or "").strip() or base.get("orchestrator_task_id", ""),
+        "orchestrator_task_id": str(orchestrator_task_id or "").strip()
+        or base.get("orchestrator_task_id", ""),
         "call_state": str(call_state or "").strip() or base.get("call_state", "new"),
-        "media_state": str(media_state or "").strip() or base.get("media_state", "idle"),
-        "interaction_state": str(interaction_state or "").strip() or base.get("interaction_state", "idle"),
-        "current_mode": str(current_mode or "").strip() or base.get("current_mode", "idle"),
+        "media_state": str(media_state or "").strip()
+        or base.get("media_state", "idle"),
+        "interaction_state": str(interaction_state or "").strip()
+        or base.get("interaction_state", "idle"),
+        "current_mode": str(current_mode or "").strip()
+        or base.get("current_mode", "idle"),
         "job_status": str(job_status or "").strip() or base.get("job_status", "idle"),
-        "last_partial_transcript": str(last_partial_transcript or "").strip() or base.get("last_partial_transcript", ""),
-        "last_transcript": str(last_transcript or "").strip() or base.get("last_transcript", ""),
-        "last_response_text": str(last_response_text or "").strip() or base.get("last_response_text", ""),
-        "last_ack_text": str(last_ack_text or "").strip() or base.get("last_ack_text", ""),
+        "last_partial_transcript": str(last_partial_transcript or "").strip()
+        or base.get("last_partial_transcript", ""),
+        "last_transcript": str(last_transcript or "").strip()
+        or base.get("last_transcript", ""),
+        "last_response_text": str(last_response_text or "").strip()
+        or base.get("last_response_text", ""),
+        "last_ack_text": str(last_ack_text or "").strip()
+        or base.get("last_ack_text", ""),
         "last_error": str(last_error or "").strip() or base.get("last_error", ""),
         "validation_state": str(validation_state or "").strip()
         or base.get("validation_state", "UNKNOWN"),
@@ -305,8 +335,12 @@ def create_or_update_call_session(
         "last_runtime_verdict_at": str(last_runtime_verdict_at or "").strip()
         or base.get("last_runtime_verdict_at", ""),
         "reconnect_count": int(reconnect_count or base.get("reconnect_count", 0) or 0),
-        "interruption_count": int(interruption_count or base.get("interruption_count", 0) or 0),
-        "response_sequence": int(response_sequence or base.get("response_sequence", 0) or 0),
+        "interruption_count": int(
+            interruption_count or base.get("interruption_count", 0) or 0
+        ),
+        "response_sequence": int(
+            response_sequence or base.get("response_sequence", 0) or 0
+        ),
         "processed_event_ids": processed_event_ids
         if processed_event_ids is not None
         else base.get("processed_event_ids", []),
@@ -324,8 +358,12 @@ def update_call_session(call_session_id: object, **updates: object) -> dict[str,
         raise ValueError("voice call session not found")
     payload = {**existing, **updates}
     payload["call_session_id"] = existing["call_session_id"]
-    payload["session_id"] = str(payload.get("session_id", "")).strip() or existing["session_id"]
-    payload["call_control_id"] = str(payload.get("call_control_id", "")).strip() or existing["call_control_id"]
+    payload["session_id"] = (
+        str(payload.get("session_id", "")).strip() or existing["session_id"]
+    )
+    payload["call_control_id"] = (
+        str(payload.get("call_control_id", "")).strip() or existing["call_control_id"]
+    )
     payload["created_at"] = existing["created_at"]
     return upsert_call_session(payload)
 
@@ -383,10 +421,14 @@ def list_pending_outbound(call_session_id: object) -> list[dict[str, Any]]:
     session = find_call_session(call_session_id=call_session_id)
     if session is None:
         return []
-    return [_normalize_pending_item(item) for item in session.get("pending_outbound", [])]
+    return [
+        _normalize_pending_item(item) for item in session.get("pending_outbound", [])
+    ]
 
 
-def remove_pending_outbound(call_session_id: object, event_id: object) -> dict[str, Any]:
+def remove_pending_outbound(
+    call_session_id: object, event_id: object
+) -> dict[str, Any]:
     normalized_event_id = str(event_id or "").strip()
     session = find_call_session(call_session_id=call_session_id)
     if session is None:
@@ -456,4 +498,3 @@ def load_trace_events(*, call_session_id: object = "") -> list[dict[str, Any]]:
         for item in events
         if str(item.get("call_session_id", "")).strip() == normalized_call_session_id
     ]
-

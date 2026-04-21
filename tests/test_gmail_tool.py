@@ -9,8 +9,12 @@ from integrations import gmail_gateway, gmail_tool
 
 
 def test_run_gmail_read_latest_returns_latest_mock_email(tmp_path, monkeypatch) -> None:
-    inbox_dir = tmp_path / "runtime" / "out" / "external_business" / "gmail_gateway" / "inbox"
-    drafts_dir = tmp_path / "runtime" / "out" / "external_business" / "gmail_gateway" / "drafts"
+    inbox_dir = (
+        tmp_path / "runtime" / "out" / "external_business" / "gmail_gateway" / "inbox"
+    )
+    drafts_dir = (
+        tmp_path / "runtime" / "out" / "external_business" / "gmail_gateway" / "drafts"
+    )
     cache_path = tmp_path / "artifacts" / "tool_cache" / "gmail" / "latest_email.json"
     inbox_dir.mkdir(parents=True, exist_ok=True)
     drafts_dir.mkdir(parents=True, exist_ok=True)
@@ -67,7 +71,9 @@ def test_run_gmail_read_latest_returns_latest_mock_email(tmp_path, monkeypatch) 
 
 
 def test_run_gmail_create_draft_writes_mock_draft(tmp_path, monkeypatch) -> None:
-    drafts_dir = tmp_path / "runtime" / "out" / "external_business" / "gmail_gateway" / "drafts"
+    drafts_dir = (
+        tmp_path / "runtime" / "out" / "external_business" / "gmail_gateway" / "drafts"
+    )
     cache_path = tmp_path / "artifacts" / "tool_cache" / "gmail" / "latest_email.json"
     drafts_dir.mkdir(parents=True, exist_ok=True)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -136,7 +142,9 @@ def test_run_gmail_create_draft_rejects_unsafe_subject(tmp_path, monkeypatch) ->
 
 def test_run_google_gmail_send_external_returns_sent_message(monkeypatch) -> None:
     monkeypatch.setenv("DIGITAL_FOREMAN_GMAIL_TOOL_MODE", "real")
-    monkeypatch.setattr(gmail_tool.google_drive_reader, "_has_required_credentials", lambda: True)
+    monkeypatch.setattr(
+        gmail_tool.google_drive_reader, "_has_required_credentials", lambda: True
+    )
     monkeypatch.setattr(
         gmail_tool,
         "_gmail_request_json",
@@ -170,11 +178,15 @@ def test_gmail_execution_sender_prefers_dedicated_env(monkeypatch) -> None:
     assert gmail_tool.gmail_execution_sender() == "personal.sender@gmail.com"
 
 
-def test_gmail_credentials_available_prefers_dedicated_refresh_token(monkeypatch) -> None:
+def test_gmail_credentials_available_prefers_dedicated_refresh_token(
+    monkeypatch,
+) -> None:
     monkeypatch.setenv("GMAIL_EXECUTION_CLIENT_ID", "gmail-client-id")
     monkeypatch.setenv("GMAIL_EXECUTION_CLIENT_SECRET", "gmail-client-secret")
     monkeypatch.setenv("GMAIL_EXECUTION_REFRESH_TOKEN", "gmail-refresh-token")
-    monkeypatch.setattr(gmail_tool.google_drive_reader, "_has_required_credentials", lambda: False)
+    monkeypatch.setattr(
+        gmail_tool.google_drive_reader, "_has_required_credentials", lambda: False
+    )
 
     assert gmail_tool._gmail_credentials_available() is True
 
@@ -222,12 +234,16 @@ def test_gmail_gateway_send_email_uses_real_gmail_send(monkeypatch) -> None:
     }
 
 
-def test_gmail_gateway_send_email_returns_failure_without_mock_fallback(monkeypatch) -> None:
+def test_gmail_gateway_send_email_returns_failure_without_mock_fallback(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
         gmail_gateway,
         "run_google_gmail_send_external",
         lambda payload: (_ for _ in ()).throw(
-            gmail_tool.GmailToolError("GMAIL_API_FAILED", "Gmail credentials are not configured.")
+            gmail_tool.GmailToolError(
+                "GMAIL_API_FAILED", "Gmail credentials are not configured."
+            )
         ),
     )
 

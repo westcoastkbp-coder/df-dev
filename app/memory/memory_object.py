@@ -68,9 +68,7 @@ def _validate_enum(value: object, *, field_name: str, allowed: frozenset[str]) -
     normalized = _normalize_text(value).lower()
     if normalized not in allowed:
         allowed_display = ", ".join(sorted(allowed))
-        raise MemoryObjectError(
-            f"{field_name} must be one of: {allowed_display}"
-        )
+        raise MemoryObjectError(f"{field_name} must be one of: {allowed_display}")
     return normalized
 
 
@@ -195,8 +193,12 @@ class MemoryObject:
         object.__setattr__(self, "updated_at", _normalize_text(self.updated_at))
         object.__setattr__(self, "tags", _normalize_string_list(self.tags))
         object.__setattr__(self, "refs", _normalize_string_list(self.refs))
-        object.__setattr__(self, "local_path", _normalize_optional_path(self.local_path))
-        object.__setattr__(self, "remote_path", _normalize_optional_path(self.remote_path))
+        object.__setattr__(
+            self, "local_path", _normalize_optional_path(self.local_path)
+        )
+        object.__setattr__(
+            self, "remote_path", _normalize_optional_path(self.remote_path)
+        )
         object.__setattr__(self, "artifact_type", _normalize_text(self.artifact_type))
         object.__setattr__(self, "logical_key", _normalize_text(self.logical_key))
         object.__setattr__(self, "state", _normalize_text(self.state).lower())
@@ -260,17 +262,19 @@ def memory_object_from_mapping(
     resolved_artifact_type = _normalize_text(
         artifact_type if artifact_type is not None else mapped.get("type")
     )
-    resolved_memory_class = _normalize_text(mapped.get("memory_class")) or infer_memory_class(
-        resolved_artifact_type
-    )
+    resolved_memory_class = _normalize_text(
+        mapped.get("memory_class")
+    ) or infer_memory_class(resolved_artifact_type)
     raw_state = _normalize_text(mapped.get("state"))
     raw_status = _normalize_text(mapped.get("status")) or raw_state
-    normalized_updated_at = _normalize_text(
-        mapped.get("updated_at") or mapped.get("timestamp")
-    ) or _utc_timestamp()
-    normalized_created_at = _normalize_text(
-        mapped.get("created_at") or mapped.get("timestamp")
-    ) or normalized_updated_at
+    normalized_updated_at = (
+        _normalize_text(mapped.get("updated_at") or mapped.get("timestamp"))
+        or _utc_timestamp()
+    )
+    normalized_created_at = (
+        _normalize_text(mapped.get("created_at") or mapped.get("timestamp"))
+        or normalized_updated_at
+    )
 
     return MemoryObject(
         id=_normalize_text(mapped.get("id")),
@@ -285,11 +289,16 @@ def memory_object_from_mapping(
         tags=_normalize_string_list(mapped.get("tags")),
         refs=_normalize_string_list(mapped.get("refs")),
         local_path=local_path if local_path is not None else mapped.get("local_path"),
-        remote_path=remote_path if remote_path is not None else mapped.get("remote_path"),
+        remote_path=remote_path
+        if remote_path is not None
+        else mapped.get("remote_path"),
         payload=mapped.get("payload"),
         artifact_type=resolved_artifact_type,
-        logical_key=logical_key if logical_key is not None else mapped.get("logical_key"),
-        state=raw_state or compatibility_state(raw_status, memory_class=resolved_memory_class),
+        logical_key=logical_key
+        if logical_key is not None
+        else mapped.get("logical_key"),
+        state=raw_state
+        or compatibility_state(raw_status, memory_class=resolved_memory_class),
         resolution=mapped.get("resolution"),
     )
 
@@ -331,7 +340,8 @@ def make_artifact_object(
         payload=payload,
         artifact_type=artifact_type,
         logical_key=logical_key,
-        state=_normalize_text(state) or compatibility_state(status, memory_class=ARTIFACT_MEMORY_CLASS),
+        state=_normalize_text(state)
+        or compatibility_state(status, memory_class=ARTIFACT_MEMORY_CLASS),
         resolution=resolution,
     )
 

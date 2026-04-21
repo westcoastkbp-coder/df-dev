@@ -39,14 +39,20 @@ def _load_required_env() -> None:
     for key, value in load_env().items():
         os.environ[str(key)] = str(value)
 
-    missing = [name for name in REQUIRED_ENV_VARS if not str(os.environ.get(name) or "").strip()]
+    missing = [
+        name
+        for name in REQUIRED_ENV_VARS
+        if not str(os.environ.get(name) or "").strip()
+    ]
     if missing:
         raise RuntimeError(f"Missing required env keys: {', '.join(missing)}")
 
 
 def _write_task_file() -> Path:
     TASK_PATH.parent.mkdir(parents=True, exist_ok=True)
-    TASK_PATH.write_text(json.dumps(TASK_PAYLOAD, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    TASK_PATH.write_text(
+        json.dumps(TASK_PAYLOAD, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return TASK_PATH
 
 
@@ -60,7 +66,9 @@ def _read_artifact_payload() -> dict[str, object] | None:
         return None
 
 
-def _result_reason(result: subprocess.CompletedProcess[str], artifact_payload: dict[str, object] | None) -> str:
+def _result_reason(
+    result: subprocess.CompletedProcess[str], artifact_payload: dict[str, object] | None
+) -> str:
     if isinstance(artifact_payload, dict):
         artifact_reason = str(artifact_payload.get("reason") or "").strip()
         if artifact_reason:

@@ -38,7 +38,9 @@ def load_task_memory() -> list[dict[str, object]]:
 
 def _save_task_memory(entries: list[dict[str, object]]) -> None:
     _ensure_task_memory_file()
-    task_state_store.replace_memory_entries([dict(entry) for entry in entries[-MAX_ENTRIES:]])
+    task_state_store.replace_memory_entries(
+        [dict(entry) for entry in entries[-MAX_ENTRIES:]]
+    )
 
 
 def store_task_result(result: dict[str, object]) -> dict[str, object]:

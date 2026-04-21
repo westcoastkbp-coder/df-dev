@@ -15,7 +15,10 @@ if str(REPO_ROOT) not in sys.path:
 
 import scripts.run_codex_task as run_codex_task_module
 import app.execution.decision_engine as decision_engine_module
-from app.execution.decision_trace import build_decision_trace, summarize_context_reference
+from app.execution.decision_trace import (
+    build_decision_trace,
+    summarize_context_reference,
+)
 from app.execution.vendor_router import DEFAULT_VENDOR, route as route_vendor
 from control.context_store import (
     load_context,
@@ -438,7 +441,9 @@ def parse_command(command_text: str) -> dict[str, Any] | None:
         if not topic:
             return None
         task_payload = _build_linkedin_post_task(topic)
-        task_payload["command_name"] = f"linkedin post {' '.join(topic.lower().split())}"
+        task_payload["command_name"] = (
+            f"linkedin post {' '.join(topic.lower().split())}"
+        )
         task_payload["pipeline_route"] = "linkedin post"
         task_payload["print_linkedin_post"] = True
         return task_payload
@@ -507,7 +512,9 @@ def _parse_memory_command(command_text: str) -> tuple[str, str, str] | None:
     return None
 
 
-def write_task_file(task_payload: dict[str, Any], task_path: Path | None = None) -> Path:
+def write_task_file(
+    task_payload: dict[str, Any], task_path: Path | None = None
+) -> Path:
     output_path = task_path or TASK_OUTPUT_PATH
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(task_payload, indent=2) + "\n", encoding="utf-8")
@@ -601,7 +608,9 @@ def _analysis_from_artifact(artifact_path: Path) -> str:
 
 def _email_subject_from_artifact(artifact_path: Path) -> str:
     final_output = _final_output_from_artifact(artifact_path)
-    return str(final_output.get("source_subject") or final_output.get("subject") or "").strip()
+    return str(
+        final_output.get("source_subject") or final_output.get("subject") or ""
+    ).strip()
 
 
 def _email_sent_from_artifact(artifact_path: Path) -> bool:
@@ -643,14 +652,18 @@ def _tool_source_from_artifact(artifact_path: Path) -> str:
 
     tool_trace = payload.get("tool_trace")
     if isinstance(tool_trace, dict):
-        return str(tool_trace.get("tool_source") or tool_trace.get("source") or "").strip()
+        return str(
+            tool_trace.get("tool_source") or tool_trace.get("source") or ""
+        ).strip()
 
     pipeline_trace = payload.get("pipeline_trace")
     if isinstance(pipeline_trace, list):
         for step_trace in reversed(pipeline_trace):
             if not isinstance(step_trace, dict):
                 continue
-            tool_source = str(step_trace.get("tool_source") or step_trace.get("source") or "").strip()
+            tool_source = str(
+                step_trace.get("tool_source") or step_trace.get("source") or ""
+            ).strip()
             if tool_source:
                 return tool_source
     return ""
@@ -672,7 +685,10 @@ def _task_failure_reason(task_result: dict[str, Any], artifact_path: Path) -> st
     if isinstance(pipeline_trace, list):
         for step_trace in pipeline_trace:
             if isinstance(step_trace, dict) and step_trace.get("tool_ok") is False:
-                return str(step_trace.get("tool_error_code") or "").strip() or "PIPELINE_FAILURE"
+                return (
+                    str(step_trace.get("tool_error_code") or "").strip()
+                    or "PIPELINE_FAILURE"
+                )
 
     try:
         artifact_payload = _read_json(artifact_path)
@@ -718,7 +734,11 @@ def _record_command_state(
     failure_reason: str,
     state_path: Path | str | None = None,
 ) -> tuple[dict[str, Any], Path]:
-    result = "SUCCESS" if succeeded else str(failure_reason or "FAILURE").strip() or "FAILURE"
+    result = (
+        "SUCCESS"
+        if succeeded
+        else str(failure_reason or "FAILURE").strip() or "FAILURE"
+    )
     doc_id = _doc_id_from_url(doc_url) or _doc_id_from_artifact(artifact_path)
     return append_command_state(
         command_name=command_name,
@@ -774,7 +794,9 @@ def _failed_action_summary(
     action_name = _resolve_last_action(command_name, normalized_command)
     if not action_name:
         action_name = normalized_command or "execution"
-    normalized_reason = " ".join(str(failure_reason or "").split()).strip() or "execution failed"
+    normalized_reason = (
+        " ".join(str(failure_reason or "").split()).strip() or "execution failed"
+    )
     return f"{action_name}: failed ({normalized_reason})"
 
 
@@ -808,7 +830,9 @@ def _handle_context_command(command_type: str, mode: str = "") -> tuple[int, Any
     }
 
 
-def _handle_memory_command(command_type: str, value: str = "", reason: str = "") -> tuple[int, Any]:
+def _handle_memory_command(
+    command_type: str, value: str = "", reason: str = ""
+) -> tuple[int, Any]:
     if command_type == "show_memory":
         return 0, build_memory_snapshot()
 
@@ -903,8 +927,12 @@ def _write_success_project_state(
     return project_state_update
 
 
-def _memory_state_from_summary(memory_summary: dict[str, Any] | None = None) -> dict[str, str]:
-    summary = memory_summary if isinstance(memory_summary, dict) else _load_memory_summary()
+def _memory_state_from_summary(
+    memory_summary: dict[str, Any] | None = None,
+) -> dict[str, str]:
+    summary = (
+        memory_summary if isinstance(memory_summary, dict) else _load_memory_summary()
+    )
     return {
         "core_status": str(summary.get("core_status") or "").strip(),
         "operating_phase": str(summary.get("operating_phase") or "").strip(),
@@ -937,7 +965,9 @@ def _normalize_output_contract(
         "result": candidate_payload.get("result", result),
         "execution_trace": {
             "execution_id": str(
-                candidate_trace.get("execution_id") or execution_id or _timestamp_task_id()
+                candidate_trace.get("execution_id")
+                or execution_id
+                or _timestamp_task_id()
             ),
             "memory_state": _memory_state_from_summary(
                 memory_summary
@@ -1085,7 +1115,9 @@ def _verify_planned_step(
         error_payload = dict(execution_result.get("error") or {})
         return {
             "valid": False,
-            "error": str(error_payload.get("message") or "ROLE_EXECUTION_FAILED").strip()
+            "error": str(
+                error_payload.get("message") or "ROLE_EXECUTION_FAILED"
+            ).strip()
             or "ROLE_EXECUTION_FAILED",
             "retry_hint": "retry once",
         }
@@ -1164,7 +1196,9 @@ def _execute_role_pipeline(
             step_trace["attempts"].append(
                 {
                     "attempt": attempt,
-                    "executor_status": str(execution_result.get("status") or "").strip(),
+                    "executor_status": str(
+                        execution_result.get("status") or ""
+                    ).strip(),
                     "verifier_status": "pass" if verification["valid"] else "fail",
                     "error": str(verification.get("error") or "").strip(),
                     "retry_hint": str(verification.get("retry_hint") or "").strip(),
@@ -1178,8 +1212,12 @@ def _execute_role_pipeline(
         if step_trace["status"] != "passed":
             role_trace["verifier"] = {
                 "status": "failed",
-                "error": str(verification.get("error") or "ROLE_VERIFICATION_FAILED").strip(),
-                "retry_hint": str(verification.get("retry_hint") or "retry once").strip(),
+                "error": str(
+                    verification.get("error") or "ROLE_VERIFICATION_FAILED"
+                ).strip(),
+                "retry_hint": str(
+                    verification.get("retry_hint") or "retry once"
+                ).strip(),
             }
             return (
                 False,
@@ -1238,7 +1276,9 @@ def _execute_task_request(
                 system_context=system_context,
             )
         else:
-            succeeded, doc_url, artifact_path, failure_reason = execute_command_task_with_retry(task_path)
+            succeeded, doc_url, artifact_path, failure_reason = (
+                execute_command_task_with_retry(task_path)
+            )
     except Exception as error:
         failure_reason = str(error).strip() or "COMMAND_EXECUTION_FAILED"
         execution_state.update(
@@ -1356,7 +1396,9 @@ def _command_decision_trace(
             task_payload=task_payload,
         ),
         action_type=normalized_command,
-        policy_result="allowed: context loaded and command routed" if success else f"blocked: {normalized_reason or 'execution failed'}",
+        policy_result="allowed: context loaded and command routed"
+        if success
+        else f"blocked: {normalized_reason or 'execution failed'}",
         confidence="high" if success else "medium",
         vendor=vendor,
     )
@@ -1523,7 +1565,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             decision_engine_module.decide(task_payload, decision_context),
             expected_task_id=str(task_payload.get("task_id", "")).strip(),
         )
-        action_plan["vendor"] = route_vendor(task_payload, decision_context, action_plan)
+        action_plan["vendor"] = route_vendor(
+            task_payload, decision_context, action_plan
+        )
         action_plan = decision_engine_module.validate_action_plan(
             action_plan,
             expected_task_id=str(task_payload.get("task_id", "")).strip(),
@@ -1572,15 +1616,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             task_payload=task_payload,
             success=False,
             failure_reason=failure_reason,
-            vendor=str(action_plan.get("vendor") or DEFAULT_VENDOR).strip() or DEFAULT_VENDOR,
+            vendor=str(action_plan.get("vendor") or DEFAULT_VENDOR).strip()
+            or DEFAULT_VENDOR,
         )
         _record_system_context_execution_summary(
             _failed_action_summary(command_name, normalized_command, failure_reason)
             + f" | {failure_trace['reason']}"
         )
-        failure_tool_source = "fallback" if bool(execution_state.get("fallback_error")) else str(
-            execution_state.get("planned_tool_source") or ""
-        ).strip()
+        failure_tool_source = (
+            "fallback"
+            if bool(execution_state.get("fallback_error"))
+            else str(execution_state.get("planned_tool_source") or "").strip()
+        )
         return _emit_error_output(
             failure_reason,
             memory_summary=output_memory_summary,
@@ -1606,7 +1653,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         context_summary=context_summary,
         task_payload=task_payload,
         success=True,
-        vendor=str(action_plan.get("vendor") or DEFAULT_VENDOR).strip() or DEFAULT_VENDOR,
+        vendor=str(action_plan.get("vendor") or DEFAULT_VENDOR).strip()
+        or DEFAULT_VENDOR,
     )
     result_payload = _build_task_output_payload(
         result,

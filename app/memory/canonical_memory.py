@@ -53,7 +53,9 @@ def _normalize_memory_id(value: object, *, field_name: str) -> str:
     return normalized
 
 
-def _normalize_identifier(value: object, *, field_name: str, required: bool = False) -> str | None:
+def _normalize_identifier(
+    value: object, *, field_name: str, required: bool = False
+) -> str | None:
     normalized = _normalize_text(value)
     if not normalized:
         if required:
@@ -79,7 +81,9 @@ def _normalize_enum(
 
 def _normalize_payload(value: object) -> dict[str, Any]:
     if isinstance(value, Mapping):
-        return {str(key).strip(): value[key] for key in sorted(value) if str(key).strip()}
+        return {
+            str(key).strip(): value[key] for key in sorted(value) if str(key).strip()
+        }
     raise CanonicalMemoryError("structured_payload must be a mapping")
 
 
@@ -134,7 +138,9 @@ def build_audit_metadata(
         "source_type": normalized_source_type,
         "source_ref": normalized_source_ref,
         "prior_memory_id": (
-            _normalize_memory_id(prior_memory_id, field_name="audit_metadata.prior_memory_id")
+            _normalize_memory_id(
+                prior_memory_id, field_name="audit_metadata.prior_memory_id"
+            )
             if _normalize_text(prior_memory_id)
             else None
         ),
@@ -237,16 +243,28 @@ class MemoryObject:
             "subject_ref",
             _normalize_identifier(self.subject_ref, field_name="subject_ref"),
         )
-        object.__setattr__(self, "content_summary", _normalize_text(self.content_summary))
-        object.__setattr__(self, "structured_payload", _normalize_payload(self.structured_payload))
+        object.__setattr__(
+            self, "content_summary", _normalize_text(self.content_summary)
+        )
+        object.__setattr__(
+            self, "structured_payload", _normalize_payload(self.structured_payload)
+        )
         object.__setattr__(
             self,
             "status",
-            _normalize_enum(self.status, field_name="status", allowed=SUPPORTED_STATUSES),
+            _normalize_enum(
+                self.status, field_name="status", allowed=SUPPORTED_STATUSES
+            ),
         )
-        object.__setattr__(self, "created_at", _normalize_text(self.created_at) or utc_timestamp())
-        object.__setattr__(self, "updated_at", _normalize_text(self.updated_at) or self.created_at)
-        resolved_source_trace_id = self.source_trace_id or f"trace:{_normalize_text(self.source_ref)}"
+        object.__setattr__(
+            self, "created_at", _normalize_text(self.created_at) or utc_timestamp()
+        )
+        object.__setattr__(
+            self, "updated_at", _normalize_text(self.updated_at) or self.created_at
+        )
+        resolved_source_trace_id = (
+            self.source_trace_id or f"trace:{_normalize_text(self.source_ref)}"
+        )
         object.__setattr__(
             self,
             "source_trace_id",
@@ -259,7 +277,8 @@ class MemoryObject:
         object.__setattr__(
             self,
             "evidence_ref",
-            _normalize_text(self.evidence_ref) or f"evidence:{_normalize_text(self.source_ref)}",
+            _normalize_text(self.evidence_ref)
+            or f"evidence:{_normalize_text(self.source_ref)}",
         )
         object.__setattr__(self, "version", _normalize_version(self.version))
         object.__setattr__(
@@ -279,12 +298,16 @@ class MemoryObject:
         object.__setattr__(
             self,
             "trust_class",
-            _normalize_identifier(self.trust_class, field_name="trust_class", required=True),
+            _normalize_identifier(
+                self.trust_class, field_name="trust_class", required=True
+            ),
         )
         object.__setattr__(
             self,
             "source_type",
-            _normalize_identifier(self.source_type, field_name="source_type", required=True),
+            _normalize_identifier(
+                self.source_type, field_name="source_type", required=True
+            ),
         )
         object.__setattr__(self, "source_ref", _normalize_text(self.source_ref))
         object.__setattr__(
@@ -387,7 +410,9 @@ class MemoryFact(MemoryObject):
     def __post_init__(self) -> None:
         super().__post_init__()
         if not self.structured_payload.get("fact_key"):
-            raise CanonicalMemoryError("fact memory requires structured_payload.fact_key")
+            raise CanonicalMemoryError(
+                "fact memory requires structured_payload.fact_key"
+            )
 
 
 class MemoryDecision(MemoryObject):
@@ -473,11 +498,15 @@ def memory_object_from_mapping(payload: Mapping[str, Any]) -> MemoryObject:
         "structured_payload": payload.get("structured_payload") or {},
         "status": payload.get("status") or "active",
         "created_at": payload.get("created_at") or utc_timestamp(),
-        "updated_at": payload.get("updated_at") or payload.get("created_at") or utc_timestamp(),
+        "updated_at": payload.get("updated_at")
+        or payload.get("created_at")
+        or utc_timestamp(),
         "source_trace_id": payload.get("source_trace_id") or payload.get("source_ref"),
         "evidence_ref": payload.get("evidence_ref") or payload.get("source_ref"),
         "version": payload.get("version") or 1,
-        "confidence": payload.get("confidence") if payload.get("confidence") is not None else 1.0,
+        "confidence": payload.get("confidence")
+        if payload.get("confidence") is not None
+        else 1.0,
         "trust_level": payload.get("trust_level") or "validated",
         "trust_class": payload.get("trust_class") or "governed",
         "source_type": payload.get("source_type"),

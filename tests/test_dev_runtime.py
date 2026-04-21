@@ -20,7 +20,9 @@ def test_preferred_dev_runtime_defaults_to_wsl_on_windows(monkeypatch) -> None:
 
 def test_normalize_path_for_dev_env_converts_windows_paths() -> None:
     assert (
-        dev_runtime.normalize_path_for_dev_env(r"D:\digital_foreman\scripts\run_codex_task.py")
+        dev_runtime.normalize_path_for_dev_env(
+            r"D:\digital_foreman\scripts\run_codex_task.py"
+        )
         == "/mnt/d/digital_foreman/scripts/run_codex_task.py"
     )
 

@@ -1,13 +1,20 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from collections.abc import Callable
 from pathlib import Path
 from typing import TypedDict
 
-from app.execution.lead_estimate_contract import build_action_payload, build_decision_payload
+from app.execution.lead_estimate_contract import (
+    build_action_payload,
+    build_decision_payload,
+)
 from app.execution.paths import OUTPUT_DIR, ROOT_DIR
-from runtime.system_log import log_event, log_task_binding_result, log_task_workflow_decision
+from runtime.system_log import (
+    log_event,
+    log_task_binding_result,
+    log_task_workflow_decision,
+)
 
 
 REAL_LEAD_RUN_REPORT_FILE = OUTPUT_DIR / "reports" / "real_lead_run_report.json"
@@ -40,8 +47,12 @@ def validate_reporting_payload(payload: object) -> ReportingPayload:
         raise ValueError("reporting_payload.action_payload must be a dict")
     return {
         "task_id": str(payload.get("task_id") or "").strip(),
-        "decision_payload": build_decision_payload(dict(payload.get("decision_payload") or {})),
-        "action_payload": build_action_payload(dict(payload.get("action_payload") or {})),
+        "decision_payload": build_decision_payload(
+            dict(payload.get("decision_payload") or {})
+        ),
+        "action_payload": build_action_payload(
+            dict(payload.get("action_payload") or {})
+        ),
     }
 
 
@@ -50,7 +61,11 @@ def write_real_lead_report(
     *,
     output_path: Path | None = None,
 ) -> Path:
-    target = Path(output_path) if output_path is not None else ROOT_DIR / REAL_LEAD_RUN_REPORT_FILE
+    target = (
+        Path(output_path)
+        if output_path is not None
+        else ROOT_DIR / REAL_LEAD_RUN_REPORT_FILE
+    )
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return target
@@ -110,7 +125,9 @@ def _execution_result_marker(execution_result: dict[str, object]) -> str:
     if normalized_result_type:
         return normalized_result_type
 
-    normalized_action_type = str(execution_result.get("action_type", "")).strip().lower()
+    normalized_action_type = (
+        str(execution_result.get("action_type", "")).strip().lower()
+    )
     if normalized_action_type == "new_lead":
         return "lead_intake"
     return normalized_action_type
@@ -133,6 +150,8 @@ def store_execution_result_summary(
         {
             "task_id": str(task_id or "").strip(),
             "result_type": result_type,
-            "result_summary": str(execution_result.get("diagnostic_message", "")).strip(),
+            "result_summary": str(
+                execution_result.get("diagnostic_message", "")
+            ).strip(),
         }
     )

@@ -80,7 +80,9 @@ def test_ownerbox_artifact_can_be_saved_loaded_and_archived(
     loaded = storage_adapter.load_artifact("ownerbox", saved_path)
     archived_path = storage_adapter.archive_artifact("ownerbox", saved_path)
 
-    assert saved_path == tmp_path / "ownerbox" / "artifacts" / "task_renew-insurance.json"
+    assert (
+        saved_path == tmp_path / "ownerbox" / "artifacts" / "task_renew-insurance.json"
+    )
     assert loaded["id"] == "renew-insurance"
     assert loaded["domain"] == "ownerbox"
     assert loaded["type"] == "task"
@@ -107,7 +109,9 @@ def test_dev_artifact_can_be_saved_and_loaded(
     )
     loaded = storage_adapter.load_artifact("dev", saved_path)
 
-    assert saved_path == tmp_path / "df-dev" / "artifacts" / "report_baseline-check.json"
+    assert (
+        saved_path == tmp_path / "df-dev" / "artifacts" / "report_baseline-check.json"
+    )
     assert loaded["domain"] == "dev"
     assert loaded["payload"]["summary"] == "Dev contour baseline report."
 
@@ -127,7 +131,9 @@ def test_cross_domain_access_is_rejected(
         },
     )
 
-    with pytest.raises(storage_adapter.BoundaryViolationError, match="outside the allowed namespace"):
+    with pytest.raises(
+        storage_adapter.BoundaryViolationError, match="outside the allowed namespace"
+    ):
         storage_adapter.load_artifact("dev", ownerbox_path)
 
 
@@ -141,7 +147,9 @@ def test_invalid_domain_and_missing_artifact_raise_clear_exceptions(
         storage_adapter.resolve_path("qa", "task")
 
     missing_path = tmp_path / "ownerbox" / "artifacts" / "task_missing.json"
-    with pytest.raises(storage_adapter.ArtifactNotFoundError, match="Artifact not found"):
+    with pytest.raises(
+        storage_adapter.ArtifactNotFoundError, match="Artifact not found"
+    ):
         storage_adapter.load_artifact("ownerbox", missing_path)
 
 
@@ -209,7 +217,9 @@ def test_dev_opencloud_is_export_only(
     )
 
     with pytest.raises(storage_adapter.BoundaryViolationError, match="export-only"):
-        storage_adapter.fetch_from_opencloud("dev", "exports/dev/report_baseline-check.json")
+        storage_adapter.fetch_from_opencloud(
+            "dev", "exports/dev/report_baseline-check.json"
+        )
 
 
 def test_save_artifact_uploads_to_webdav_when_enabled(
@@ -336,7 +346,7 @@ def test_upload_to_webdav_uses_basic_auth(
     monkeypatch.setenv("WEBDEV_PASSWORD", "test-password")
 
     local_file = tmp_path / "artifact.json"
-    local_file.write_text("{\"ok\":true}\n", encoding="utf-8")
+    local_file.write_text('{"ok":true}\n', encoding="utf-8")
     captured: dict[str, object] = {}
 
     class DummyResponse:
@@ -354,6 +364,9 @@ def test_upload_to_webdav_uses_basic_auth(
     remote_path = storage_adapter.upload_to_webdav(local_file, "DF/dev/artifact.json")
 
     assert remote_path == "DF/dev/artifact.json"
-    assert captured["url"] == "http://localhost:8080/remote.php/dav/files/admin/DF/dev/artifact.json"
+    assert (
+        captured["url"]
+        == "http://localhost:8080/remote.php/dav/files/admin/DF/dev/artifact.json"
+    )
     assert captured["auth"] == ("admin", "test-password")
-    assert captured["body"] == b"{\"ok\":true}\n"
+    assert captured["body"] == b'{"ok":true}\n'

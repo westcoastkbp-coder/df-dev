@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -10,10 +10,14 @@ from app.execution.action_result import build_action_result
 from app.orchestrator.task_factory import get_task, load_tasks, save_task
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 from app.system.analyzer import ensure_gap_priority_metadata
 from app.system.gap_tasks import ingest_system_gaps
 
@@ -21,10 +25,14 @@ from app.system.gap_tasks import ingest_system_gaps
 def test_system_stability_rerun_v2(tmp_path: Path) -> None:
     store_path = tmp_path / "data" / "tasks.json"
     task_state_store_module.ROOT_DIR = tmp_path
-    task_state_store_module.TASK_STATE_DB_FILE = Path("runtime/state/task_state.sqlite3")
+    task_state_store_module.TASK_STATE_DB_FILE = Path(
+        "runtime/state/task_state.sqlite3"
+    )
     task_factory_module.TASK_SYSTEM_FILE = store_path
     task_factory_module.clear_task_runtime_store()
-    task_queue_module.TASK_QUEUE_FILE = tmp_path / "runtime" / "state" / "task_queue.json"
+    task_queue_module.TASK_QUEUE_FILE = (
+        tmp_path / "runtime" / "state" / "task_queue.json"
+    )
     task_queue_module.TASK_LOG_FILE = tmp_path / "runtime" / "logs" / "tasks.log"
     queue = InMemoryTaskQueue()
 
@@ -106,7 +114,8 @@ def test_system_stability_rerun_v2(tmp_path: Path) -> None:
         {
             task["task_id"]
             for task in created
-            if "Core-impact regression" in str(task.get("payload", {}).get("problem", ""))
+            if "Core-impact regression"
+            in str(task.get("payload", {}).get("problem", ""))
         }
     ):
         task = get_task(task_id, store_path=store_path)
@@ -122,7 +131,9 @@ def test_system_stability_rerun_v2(tmp_path: Path) -> None:
             task_id=task_data.get("task_id"),
             action_type=str(task_data.get("intent", "")).strip().upper(),
             result_payload={
-                "summary": str(dict(task_data.get("payload", {}) or {}).get("summary", "")).strip(),
+                "summary": str(
+                    dict(task_data.get("payload", {}) or {}).get("summary", "")
+                ).strip(),
             },
             error_code="",
             error_message="",
@@ -157,7 +168,9 @@ def test_system_stability_rerun_v2(tmp_path: Path) -> None:
 
     persisted_tasks = load_tasks(store_path)
     unique_created_task_ids = {str(task.get("task_id", "")).strip() for task in created}
-    persisted_task_ids = [str(task.get("task_id", "")).strip() for task in persisted_tasks]
+    persisted_task_ids = [
+        str(task.get("task_id", "")).strip() for task in persisted_tasks
+    ]
     queued_ids = queue.queued_task_ids()
 
     policy_violations = any(
@@ -166,10 +179,9 @@ def test_system_stability_rerun_v2(tmp_path: Path) -> None:
         for task in persisted_tasks
     ) or bool(execution_failures)
 
-    duplicates_detected = (
-        len(persisted_task_ids) != len(set(persisted_task_ids))
-        or len(queued_ids) != len(set(queued_ids))
-    )
+    duplicates_detected = len(persisted_task_ids) != len(
+        set(persisted_task_ids)
+    ) or len(queued_ids) != len(set(queued_ids))
 
     system_stable = (
         len(gaps) == 50
@@ -177,7 +189,10 @@ def test_system_stability_rerun_v2(tmp_path: Path) -> None:
         and not duplicates_detected
         and not policy_violations
         and queue.is_idle()
-        and all(str(task.get("status", "")).strip().upper() != "FAILED" for task in persisted_tasks)
+        and all(
+            str(task.get("status", "")).strip().upper() != "FAILED"
+            for task in persisted_tasks
+        )
     )
 
     summary = {
@@ -203,4 +218,3 @@ def test_system_stability_rerun_v2(tmp_path: Path) -> None:
     assert summary["system_stable"] is True
     assert summary["policy_violations"] is False
     assert summary["PASS / FAIL"] == "PASS"
-

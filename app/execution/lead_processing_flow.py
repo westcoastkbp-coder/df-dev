@@ -108,7 +108,9 @@ def decide_next_step(lead_data: Mapping[str, object]) -> dict[str, object]:
     }
 
 
-def _decision_trace(task_id: str, lead_data: Mapping[str, object], decision: Mapping[str, object]) -> dict[str, str]:
+def _decision_trace(
+    task_id: str, lead_data: Mapping[str, object], decision: Mapping[str, object]
+) -> dict[str, str]:
     vendor = route_vendor(
         {"task_id": task_id, "payload": dict(lead_data)},
         {},
@@ -165,7 +167,9 @@ def _execute_action(
                 "provider_result": dict(provider_result),
             },
             error_code="" if success else "lead_processing_action_failed",
-            error_message="" if success else _normalize_text(provider_result.get("error")),
+            error_message=""
+            if success
+            else _normalize_text(provider_result.get("error")),
             source="app.execution.lead_processing_flow",
             decision_trace=dict(decision_trace),
         )
@@ -265,7 +269,8 @@ def run_lead_processing_flow(
     else:
         task = task_store.fail_task(
             task_id,
-            error=_normalize_text(action_result.get("error_message")) or "lead processing failed",
+            error=_normalize_text(action_result.get("error_message"))
+            or "lead processing failed",
             result=final_result,
             decision_trace=action_result.get("decision_trace"),
             store_path=store_path,

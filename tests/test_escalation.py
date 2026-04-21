@@ -39,7 +39,9 @@ def _read_jsonl(path: Path) -> list[dict[str, object]]:
     ]
 
 
-def _build_validated_task(store_path: Path, *, task_id: str, priority: str = "NORMAL") -> dict[str, object]:
+def _build_validated_task(
+    store_path: Path, *, task_id: str, priority: str = "NORMAL"
+) -> dict[str, object]:
     task = task_factory_module.create_task(
         {
             "task_id": task_id,
@@ -68,7 +70,9 @@ def test_invalid_action_result_triggers_escalation(monkeypatch, tmp_path: Path) 
     executed = run_execution(
         dict(task),
         now=lambda: "2026-04-05T00:00:00Z",
-        persist=lambda task_data: task_factory_module.save_task(task_data, store_path=store_path),
+        persist=lambda task_data: task_factory_module.save_task(
+            task_data, store_path=store_path
+        ),
         executor=invalid_executor,
     )
 
@@ -79,7 +83,10 @@ def test_invalid_action_result_triggers_escalation(monkeypatch, tmp_path: Path) 
         "reason": "invalid_action_result",
         "severity": "critical",
     }
-    assert _read_jsonl(log_file)[0]["details"] == executed["runtime_verdict"]["escalation_signal"]
+    assert (
+        _read_jsonl(log_file)[0]["details"]
+        == executed["runtime_verdict"]["escalation_signal"]
+    )
 
 
 def test_normal_failure_does_not_trigger_escalation() -> None:
@@ -112,12 +119,16 @@ def test_identical_runs_produce_same_escalation() -> None:
     first = escalation_module.decide_escalation_action(task, reason="execution failed")
     second = escalation_module.decide_escalation_action(task, reason="execution failed")
 
-    assert first == second == {
-        "action": "escalate",
-        "signal": {
-            "status": "escalation_required",
-            "task_id": "DF-ESCALATE-REPEAT-V1",
-            "reason": "repeated_task_failure",
-            "severity": "medium",
-        },
-    }
+    assert (
+        first
+        == second
+        == {
+            "action": "escalate",
+            "signal": {
+                "status": "escalation_required",
+                "task_id": "DF-ESCALATE-REPEAT-V1",
+                "reason": "repeated_task_failure",
+                "severity": "medium",
+            },
+        }
+    )

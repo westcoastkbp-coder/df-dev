@@ -12,7 +12,9 @@ from integrations.claude_tool import (
 )
 
 
-def _validated_task_and_context(input_payload: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+def _validated_task_and_context(
+    input_payload: dict[str, Any],
+) -> tuple[str, dict[str, Any]]:
     if not isinstance(input_payload, dict):
         raise RuntimeError("Claude web operator input must be an object.")
 

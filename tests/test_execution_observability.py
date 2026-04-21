@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -11,10 +11,14 @@ import app.policy.policy_gate as policy_gate_module
 import runtime.system_log as system_log_module
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 
 
 def _configure_runtime(monkeypatch, tmp_path: Path) -> Path:
@@ -45,8 +49,7 @@ def _build_task(
             "status": "created",
             "intent": intent,
             "payload": payload,
-        }
-        ,
+        },
         store_path=store_path,
     )
     task["intent"] = intent
@@ -192,4 +195,3 @@ def test_failure_trace_logs_failed_step(monkeypatch, tmp_path: Path) -> None:
     assert trace["run_id"] == "DF-TRACE-FAIL-V1"
     assert [step["step_name"] for step in trace["step_sequence"]] == ["input_validated"]
     assert trace["step_sequence"][0]["result_status"] == "fail"
-

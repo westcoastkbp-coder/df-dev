@@ -15,7 +15,9 @@ ACTION_RESULT_SCHEMA_VERSION = "v1"
 ACTION_EXECUTION_MODES = {"dry_run", "live"}
 ACTION_CONFIRMATION_POLICIES = {"required", "not_required"}
 ACTION_RESULT_STATUSES = {"success", "failed", "blocked"}
-KNOWN_ACTION_TYPES = frozenset(sorted(ALLOWED_ACTION_TYPES | ALLOWED_EXTERNAL_ACTION_TYPES))
+KNOWN_ACTION_TYPES = frozenset(
+    sorted(ALLOWED_ACTION_TYPES | ALLOWED_EXTERNAL_ACTION_TYPES)
+)
 _IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9._:@-]+$")
 _ACTION_REQUIRED_FIELDS = {
     "action_id",
@@ -99,9 +101,13 @@ def _bounded_text(value: object, *, field_name: str) -> str:
 def _validate_timestamp(value: object, *, field_name: str) -> str:
     normalized = _bounded_text(value, field_name=field_name)
     try:
-        datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(timezone.utc)
+        datetime.fromisoformat(normalized.replace("Z", "+00:00")).astimezone(
+            timezone.utc
+        )
     except ValueError as exc:
-        raise ActionContractViolation(f"{field_name} must be a valid ISO-8601 timestamp") from exc
+        raise ActionContractViolation(
+            f"{field_name} must be a valid ISO-8601 timestamp"
+        ) from exc
     return normalized
 
 
@@ -137,7 +143,9 @@ def _bounded_json_like(
         return value
     if isinstance(value, float):
         if not math.isfinite(value):
-            raise ActionContractViolation(f"{field_name} must contain only finite numbers")
+            raise ActionContractViolation(
+                f"{field_name} must contain only finite numbers"
+            )
         return value
     if isinstance(value, str):
         if len(value) > _MAX_STRING_LENGTH:
@@ -159,7 +167,9 @@ def _bounded_json_like(
         if len(value) > _MAX_SEQUENCE_ITEMS:
             raise ActionContractViolation(f"{field_name} exceeds max array size")
         return [
-            _bounded_json_like(item, field_name=f"{field_name}[{index}]", depth=depth + 1)
+            _bounded_json_like(
+                item, field_name=f"{field_name}[{index}]", depth=depth + 1
+            )
             for index, item in enumerate(value)
         ]
     raise ActionContractViolation(f"{field_name} must contain only JSON-safe values")
@@ -191,17 +201,27 @@ def _validate_action_parameters(
 def validate_action_contract(payload: object) -> dict[str, object]:
     if not isinstance(payload, dict):
         raise ActionContractViolation("action contract must be a dict")
-    _validate_known_fields(payload, required_fields=_ACTION_REQUIRED_FIELDS, contract_name="action contract")
+    _validate_known_fields(
+        payload,
+        required_fields=_ACTION_REQUIRED_FIELDS,
+        contract_name="action contract",
+    )
 
-    schema_version = _bounded_text(payload.get("schema_version"), field_name="schema_version")
+    schema_version = _bounded_text(
+        payload.get("schema_version"), field_name="schema_version"
+    )
     if schema_version != ACTION_CONTRACT_SCHEMA_VERSION:
         raise ActionContractViolation(f"unsupported schema_version: {schema_version}")
 
-    action_type = _stable_identifier(payload.get("action_type"), field_name="action_type").upper()
+    action_type = _stable_identifier(
+        payload.get("action_type"), field_name="action_type"
+    ).upper()
     if action_type not in KNOWN_ACTION_TYPES:
         raise ActionContractViolation(f"unsupported action_type: {action_type}")
 
-    execution_mode = _bounded_text(payload.get("execution_mode"), field_name="execution_mode").lower()
+    execution_mode = _bounded_text(
+        payload.get("execution_mode"), field_name="execution_mode"
+    ).lower()
     if execution_mode not in ACTION_EXECUTION_MODES:
         raise ActionContractViolation(f"unsupported execution_mode: {execution_mode}")
 
@@ -210,7 +230,9 @@ def validate_action_contract(payload: object) -> dict[str, object]:
         field_name="confirmation_policy",
     ).lower()
     if confirmation_policy not in ACTION_CONFIRMATION_POLICIES:
-        raise ActionContractViolation(f"unsupported confirmation_policy: {confirmation_policy}")
+        raise ActionContractViolation(
+            f"unsupported confirmation_policy: {confirmation_policy}"
+        )
 
     parameters = payload.get("parameters")
     if not isinstance(parameters, dict):
@@ -220,16 +242,28 @@ def validate_action_contract(payload: object) -> dict[str, object]:
         raise ActionContractViolation("parameters must be a dict")
 
     return {
-        "action_id": _stable_identifier(payload.get("action_id"), field_name="action_id"),
+        "action_id": _stable_identifier(
+            payload.get("action_id"), field_name="action_id"
+        ),
         "action_type": action_type,
-        "target_type": _stable_identifier(payload.get("target_type"), field_name="target_type").lower(),
+        "target_type": _stable_identifier(
+            payload.get("target_type"), field_name="target_type"
+        ).lower(),
         "target_ref": _bounded_text(payload.get("target_ref"), field_name="target_ref"),
-        "parameters": _validate_action_parameters(action_type, dict(normalized_parameters)),
+        "parameters": _validate_action_parameters(
+            action_type, dict(normalized_parameters)
+        ),
         "execution_mode": execution_mode,
         "confirmation_policy": confirmation_policy,
-        "idempotency_key": _stable_identifier(payload.get("idempotency_key"), field_name="idempotency_key"),
-        "requested_by": _bounded_text(payload.get("requested_by"), field_name="requested_by"),
-        "timestamp": _validate_timestamp(payload.get("timestamp"), field_name="timestamp"),
+        "idempotency_key": _stable_identifier(
+            payload.get("idempotency_key"), field_name="idempotency_key"
+        ),
+        "requested_by": _bounded_text(
+            payload.get("requested_by"), field_name="requested_by"
+        ),
+        "timestamp": _validate_timestamp(
+            payload.get("timestamp"), field_name="timestamp"
+        ),
         "schema_version": schema_version,
     }
 
@@ -274,7 +308,9 @@ def validate_action_result_contract(payload: object) -> dict[str, object]:
         contract_name="action result contract",
     )
 
-    schema_version = _bounded_text(payload.get("schema_version"), field_name="schema_version")
+    schema_version = _bounded_text(
+        payload.get("schema_version"), field_name="schema_version"
+    )
     if schema_version != ACTION_RESULT_SCHEMA_VERSION:
         raise ActionContractViolation(f"unsupported schema_version: {schema_version}")
 
@@ -294,13 +330,19 @@ def validate_action_result_contract(payload: object) -> dict[str, object]:
         )
 
     return {
-        "action_id": _stable_identifier(payload.get("action_id"), field_name="action_id"),
+        "action_id": _stable_identifier(
+            payload.get("action_id"), field_name="action_id"
+        ),
         "status": status,
-        "result_type": _stable_identifier(payload.get("result_type"), field_name="result_type").lower(),
+        "result_type": _stable_identifier(
+            payload.get("result_type"), field_name="result_type"
+        ).lower(),
         "payload": _bounded_json_like(result_payload, field_name="payload"),
         "error_code": error_code,
         "error_message": error_message,
-        "timestamp": _validate_timestamp(payload.get("timestamp"), field_name="timestamp"),
+        "timestamp": _validate_timestamp(
+            payload.get("timestamp"), field_name="timestamp"
+        ),
         "schema_version": schema_version,
     }
 
@@ -355,7 +397,10 @@ def precheck_action_contract(
             "action": normalized_action,
         }
 
-    if normalized_action["confirmation_policy"] == "required" and not confirmation_received:
+    if (
+        normalized_action["confirmation_policy"] == "required"
+        and not confirmation_received
+    ):
         return {
             "allowed": False,
             "status": "blocked",

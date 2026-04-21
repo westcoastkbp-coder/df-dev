@@ -3,11 +3,21 @@ from __future__ import annotations
 import pytest
 
 import app.adapters.browser_adapter as browser_adapter_module
-from app.adapters.browser_adapter import BrowserAdapterError, BrowserExecution, execute_browser_action
-from app.execution.action_contract import ActionContractViolation, validate_action_contract, validate_action_result_contract
+from app.adapters.browser_adapter import (
+    BrowserAdapterError,
+    BrowserExecution,
+    execute_browser_action,
+)
+from app.execution.action_contract import (
+    ActionContractViolation,
+    validate_action_contract,
+    validate_action_result_contract,
+)
 
 
-def _valid_browser_action_contract(*, operation: str = "open_page", execution_mode: str = "live") -> dict[str, object]:
+def _valid_browser_action_contract(
+    *, operation: str = "open_page", execution_mode: str = "live"
+) -> dict[str, object]:
     parameters: dict[str, object] = {
         "operation": operation,
         "url": "https://example.com/form",
@@ -38,16 +48,23 @@ class StubBrowserRuntime:
         self.calls: list[tuple[str, dict[str, object]]] = []
 
     def open_page(self, *, url: str, timeout_seconds: int) -> BrowserExecution:
-        self.calls.append(("open_page", {"url": url, "timeout_seconds": timeout_seconds}))
+        self.calls.append(
+            ("open_page", {"url": url, "timeout_seconds": timeout_seconds})
+        )
         return BrowserExecution(
             result_type="browser_open",
             summary=f"Opened {url}",
             references={"url": url},
         )
 
-    def extract_text(self, *, url: str, selector: str, timeout_seconds: int) -> BrowserExecution:
+    def extract_text(
+        self, *, url: str, selector: str, timeout_seconds: int
+    ) -> BrowserExecution:
         self.calls.append(
-            ("extract_text", {"url": url, "selector": selector, "timeout_seconds": timeout_seconds})
+            (
+                "extract_text",
+                {"url": url, "selector": selector, "timeout_seconds": timeout_seconds},
+            )
         )
         return BrowserExecution(
             result_type="browser_extract",
@@ -80,9 +97,14 @@ class StubBrowserRuntime:
             references={"url": url, "selector": selector, "field_count": len(fields)},
         )
 
-    def click_element(self, *, url: str, selector: str, timeout_seconds: int) -> BrowserExecution:
+    def click_element(
+        self, *, url: str, selector: str, timeout_seconds: int
+    ) -> BrowserExecution:
         self.calls.append(
-            ("click_element", {"url": url, "selector": selector, "timeout_seconds": timeout_seconds})
+            (
+                "click_element",
+                {"url": url, "selector": selector, "timeout_seconds": timeout_seconds},
+            )
         )
         return BrowserExecution(
             result_type="browser_click",
@@ -90,9 +112,14 @@ class StubBrowserRuntime:
             references={"url": url, "selector": selector},
         )
 
-    def submit_form(self, *, url: str, selector: str, timeout_seconds: int) -> BrowserExecution:
+    def submit_form(
+        self, *, url: str, selector: str, timeout_seconds: int
+    ) -> BrowserExecution:
         self.calls.append(
-            ("submit_form", {"url": url, "selector": selector, "timeout_seconds": timeout_seconds})
+            (
+                "submit_form",
+                {"url": url, "selector": selector, "timeout_seconds": timeout_seconds},
+            )
         )
         return BrowserExecution(
             result_type="browser_submit",
@@ -119,7 +146,9 @@ def test_invalid_browser_operation_rejected() -> None:
     payload = _valid_browser_action_contract()
     payload["parameters"] = {"operation": "hover", "url": "https://example.com/form"}
 
-    with pytest.raises(ActionContractViolation, match="unsupported browser operation: hover"):
+    with pytest.raises(
+        ActionContractViolation, match="unsupported browser operation: hover"
+    ):
         validate_action_contract(payload)
 
 
@@ -136,7 +165,9 @@ def test_malformed_browser_params_rejected() -> None:
     assert validate_action_result_contract(result) == result
     assert result["status"] == "failed"
     assert result["error_code"] == "validation_error"
-    assert result["error_message"] == "parameters.selector contains unsupported characters"
+    assert (
+        result["error_message"] == "parameters.selector contains unsupported characters"
+    )
 
 
 def test_browser_dry_run_does_not_execute_runtime() -> None:
@@ -158,16 +189,22 @@ def test_browser_dry_run_does_not_resolve_live_backend(monkeypatch) -> None:
     monkeypatch.setattr(
         browser_adapter_module,
         "_build_default_browser_runtime",
-        lambda config: (_ for _ in ()).throw(AssertionError("live backend must not be resolved")),
+        lambda config: (_ for _ in ()).throw(
+            AssertionError("live backend must not be resolved")
+        ),
     )
 
-    result = execute_browser_action(_valid_browser_action_contract(execution_mode="dry_run"))
+    result = execute_browser_action(
+        _valid_browser_action_contract(execution_mode="dry_run")
+    )
 
     assert result["status"] == "success"
     assert result["result_type"] == "simulation"
 
 
-def test_browser_missing_provider_config_returns_provider_not_configured(monkeypatch) -> None:
+def test_browser_missing_provider_config_returns_provider_not_configured(
+    monkeypatch,
+) -> None:
     monkeypatch.delenv("DIGITAL_FOREMAN_BROWSER_BACKEND", raising=False)
 
     result = execute_browser_action(_valid_browser_action_contract())
@@ -185,7 +222,9 @@ def test_browser_live_backend_path_uses_provider_factory(monkeypatch) -> None:
         captured["runtime_mode"] = config.runtime_mode
         return runtime, "playwright"
 
-    monkeypatch.setattr(browser_adapter_module, "_build_default_browser_runtime", build_runtime)
+    monkeypatch.setattr(
+        browser_adapter_module, "_build_default_browser_runtime", build_runtime
+    )
 
     result = execute_browser_action(
         _valid_browser_action_contract(),
@@ -202,7 +241,9 @@ def test_browser_timeout_is_normalized() -> None:
         def open_page(self, *, url: str, timeout_seconds: int) -> BrowserExecution:
             raise TimeoutError("slow provider")
 
-    result = execute_browser_action(_valid_browser_action_contract(), runtime=TimeoutRuntime())
+    result = execute_browser_action(
+        _valid_browser_action_contract(), runtime=TimeoutRuntime()
+    )
 
     assert validate_action_result_contract(result) == result
     assert result["status"] == "failed"
@@ -214,7 +255,9 @@ def test_browser_runtime_errors_are_normalized() -> None:
         def open_page(self, *, url: str, timeout_seconds: int) -> BrowserExecution:
             raise BrowserAdapterError("transport_error", "browser transport failed")
 
-    result = execute_browser_action(_valid_browser_action_contract(), runtime=FailingRuntime())
+    result = execute_browser_action(
+        _valid_browser_action_contract(), runtime=FailingRuntime()
+    )
 
     assert validate_action_result_contract(result) == result
     assert result["status"] == "failed"

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -20,10 +20,14 @@ from app.orchestrator.execution_runner import run_execution
 from app.orchestrator.mock_executor import execute_mock_task
 from app.orchestrator.task_queue import InMemoryTaskQueue
 from functools import partial
-from app.orchestrator.task_worker import process_next_queued_task as _process_next_queued_task
+from app.orchestrator.task_worker import (
+    process_next_queued_task as _process_next_queued_task,
+)
 from tests.system_context import WORKING_SYSTEM_CONTEXT
 
-process_next_queued_task = partial(_process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT)
+process_next_queued_task = partial(
+    _process_next_queued_task, system_context=WORKING_SYSTEM_CONTEXT
+)
 from app.product.runner import execute_product_task_request
 
 
@@ -165,4 +169,3 @@ def test_allowlist_contains_product_executor_and_voice_runtime() -> None:
     assert "app.execution.product_executor" in PRODUCT_RUNTIME_ALLOWLIST
     assert "app.voice" in PRODUCT_RUNTIME_ALLOWLIST
     assert "app.execution.browser_tool" in PRODUCT_RUNTIME_ALLOWLIST
-
