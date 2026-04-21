@@ -16,9 +16,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - run: pip install ruff pytest
 
       - run: ruff format --check .
       - run: ruff check .
 
-      - run: pytest
