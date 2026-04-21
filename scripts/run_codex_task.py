@@ -29,7 +29,6 @@ import argparse
 import copy
 import json
 import re
-import subprocess
 import sys
 from time import perf_counter
 from typing import Any, Sequence

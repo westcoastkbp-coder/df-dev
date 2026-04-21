@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
-from pathlib import Path
 
 from app.execution.action_result import build_action_result
 from app.execution.execution_boundary import require_execution_boundary

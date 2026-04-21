@@ -4,7 +4,6 @@ import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Any
 
 from app.ownerbox.domain import normalize_ownerbox_domain_binding
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from integrations.claude_tool import run_claude_analyze, run_claude_analyze_external
+from integrations.claude_tool import run_claude_analyze_external
 
 LINKEDIN_CREATE_POST_DRAFT_INSTRUCTION = (
     "Create a LinkedIn post draft for the provided topic and context. "

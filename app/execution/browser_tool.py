@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
-from pathlib import Path
 from typing import Final
 
 import httpx

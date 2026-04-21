@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -26,7 +25,7 @@ from app.execution.product_runtime import (
     assert_product_runtime_action,
     assert_product_runtime_output_path,
 )
-from app.execution.paths import LOGS_DIR, OUTPUT_DIR, ROOT_DIR, RUNTIME_DIR, STATE_DIR
+from app.execution.paths import OUTPUT_DIR, ROOT_DIR, RUNTIME_DIR, STATE_DIR
 from app.policy.policy_gate import evaluate_policy
 from app.product.intake import build_product_task_request
 from runtime.resource_probe import get_resource_snapshot

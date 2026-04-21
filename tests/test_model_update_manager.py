@@ -7,7 +7,6 @@ import pytest
 
 import app.learning.model_update_config as model_update_config_module
 import app.learning.model_loader as model_loader_module
-import app.learning.model_update_manager as model_update_manager_module
 from app.learning.model_update_manager import check_update_needed, trigger_model_update
 from app.memory import memory_registry
 from app.state.state_store import get_state

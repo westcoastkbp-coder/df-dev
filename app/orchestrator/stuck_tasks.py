@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from app.execution.paths import LOGS_DIR, ROOT_DIR
 from app.orchestrator.escalation import decide_escalation_action, record_escalation

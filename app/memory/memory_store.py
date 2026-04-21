@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Iterable
 
 from app.execution.paths import ROOT_DIR, STATE_DIR
 from app.memory.canonical_memory import (

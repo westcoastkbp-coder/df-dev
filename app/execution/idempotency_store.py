@@ -4,7 +4,7 @@ import json
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Mapping
 
 from app.execution.action_contract import validate_action_result_contract
 from app.execution.paths import ROOT_DIR, STATE_DIR

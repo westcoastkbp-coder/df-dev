@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Mapping
 
 from app.execution.paths import OUTPUT_DIR, ROOT_DIR

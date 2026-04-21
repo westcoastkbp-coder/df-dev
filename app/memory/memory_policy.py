@@ -8,7 +8,6 @@ from app.memory.canonical_memory import (
     SUPPORTED_MEMORY_DOMAINS,
     SUPPORTED_MEMORY_TYPES,
     SUPPORTED_TRUST_LEVELS,
-    CanonicalMemoryError,
     utc_timestamp,
 )
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Mapping
 from urllib.parse import urlparse
 
 from app.ownerbox.domain import (

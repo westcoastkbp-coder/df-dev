@@ -4,7 +4,7 @@ import re
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Mapping
+from typing import Mapping
 
 
 OWNER_WORKFLOW_STATUSES = frozenset(

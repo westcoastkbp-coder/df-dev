@@ -4,7 +4,6 @@ import json
 import os
 import time
 from collections.abc import Mapping
-from pathlib import Path
 from typing import Any
 
 from app.execution.paths import OUTPUT_DIR

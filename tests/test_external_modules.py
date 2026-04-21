@@ -9,7 +9,6 @@ from app.execution.execution_boundary import (
 from app.execution.external_modules import (
     ExternalModuleRequest,
     ExternalModuleResult,
-    ExternalModuleUnavailableError,
     ExternalModuleValidationError,
     ExternalModuleRegistry,
     build_external_module_request,

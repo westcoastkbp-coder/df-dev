@@ -5,7 +5,6 @@ from pathlib import Path
 
 from app.execution.lead_estimate_contract import WORKFLOW_TYPE
 from app.execution.paths import TASKS_FILE
-from app.execution.followup_reentry import reenter_completed_followup
 from app.execution.real_lead_contract import (
     DEFAULT_REAL_LEAD_INPUT,
     build_real_lead_run_id,

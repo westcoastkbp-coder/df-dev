@@ -21,7 +21,6 @@ from app.execution.external_modules import (
     ExternalModuleRequest,
     ExternalModuleValidationError,
 )
-from app.execution.paths import OUTPUT_DIR
 from app.policy.policy_gate import evaluate_external_action_policy
 
 
