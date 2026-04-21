@@ -1,0 +1,122 @@
+# Python virtual environments
+venv/
+.venv/
+node_modules/
+
+# Python bytecode and caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+caches/
+.cache/
+*.cache
+.python-version
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+pytest_cache/
+pytest-cache-files-*/
+
+# Runtime and generated output
+runtime/
+/logs/
+artifacts/
+audit/
+screenshots/
+backup/
+backups/
+build/
+dist/
+tmp/
+temp/
+tmp_*/
+tmpp*/
+
+# Test and browser output
+.playwright-browsers/
+playwright-browsers/
+test-results/
+playwright-report/
+htmlcov/
+coverage/
+.coverage
+.coverage.*
+
+# Environment and local-only files
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Binary and packaged artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.pyd
+*.zip
+*.tar
+*.bin
+*.tar.gz
+*.tgz
+*.7z
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local execution state and backups
+/.git_backup_before_cleanup/
+/BRANCH_REGISTRY.json
+/CAPABILITY_REGISTRY.json
+/DEV_TASKS.json
+/DF/
+/context/
+/data/
+/df-dev/
+/df_ext_failure_report_*/
+/df_repro_*/
+/df_system_stability_*/
+/metrics/
+/personal/
+/snapshots/
+/state/
+/tmpmczf6o27/
+/tmpsngaioga/
+/verification.json
+memory/architecture.json
+memory/decisions.json
+memory/owner_memory.json
+memory/project_state.json
+memory/scoped/
+memory/shared_system_context.json
+memory/system_context.json
+control/SYSTEM_CONTEXT.json
+control/claude_tasks.json
+control/processed_issues.json
+control/secrets.json
+control/system_context.json
+tasks/codex/
+tasks/context/
+tasks/subtasks/
+tasks/github/issue-9.json
+/sample_action_contract.json
+
+# Keep source, config, and docs tracked
+!config/
+!config/**
+!docs/
+!docs/**

@@ -1,0 +1,26 @@
+{
+  "task_id": "task_001",
+  "created_at": "2026-01-01T12:00:00Z",
+  "status": "completed",
+  "action": {
+    "type": "send_email",
+    "input": {
+      "to": "client@example.com"
+    }
+  },
+  "result": {
+    "status": "success",
+    "output": {
+      "status": "success"
+    }
+  },
+  "verification": {
+    "status": "success"
+  },
+  "events": [
+    "evt_01ea5ee0d81f4fcb8d2174534bfe24b8"
+  ],
+  "next_tasks": [
+    "task_002"
+  ]
+}

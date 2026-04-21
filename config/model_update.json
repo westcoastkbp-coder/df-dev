@@ -1,0 +1,16 @@
+{
+  "active_model": "memory_ranker_v1",
+  "candidate_model": "",
+  "evaluation_mode": true,
+  "evaluation_sample_rate": 0.2,
+  "promotion_rules": {
+    "min_agreement": 0.7,
+    "min_overlap": 0.7,
+    "min_samples": 20,
+    "min_top1_match": 0.6
+  },
+  "memory_ranking": {
+    "last_dataset_size": 0,
+    "min_new_records": 50
+  }
+}

@@ -1,0 +1,8 @@
+task_id: KBP-WEBSITE-T1-EXECUTION-V1
+parent_task_id: KBP-DEV-WEBSITE-EXECUTION-V1
+action: intake_and_scope
+status: approved
+output_document: devlog/2026-04-05-kbp-website-t1-intake-and-scope.md
+next_task: T2-WEBSITE-SCAFFOLD
+approved_at: 2026-04-05
+approved_by: DEV OFFICER

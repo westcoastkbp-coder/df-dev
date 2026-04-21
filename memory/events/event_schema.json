@@ -1,0 +1,23 @@
+{
+  "event_id": "string (uuid)",
+  "timestamp": "ISO8601",
+  "event_type": "string",
+  "source": "string (agent/system/component)",
+  "action": {
+    "type": "string",
+    "input": "object",
+    "output": "object"
+  },
+  "verification": {
+    "status": "pending | success | failed",
+    "details": "object"
+  },
+  "state_update": {
+    "applied": "boolean",
+    "changes": "object"
+  },
+  "trace": {
+    "task_id": "string",
+    "session_id": "string"
+  }
+}

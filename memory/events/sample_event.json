@@ -1,0 +1,29 @@
+{
+  "event_id": "evt_001",
+  "timestamp": "2026-01-01T12:00:00Z",
+  "event_type": "task_execution",
+  "source": "execution_engine",
+  "action": {
+    "type": "send_email",
+    "input": {
+      "to": "client@example.com"
+    },
+    "output": {
+      "status": "sent"
+    }
+  },
+  "verification": {
+    "status": "success",
+    "details": {}
+  },
+  "state_update": {
+    "applied": true,
+    "changes": {
+      "email_sent": true
+    }
+  },
+  "trace": {
+    "task_id": "task_123",
+    "session_id": "session_abc"
+  }
+}

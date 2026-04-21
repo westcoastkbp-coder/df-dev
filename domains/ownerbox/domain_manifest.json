@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "domain": "ownerbox",
+  "status": "placeholder",
+  "contour": "ownerbox",
+  "artifact_output_root": "/home/avoro/data/hot/ownerbox",
+  "export_output_root": "/home/avoro/data/export/ownerbox",
+  "task_namespace": "ownerbox.tasks",
+  "memory_namespace": "ownerbox.memory",
+  "notes": [
+    "Structural placeholder only.",
+    "No OwnerBox business logic is implemented here.",
+    "No storage adapter is implemented here."
+  ]
+}

@@ -1,0 +1,3 @@
+task_id: DF-SYSTEM-STATUS
+action: system_status
+status: orchestrated

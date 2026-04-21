@@ -1,0 +1,26 @@
+{
+  "task_id": "task_002",
+  "created_at": "2026-04-17T00:47:50Z",
+  "status": "completed",
+  "action": {
+    "type": "test_action_2",
+    "input": {
+      "value": 456
+    }
+  },
+  "result": {
+    "status": "success",
+    "output": {
+      "status": "success"
+    }
+  },
+  "verification": {
+    "status": "success"
+  },
+  "events": [
+    "evt_bd54b48443a5459eb8e14502bdeed3fa"
+  ],
+  "next_tasks": [],
+  "retries": 0,
+  "max_retries": 3
+}

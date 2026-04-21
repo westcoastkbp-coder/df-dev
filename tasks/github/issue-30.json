@@ -1,0 +1,16 @@
+{
+  "body": "GOAL:\nRun the full Digital Foreman execution cycle for this GitHub issue as a real system proof.\n\nISSUE:\nDF SYSTEM PROOF - LEAD INTAKE TEST #30\n\nREQUIREMENTS:\n- convert the issue into a structured internal task\n- classify and route it through the DF routing layer\n- apply policy validation\n- execute the task\n- produce an artifact representing the initial lead intake record\n- commit the result to the repository\n\nRULES:\n- deterministic execution only\n- no manual shortcuts\n- no test-only shortcuts\n- use the current stable DF core baseline\n- do not modify unrelated code\n- if execution fails, report exact failing layer and stop\n\nEXPECTED OUTPUT:\n1. task id created\n2. routing/type decision\n3. policy validation result\n4. artifact path\n5. commit hash / commit message\n6. concise execution summary",
+  "created_at": "2026-04-13T00:00:00Z",
+  "fetched_at": "2026-04-13T00:00:00Z",
+  "issue_id": 30,
+  "issue_number": 30,
+  "labels": [
+    "system-proof",
+    "lead-intake"
+  ],
+  "raw_url": "https://github.com/westcoastkbp-coder/jarvis-digital-foreman/issues/30",
+  "source": "github",
+  "source_status": "open",
+  "status": "fetched",
+  "title": "DF SYSTEM PROOF - LEAD INTAKE TEST #30"
+}

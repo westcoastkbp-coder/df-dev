@@ -1,0 +1,97 @@
+{
+  "manifest_version": 1,
+  "product_only_rule": "deny_by_default",
+  "product_entrypoints": [
+    "app.start_product",
+    "app.server",
+    "app.voice.app"
+  ],
+  "product_runtime_allowlist": [
+    "app.start_product",
+    "app.server",
+    "app.voice",
+    "app.execution.product_box_manifest",
+    "app.policy.policy_gate",
+    "app.product.command_parser",
+    "app.product.intake",
+    "app.product.runner",
+    "app.product.task_registry",
+    "app.execution.followup_reentry",
+    "app.execution.input_normalizer",
+    "app.execution.browser_tool",
+    "app.execution.lead_estimate_contract",
+    "app.execution.lead_estimate_decision",
+    "app.execution.lead_estimate_read",
+    "app.execution.lead_estimate_write",
+    "app.execution.paths",
+    "app.execution.product_executor",
+    "app.execution.product_runtime",
+    "app.execution.rbac",
+    "app.execution.real_lead_contract",
+    "app.execution.real_lead_read",
+    "app.execution.real_lead_reporting",
+    "app.execution.real_lead_tasks",
+    "app.execution.task_schema",
+    "app.orchestrator.execution_router",
+    "app.orchestrator.execution_runner",
+    "app.orchestrator.execution_store",
+    "app.orchestrator.offload_manager",
+    "app.orchestrator.task_factory",
+    "app.orchestrator.task_lifecycle",
+    "app.orchestrator.task_memory",
+    "app.orchestrator.task_queue",
+    "app.orchestrator.task_state_store",
+    "app.orchestrator.task_worker",
+    "hardware.runtime_profile",
+    "integrations.telnyx_voice",
+    "memory.storage",
+    "runtime.decision",
+    "runtime.network",
+    "runtime.policy_engine",
+    "runtime.resource_monitor",
+    "runtime.resource_probe",
+    "runtime.system_log",
+    "runtime.telemetry",
+    "runtime.token_telemetry",
+    "runtime.validation"
+  ],
+  "blocked_modules": [
+    "agents/*",
+    "scripts/*",
+    "tests/*",
+    "app.execution.execution_policy",
+    "app.execution.execution_replay",
+    "app.execution.linear_workflow",
+    "app.execution.policy_guard",
+    "app.orchestrator.dev_orchestrator",
+    "app.orchestrator.dev_task",
+    "app.orchestrator.mock_executor",
+    "app.orchestrator.orchestrator"
+  ],
+  "allowed_actions": [
+    "READ_FILE",
+    "BROWSER_TOOL",
+    "RESOURCES",
+    "SYSTEM_STATUS",
+    "WRITE_FILE"
+  ],
+  "blocked_actions": [
+    "BUILD_WEBSITE",
+    "CONTROL_HEALTH",
+    "RUN_TESTS"
+  ],
+  "writable_paths": [
+    "data",
+    "runtime/logs",
+    "runtime/state"
+  ],
+  "required_runtime_paths": [
+    "runtime",
+    "data",
+    "runtime/logs",
+    "runtime/state"
+  ],
+  "optional_paths": [
+    "runtime/out"
+  ]
+}

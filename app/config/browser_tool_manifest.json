@@ -1,0 +1,35 @@
+{
+  "manifest_version": 1,
+  "allowed_pages": {
+    "https://example.com/": {
+      "allowed_form_selectors": [],
+      "click_targets": {
+        "a.more-info": {
+          "method": "GET",
+          "target_url": "https://example.com/more-info"
+        },
+        "a.contact-link": {
+          "method": "GET",
+          "target_url": "https://example.com/contact"
+        }
+      }
+    },
+    "https://example.com/more-info": {
+      "allowed_form_selectors": [],
+      "click_targets": {}
+    },
+    "https://example.com/contact": {
+      "allowed_form_selectors": [
+        "input[name='email']",
+        "textarea[name='message']"
+      ],
+      "click_targets": {
+        "button[type='submit']": {
+          "method": "POST",
+          "target_url": "https://example.com/contact",
+          "submit_form": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+context:
+  revision: 2
+
+system:
+  dev_environment: x870
+  product_environment: product_box
+  architecture_separation: strict
+
+product_box:
+  runtime_scope: business_only
+  company_name: West Coast KBP
+  description: business-only runtime for West Coast KBP
+  is_dev_environment: false
+  code_generation_allowed: false
+  roles:
+    - business_operations
+
+interaction:
+  primary_channels:
+    - voice
+    - sms
+    - email
+
+operational:
+  owner_role: owner
+  company_name: West Coast KBP

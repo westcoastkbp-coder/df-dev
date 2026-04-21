@@ -1,0 +1,18 @@
+{
+  "SYSTEM_TEST": {
+    "message": "SYSTEM RESPONSE: test processed",
+    "action": "test_flow"
+  },
+  "BUG_REPORT": {
+    "message": "SYSTEM RESPONSE: bug detected and logged",
+    "action": "bug_flow"
+  },
+  "TASK": {
+    "message": "SYSTEM RESPONSE: task accepted and executed",
+    "action": "task_flow"
+  },
+  "UNKNOWN": {
+    "message": "SYSTEM RESPONSE: unknown type",
+    "action": "noop"
+  }
+}
